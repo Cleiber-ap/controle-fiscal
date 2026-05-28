@@ -1,0 +1,441 @@
+import { useState, useRef } from 'react'
+import { registrarLog } from '../../api/auditoria'
+import api from '../../api/endpoints'
+
+
+interface NFParsed {
+  numero_nf: string
+  destinatario: string
+  cnpj_dest: string
+  valor_nf: number
+  data_emissao: string
+  nat_op: string
+  status: string
+  arquivo: string
+  refNFe?: string
+  mesEmissao?: number
+  anoEmissao?: number
+}
+
+function parseXML(texto: string, arquivo: string): NFParsed | null {
+  // Detectar cancelamento
+  const isINUT = arquivo.toLowerCase().includes('nfe-inut') || texto.includes('<ProcInutNFe') || texto.includes('xServ>INUTILIZAR')
+  if (isINUT) {
+    try {
+      const parser = new DOMParser()
+      const doc = parser.parseFromString(texto, 'application/xml')
+      const get = (tag: string) => doc.getElementsByTagName(tag)[0]?.textContent?.trim() || ''
+      const nNF = get('nNFIni') || get('nNFFin')
+      const xJust = get('xJust')
+      const cnpjEmit = get('CNPJ')
+      const ano = get('ano')
+      const dhEvento = get('dhRecbto') || get('dhRegEvento') || ''
+      let dataEvento = ''
+      if (dhEvento) {
+        const d = new Date(dhEvento)
+        if (!isNaN(d.getTime())) dataEvento = String(d.getDate()).padStart(2,'0') + '/' + String(d.getMonth()+1).padStart(2,'0') + '/' + d.getFullYear()
+      }
+      if (!nNF) return null
+      return {
+        numero_nf: nNF + '-INUT',
+        destinatario: 'INUTILIZADA',
+        cnpj_dest: '',
+        valor_nf: 0,
+        data_emissao: dataEvento || ('20' + ano),
+        nat_op: 'Inutilizacao',
+        status: 'Inutilizacao',
+        arquivo,
+      }
+    } catch { return null }
+  }
+  const isCCE = arquivo.toLowerCase().includes('nfe-cce') || texto.includes('descEvento>Carta de Correcao') || texto.includes('Carta de Corre')
+  const isCAN = !isCCE && (texto.includes('<procEventoNFe') || arquivo.toLowerCase().includes('nfe-can'))
+  if (isCCE || isCAN) {
+    try {
+      const parser = new DOMParser()
+      const doc = parser.parseFromString(texto, 'application/xml')
+      const get = (tag: string) => doc.getElementsByTagName(tag)[0]?.textContent?.trim() || ''
+      const chNFe = get('chNFe')
+      const nNF = chNFe ? chNFe.substring(25, 34).replace(/^0+/, '') : ''
+      const dhEvento = get('dhEvento')
+      let dataEvento = ''
+      if (dhEvento) {
+        const d = new Date(dhEvento)
+        if (!isNaN(d.getTime())) {
+          dataEvento = String(d.getDate()).padStart(2,'0') + '/' + String(d.getMonth()+1).padStart(2,'0') + '/' + d.getFullYear()
+        }
+      }
+      const xJust = get('xJust')
+      const cnpjEmit = get('CNPJ')
+      if (!nNF) return null
+      return {
+        numero_nf: nNF + (isCCE ? '-CCE' : '-CAN'),
+        destinatario: isCCE ? 'CORRECAO: ' + xJust : 'CANCELAMENTO: ' + xJust,
+        cnpj_dest: '_lookup_' + nNF,
+        valor_nf: 0,
+        data_emissao: dataEvento,
+        nat_op: isCCE ? 'Carta de Correcao' : 'Cancelamento',
+        status: isCCE ? 'Carta de Correcao' : 'Cancelamento',
+        arquivo,
+      }
+    } catch { return null }
+  }
+  try {
+    const parser = new DOMParser()
+    const doc = parser.parseFromString(texto, 'application/xml')
+
+    const get = (tag: string) => doc.getElementsByTagName(tag)[0]?.textContent?.trim() || ''
+
+    const numero_nf = get('nNF')
+    const destinatario = get('xNome') // primeiro xNome é o emitente, segundo é o destinatário
+    // Pegar especificamente o dest > xNome
+    const destEl = doc.getElementsByTagName('dest')[0]
+    const destNome = destEl?.getElementsByTagName('xNome')[0]?.textContent?.trim() || get('xNome')
+    const cnpj = destEl?.getElementsByTagName('CNPJ')[0]?.textContent?.trim() || destEl?.getElementsByTagName('CPF')[0]?.textContent?.trim() || ''
+    const valorNF = parseFloat(get('vNF')) || 0
+    const dhEmi = get('dhEmi') || get('dEmi')
+    const natOp = get('natOp')
+    const refNFe = get('refNFe') || ''
+
+    // Converter data para DD/MM/AAAA
+    let dataEmissao = ''
+    if (dhEmi) {
+      const d = new Date(dhEmi)
+      if (!isNaN(d.getTime())) {
+        dataEmissao = `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`
+      } else if (dhEmi.match(/^\d{4}-\d{2}-\d{2}/)) {
+        const [a, m, dia] = dhEmi.split('-')
+        dataEmissao = `${dia.substring(0, 2)}/${m}/${a}`
+      }
+    }
+
+    const status = natOp || 'Venda'
+
+    if (!numero_nf) return null
+
+    return {
+      numero_nf,
+      destinatario: destNome,
+      cnpj_dest: cnpj,
+      valor_nf: valorNF,
+      data_emissao: dataEmissao,
+      nat_op: natOp,
+      status,
+      arquivo,
+      refNFe: refNFe || undefined,
+      mesEmissao: dataEmissao ? parseInt(dataEmissao.split('/')[1]) : undefined,
+      anoEmissao: dataEmissao ? parseInt(dataEmissao.split('/')[2]) : undefined,
+    }
+  } catch {
+    return null
+  }
+}
+
+export default function ImportarXML() {
+  const [empresa, setEmpresa] = useState<'six' | 'enova'>('six')
+  const [dragging, setDragging] = useState(false)
+  const [notas, setNotas] = useState<NFParsed[]>([])
+  const [erros, setErros] = useState<string[]>([])
+  const [importando, setImportando] = useState(false)
+  const [resultado, setResultado] = useState<string | null>(null)
+  const [creditoPendente, setCreditoPendente] = useState<{nota: any, valorOrig: number} | null>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  const isSix = empresa === 'six'
+  const corEmp = isSix ? '#4F8EF7' : '#34D399'
+  const bgEmp = isSix ? '#1C2E52' : '#0D3326'
+  const empId = isSix ? 1 : 2
+  const mono = { fontFamily: 'monospace' }
+
+  async function processarArquivos(files: FileList) {
+    const novasNotas: NFParsed[] = []
+    const novosErros: string[] = []
+
+    for (const file of Array.from(files)) {
+      if (!file.name.endsWith('.xml')) {
+        novosErros.push(`${file.name} — não é um arquivo XML`)
+        continue
+      }
+      const texto = await file.text()
+      const nf = parseXML(texto, file.name)
+      if (nf) {
+        novasNotas.push(nf)
+      } else {
+        novosErros.push(`${file.name} — não foi possível extrair dados da NF`)
+      }
+    }
+
+    setNotas(prev => {
+      // Evitar duplicatas por numero_nf
+      const existentes = new Set(prev.map(n => n.numero_nf))
+      return [...prev, ...novasNotas.filter(n => !existentes.has(n.numero_nf))]
+    })
+    setErros(prev => [...prev, ...novosErros])
+    setResultado(null)
+  }
+
+  function onDrop(e: React.DragEvent) {
+    e.preventDefault()
+    setDragging(false)
+    if (e.dataTransfer.files.length > 0) processarArquivos(e.dataTransfer.files)
+  }
+
+  function onFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    if (e.target.files?.length) processarArquivos(e.target.files)
+  }
+
+  async function importar() {
+    if (notas.length === 0) return
+    setImportando(true)
+    try {
+      let importadas = 0
+      for (const nota of notas) {
+        // Se for CAN ou CCE, buscar destinatario/cnpj da nota original
+        let notaFinal = { ...nota, empresa_id: empId }
+        if (nota.cnpj_dest?.startsWith('_lookup_')) {
+          const nNFOrig = nota.cnpj_dest.replace('_lookup_', '')
+          const orig = notas.find(n => n.numero_nf === nNFOrig)
+          if (orig) {
+            notaFinal.destinatario = orig.destinatario
+            notaFinal.cnpj_dest = orig.cnpj_dest
+          } else {
+            // Buscar no banco
+            try {
+              const res = await api.get('/notas/' + empId)
+              const origDb = res.data.find((n: any) => n.numero_nf === nNFOrig)
+              if (origDb) {
+                notaFinal.destinatario = origDb.destinatario
+                notaFinal.cnpj_dest = origDb.cnpj_dest
+              } else {
+                notaFinal.cnpj_dest = ''
+              }
+            } catch { notaFinal.cnpj_dest = '' }
+          }
+        }
+        await api.post('/notas/importar', notaFinal)
+        importadas++
+        // Se for devolucao com refNFe: registrar ajuste para subtrair do RBT12
+        const isDev = (notaFinal.nat_op || '').toLowerCase().includes('devolu')
+        if (isDev && notaFinal.refNFe && notaFinal.refNFe.length >= 25) {
+          const chave = notaFinal.refNFe
+          const anoOrig = parseInt('20' + chave.substring(2, 4))
+          const mesOrig = parseInt(chave.substring(4, 6))
+          const nfOrig = chave.substring(25, 34).replace(/^0+/, '')
+          try {
+            await api.post('/notas/ajustes', {
+              empresa_id: empId, ano: anoOrig, mes: mesOrig,
+              valor: notaFinal.valor_nf, nf_devolucao: notaFinal.numero_nf,
+              nf_referenciada: nfOrig, chave_ref: chave
+            })
+            } catch(e) { console.warn('Ajuste devolucao nao registrado', e) }
+        }
+      }
+      // Atualizar historico de faturamento se houver notas de venda
+      const notasVenda = notas.filter(n => n.status === 'Venda')
+      if (notasVenda.length > 0) {
+        // Agrupar por mês/ano
+        const porMes: Record<string, number> = {}
+        notasVenda.forEach(n => {
+          if (n.data_emissao) {
+            const [, m, a] = n.data_emissao.split('/')
+            const key = `${a}-${m}`
+            porMes[key] = (porMes[key] || 0) + n.valor_nf
+          }
+        })
+        for (const [key, valor] of Object.entries(porMes)) {
+          const [ano, mes] = key.split('-')
+          await api.post('/dados/historico/upsert', { empresa_id: empId, ano: parseInt(ano), mes: parseInt(mes), valor })
+        }
+      }
+      setResultado(`✅ ${importadas} nota${importadas !== 1 ? 's' : ''} importada${importadas !== 1 ? 's' : ''} com sucesso!${notasVenda.length > 0 ? ` · Planilha_2 atualizada` : ''}`)
+      await registrarLog({ acao: 'IMPORTAR', modulo: 'notas', descricao: `${importadas} nota${importadas !== 1 ? 's' : ''} importada${importadas !== 1 ? 's' : ''} via XML · Empresa: ${empresa.toUpperCase()} · ${notasVenda.length} Venda`, valorDepois: { empresa, total: importadas, vendas: notasVenda.length, notas: notas.map(n => n.numero_nf) } })
+      setNotas([])
+    } catch (err: any) {
+      setResultado(`❌ Erro ao importar: ${err?.response?.data?.detail || err.message}`)
+    } finally {
+      setImportando(false)
+    }
+  }
+
+  function remover(nf: string) {
+    setNotas(prev => prev.filter(n => n.numero_nf !== nf))
+  }
+
+  const notasVenda = notas.filter(n => n.status === 'Venda')
+  const totalVenda = notasVenda.reduce((s, n) => s + n.valor_nf, 0)
+
+  function fmtR(v: number) {
+    return 'R$ ' + v.toLocaleString('pt-BR', { minimumFractionDigits: 2 })
+  }
+  function fmtCNPJ(v: string) {
+    if (!v) return '—'
+    const n = v.replace(/\D/g, '')
+    if (n.length === 14) return n.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5')
+    return v
+  }
+
+  const st = { fontSize: '11px', fontWeight: 600, textTransform: 'uppercase' as const, letterSpacing: '1.2px', color: '#4A5070', marginBottom: '10px', marginTop: '22px', display: 'flex', alignItems: 'center', gap: '8px' }
+
+  return (
+    <div>
+      {/* Breadcrumb */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', color: '#4A5070', marginBottom: '16px' }}>
+        <span>Início</span><span style={{ margin: '0 4px' }}>›</span>
+        <span style={{ color: '#7B82A0' }}>Importar XML</span>
+      </div>
+
+      {/* Seletor de empresa */}
+      <div style={{ background: '#13161F', border: '1px solid #252836', borderRadius: '14px', padding: '12px 16px', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+        <div style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1px', color: '#4A5070', whiteSpace: 'nowrap' }}>Empresa ativa</div>
+        <div style={{ display: 'flex', gap: '8px' }}>
+          {[{ key: 'six', label: 'SIX Comercial', cor: '#4F8EF7', bg: '#1C2E52' }, { key: 'enova', label: 'ENOVA Comercial', cor: '#34D399', bg: '#0D3326' }].map(e => (
+            <div key={e.key} onClick={() => { setEmpresa(e.key as any); setNotas([]); setErros([]); setResultado(null) }}
+              style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '5px 14px', borderRadius: '6px', cursor: 'pointer', fontSize: '12px', fontWeight: 500, color: empresa === e.key ? e.cor : '#7B82A0', background: empresa === e.key ? e.bg : 'transparent' }}>
+              <div style={{ width: '7px', height: '7px', borderRadius: '50%', background: e.cor }} />
+              {e.label}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Drop zone */}
+      <div style={{ ...st, marginTop: 0 }}>
+        Arquivos XML — NF-e
+        <div style={{ flex: 1, height: '1px', background: '#252836' }} />
+      </div>
+
+      <div
+        onDragOver={e => { e.preventDefault(); setDragging(true) }}
+        onDragLeave={() => setDragging(false)}
+        onDrop={onDrop}
+        onClick={() => inputRef.current?.click()}
+        style={{
+          border: `1px dashed ${dragging ? corEmp : '#333750'}`,
+          borderRadius: '14px', padding: '32px',
+          textAlign: 'center', cursor: 'pointer',
+          background: dragging ? (isSix ? 'rgba(79,142,247,0.06)' : 'rgba(52,211,153,0.06)') : '#13161F',
+          transition: 'all .2s', marginBottom: '16px',
+        }}>
+        <div style={{ fontSize: '32px', marginBottom: '10px' }}>📄</div>
+        <div style={{ fontSize: '13px', fontWeight: 500, color: '#E8EAF0', marginBottom: '4px' }}>Clique ou arraste os arquivos XML</div>
+        <div style={{ fontSize: '11px', color: '#7B82A0' }}>Somente natOp = "Venda" entra no faturamento da Planilha_2</div>
+        <input ref={inputRef} type="file" accept=".xml" multiple onChange={onFileChange} style={{ display: 'none' }} />
+      </div>
+
+      {/* Campos automáticos */}
+      <div style={{ background: '#13161F', border: '1px solid #252836', borderRadius: '14px', padding: '12px 16px', marginBottom: '16px' }}>
+        <div style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1px', color: '#4A5070', marginBottom: '8px' }}>Campos preenchidos automaticamente</div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px' }}>
+          {[
+            ['Nº NF', '<nNF>'],
+            ['Destinatário', '<dest><xNome>'],
+            ['CNPJ', '<dest><CNPJ>'],
+            ['Valor NF', '<vNF>'],
+            ['Dt. Emissão', '<dhEmi>'],
+            ['Nat. Operação', '<natOp>'],
+          ].map(([label, tag]) => (
+            <div key={tag} style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', color: '#7B82A0' }}>
+              <span>📌 {label} ←</span>
+              <span style={{ background: '#1A1D2A', border: '1px solid #252836', borderRadius: '4px', padding: '1px 5px', ...mono, fontSize: '10px', color: corEmp }}>{tag}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Info lançamento automático */}
+      <div style={{ background: '#0D3326', border: '1px solid #134D38', borderRadius: '14px', padding: '12px 16px', marginBottom: '16px' }}>
+        <div style={{ fontSize: '11px', color: '#34D399', fontWeight: 500, marginBottom: '3px' }}>📤 Lançamento automático na Planilha_2</div>
+        <div style={{ fontSize: '11px', color: '#7B82A0' }}>
+          Somatória das NFs de <strong style={{ color: '#34D399' }}>Venda</strong> do mês será gravada automaticamente no histórico de faturamento · Empresa: <strong style={{ color: corEmp }}>{isSix ? 'SIX' : 'ENOVA'} Comercial</strong>
+        </div>
+      </div>
+
+      {/* Erros */}
+      {erros.length > 0 && (
+        <div style={{ background: '#3B1010', border: '1px solid rgba(248,113,113,0.3)', borderRadius: '14px', padding: '12px 16px', marginBottom: '16px' }}>
+          {erros.map((e, i) => <div key={i} style={{ fontSize: '11px', color: '#F87171', marginBottom: '3px' }}>⚠️ {e}</div>)}
+        </div>
+      )}
+
+      {/* Resultado */}
+      {resultado && (
+        <div style={{ background: resultado.startsWith('✅') ? '#0D3326' : '#3B1010', border: `1px solid ${resultado.startsWith('✅') ? 'rgba(52,211,153,0.3)' : 'rgba(248,113,113,0.3)'}`, borderRadius: '14px', padding: '12px 16px', marginBottom: '16px', fontSize: '12px', fontWeight: 600, color: resultado.startsWith('✅') ? '#34D399' : '#F87171' }}>
+          {resultado}
+        </div>
+      )}
+
+      {/* Preview das notas */}
+      {notas.length > 0 && (
+        <>
+          <div style={st}>
+            Preview — {notas.length} nota{notas.length !== 1 ? 's' : ''} carregada{notas.length !== 1 ? 's' : ''}
+            <div style={{ flex: 1, height: '1px', background: '#252836' }} />
+            {notasVenda.length > 0 && (
+              <span style={{ fontSize: '10px', color: '#34D399', fontWeight: 500 }}>
+                {notasVenda.length} Venda · {fmtR(totalVenda)}
+              </span>
+            )}
+          </div>
+
+          <div style={{ background: '#13161F', border: '1px solid #252836', borderRadius: '14px', overflow: 'hidden', marginBottom: '16px' }}>
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
+                <thead>
+                  <tr style={{ background: '#1A1D2A' }}>
+                    {['Nº NF', 'Destinatário', 'CNPJ', 'Valor NF', 'Dt. Emissão', 'Nat. Operação', 'Status', ''].map((h, i) => (
+                      <th key={i} style={{ padding: '8px 12px', textAlign: ['Valor NF'].includes(h) ? 'right' : 'left', fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.8px', color: '#4A5070', borderBottom: '1px solid #252836', whiteSpace: 'nowrap' }}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {notas.map(n => (
+                    <tr key={n.numero_nf}>
+                      <td style={{ padding: '8px 12px', borderBottom: '1px solid #252836' }}>
+                        <span style={{ ...mono, fontSize: '12px', fontWeight: 700, color: corEmp, background: bgEmp, padding: '2px 8px', borderRadius: '6px' }}>{n.numero_nf}</span>
+                      </td>
+                      <td style={{ padding: '8px 12px', borderBottom: '1px solid #252836', color: '#7B82A0', maxWidth: '180px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{n.destinatario || '—'}</td>
+                      <td style={{ padding: '8px 12px', borderBottom: '1px solid #252836', ...mono, fontSize: '11px', color: '#7B82A0' }}>{fmtCNPJ(n.cnpj_dest)}</td>
+                      <td style={{ padding: '8px 12px', borderBottom: '1px solid #252836', textAlign: 'right', ...mono, fontSize: '11px', fontWeight: 600, color: '#E8EAF0' }}>{fmtR(n.valor_nf)}</td>
+                      <td style={{ padding: '8px 12px', borderBottom: '1px solid #252836', ...mono, fontSize: '11px', color: '#7B82A0' }}>{n.data_emissao || '—'}</td>
+                      <td style={{ padding: '8px 12px', borderBottom: '1px solid #252836', fontSize: '11px', color: '#7B82A0', maxWidth: '140px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{n.nat_op || '—'}</td>
+                      <td style={{ padding: '8px 12px', borderBottom: '1px solid #252836' }}>
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '3px 8px', borderRadius: '999px', fontSize: '10px', fontWeight: 600, background: n.status === 'Venda' ? 'rgba(52,211,153,0.15)' : 'rgba(123,130,160,0.15)', color: n.status === 'Venda' ? '#34D399' : '#7B82A0' }}>
+                          <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: n.status === 'Venda' ? '#34D399' : '#7B82A0' }} />
+                          {n.status}
+                        </span>
+                      </td>
+                      <td style={{ padding: '8px 12px', borderBottom: '1px solid #252836', textAlign: 'center' }}>
+                        <button onClick={() => remover(n.numero_nf)} style={{ padding: '3px 8px', background: '#3B1010', border: '1px solid rgba(248,113,113,0.3)', borderRadius: '5px', color: '#F87171', fontSize: '11px', cursor: 'pointer' }}>✕</button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+                <tfoot>
+                  <tr style={{ background: '#1A1D2A' }}>
+                    <td colSpan={3} style={{ padding: '8px 12px', fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1px', color: '#7B82A0', borderTop: '2px solid #333750' }}>
+                      {notasVenda.length} de {notas.length} são Venda
+                    </td>
+                    <td style={{ padding: '8px 12px', textAlign: 'right', fontFamily: 'monospace', fontSize: '11px', fontWeight: 700, color: '#34D399', borderTop: '2px solid #333750' }}>{fmtR(totalVenda)}</td>
+                    <td colSpan={4} style={{ borderTop: '2px solid #333750' }} />
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+          </div>
+
+          {/* Botões */}
+          <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+            <button onClick={() => { setNotas([]); setErros([]); setResultado(null) }}
+              style={{ padding: '8px 16px', background: 'transparent', border: '1px solid #252836', borderRadius: '6px', color: '#7B82A0', fontSize: '12px', cursor: 'pointer', fontFamily: 'inherit' }}>
+              Cancelar
+            </button>
+            <button onClick={importar} disabled={importando}
+              style={{ padding: '8px 20px', background: isSix ? '#1C2E52' : '#0D3326', border: `1px solid ${isSix ? 'rgba(79,142,247,0.3)' : 'rgba(52,211,153,0.3)'}`, borderRadius: '6px', color: corEmp, fontSize: '12px', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
+              {importando ? 'Importando...' : `📥 Importar ${notas.length} nota${notas.length !== 1 ? 's' : ''}`}
+            </button>
+          </div>
+        </>
+      )}
+    </div>
+  )
+}

@@ -1,0 +1,217 @@
+﻿import { useState, useEffect } from 'react'
+import { registrarLog } from '../../api/auditoria'
+
+const API = 'http://localhost:8000'
+const token = () => localStorage.getItem('access_token')
+const hdr = () => ({ 'Authorization': 'Bearer ' + token(), 'Content-Type': 'application/json' })
+const MESES = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro']
+const fmtR = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+
+function calcINSS(salario: number): number {
+  const faixas = [{ ate: 1412, aliq: 0.075 }, { ate: 2666.68, aliq: 0.09 }, { ate: 4000.03, aliq: 0.12 }, { ate: 7786.02, aliq: 0.14 }]
+  let inss = 0, base = 0
+  for (const f of faixas) {
+    if (salario <= base) break
+    const trib = Math.min(salario, f.ate) - base
+    inss += trib * f.aliq
+    base = f.ate
+    if (salario <= f.ate) break
+  }
+  return inss
+}
+
+function calcEncargos(func: any, diasUteis: number, horasExtras: number) {
+  const sal = parseFloat(func.salario_base) || 0
+  const va = parseFloat(func.vale_alimentacao) || 0
+  const dinheiro = parseFloat(func.salario_dinheiro) || 0
+  const usaVT = func.vale_transporte
+  const ferias13 = sal * (2 / 12)
+  const fgts = sal * 0.08
+  const multaFgts = fgts * 0.40
+  const horaValor = sal / 220
+  const heValor = horasExtras * horaValor * 1.5
+  const heDsr = horasExtras > 0 ? heValor * (1 / diasUteis) : 0
+  const vtValor = usaVT ? (sal + heValor) * 0.06 : 0
+  const inss = calcINSS(sal + heValor)
+  const desVT = usaVT ? (sal + heValor) * 0.06 : 0
+  const totalEncargos = ferias13 + fgts + multaFgts + heValor + heDsr + vtValor
+  const totalDescontos = inss + desVT
+  const salLiquido = sal + heValor + va - totalDescontos + dinheiro
+  const totalEmpresa = sal + totalEncargos + va
+  return { sal, ferias13, fgts, multaFgts, heValor, heDsr, vtValor, va, dinheiro, inss, desVT, totalEncargos, totalDescontos, salLiquido, totalEmpresa, pctEncargos: totalEncargos / sal }
+}
+
+export default function Encargos() {
+  const [funcionarios, setFuncionarios] = useState<any[]>([])
+  const [horas, setHoras] = useState<Record<number, number>>({})
+  const [aba, setAba] = useState<'resumo' | 'funcionarios'>('resumo')
+  const [mesRef, setMesRef] = useState(() => { const d = new Date(); return { mes: d.getMonth() === 0 ? 12 : d.getMonth(), ano: d.getMonth() === 0 ? d.getFullYear() - 1 : d.getFullYear() } })
+  const [diasUteis, setDiasUteis] = useState(22)
+  const [editando, setEditando] = useState<any | null>(null)
+  const [form, setForm] = useState<any>({})
+  const [salvando, setSalvando] = useState(false)
+  const [notif, setNotif] = useState<{ msg: string, ok: boolean } | null>(null)
+  const showNotif = (msg: string, ok = true) => { setNotif({ msg, ok }); setTimeout(() => setNotif(null), 3500) }
+  const carregar = async () => {
+    const [fs2, hs] = await Promise.all([
+      fetch(API + '/funcionarios/', { headers: hdr() }).then(r => r.json()).catch(() => []),
+      fetch(API + `/funcionarios/horas/${mesRef.ano}/${mesRef.mes}`, { headers: hdr() }).then(r => r.json()).catch(() => ({})),
+    ])
+    setFuncionarios(Array.isArray(fs2) ? fs2 : [])
+    setHoras(hs || {})
+  }
+  useEffect(() => { carregar() }, [mesRef])
+  const salvarHoras = async (fid: number, h: number) => {
+    setHoras(p => ({ ...p, [fid]: h }))
+    await fetch(API + '/funcionarios/horas', { method: 'POST', headers: hdr(), body: JSON.stringify({ funcionario_id: fid, ano: mesRef.ano, mes: mesRef.mes, horas: h }) })
+  }
+  const salvarFuncionario = async () => {
+    setSalvando(true)
+    try {
+      const method = form.id ? 'PUT' : 'POST'
+      const url = form.id ? API + '/funcionarios/' + form.id : API + '/funcionarios/'
+      await fetch(url, { method, headers: hdr(), body: JSON.stringify(form) })
+      await registrarLog({ acao: form.id ? 'EDITAR' : 'INCLUIR', modulo: 'encargos', descricao: (form.id ? 'Funcionário atualizado: ' : 'Funcionário criado: ') + form.nome })
+      showNotif('Funcionário salvo!')
+      setEditando(null); setForm({}); carregar()
+    } catch { showNotif('Erro ao salvar', false) }
+    setSalvando(false)
+  }
+  const excluir = async (fid: number, nome: string) => {
+    if (!confirm('Desativar ' + nome + '?')) return
+    await fetch(API + '/funcionarios/' + fid, { method: 'DELETE', headers: hdr() })
+    showNotif(nome + ' desativado'); carregar()
+  }
+  const calculos = funcionarios.map(f => ({ ...f, calc: calcEncargos(f, diasUteis, horas[f.id] || 0) }))
+  const totalGeral = calculos.reduce((s, f) => s + f.calc.totalEmpresa, 0)
+  const totalEncargosGeral = calculos.reduce((s, f) => s + f.calc.totalEncargos, 0)
+  const totalSalarios = calculos.reduce((s, f) => s + f.calc.sal, 0)
+  const st = {
+    card: { background: '#13151F', border: '1px solid #252836', borderRadius: 10, padding: 20, marginBottom: 16 } as any,
+    label: { fontSize: 11, fontWeight: 600, color: '#7B82A0', textTransform: 'uppercase' as any, letterSpacing: '0.08em', marginBottom: 6 },
+    input: { background: '#0E1017', border: '1px solid #2A2D3E', borderRadius: 6, color: '#E8EAF0', padding: '7px 10px', fontSize: 13, width: '100%', outline: 'none' } as any,
+    btn: (c = '#4F8EF7') => ({ background: c, color: c === '#1A1D2A' ? '#7B82A0' : '#fff', border: '1px solid ' + (c === '#1A1D2A' ? '#2A2D3E' : c), borderRadius: 6, padding: '7px 16px', fontSize: 12, fontWeight: 600, cursor: 'pointer' }) as any,
+    th: { fontSize: 11, fontWeight: 600, color: '#7B82A0', textTransform: 'uppercase' as any, padding: '8px 12px', textAlign: 'left' as any, borderBottom: '1px solid #252836' },
+    td: { fontSize: 12, color: '#E8EAF0', padding: '9px 12px', borderBottom: '1px solid #1A1D2A', fontFamily: 'monospace' },
+  }
+  return (
+    <div style={{ padding: '24px 32px', color: '#E8EAF0', maxWidth: 1200 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
+        <h2 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>👷 Encargos Trabalhistas</h2>
+        <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+          <select value={mesRef.mes} onChange={e => setMesRef(p => ({ ...p, mes: +e.target.value }))} style={{ ...st.input, width: 140 }}>
+            {MESES.map((m, i) => <option key={i} value={i + 1}>{m}</option>)}
+          </select>
+          <input type="number" value={mesRef.ano} onChange={e => setMesRef(p => ({ ...p, ano: +e.target.value }))} style={{ ...st.input, width: 80 }} />
+          <span style={{ fontSize: 12, color: '#7B82A0' }}>Dias úteis:</span>
+          <input type="number" value={diasUteis} onChange={e => setDiasUteis(+e.target.value)} style={{ ...st.input, width: 60 }} />
+        </div>
+      </div>
+      {notif && <div style={{ background: notif.ok ? '#0D3326' : '#2D1B1B', border: '1px solid ' + (notif.ok ? '#34D399' : '#F87171'), borderRadius: 8, padding: '10px 16px', marginBottom: 16, color: notif.ok ? '#34D399' : '#F87171', fontSize: 13 }}>{notif.msg}</div>}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, marginBottom: 20 }}>
+        {[{ label: 'Total Salários', valor: totalSalarios, cor: '#4F8EF7' }, { label: 'Total Encargos', valor: totalEncargosGeral, cor: '#FBBF24' }, { label: 'Custo Total Empresa', valor: totalGeral, cor: '#34D399' }].map(c => (
+          <div key={c.label} style={{ ...st.card, borderColor: c.cor + '44' }}>
+            <div style={st.label}>{c.label}</div>
+            <div style={{ fontSize: 22, fontWeight: 700, color: c.cor, fontFamily: 'monospace' }}>{fmtR(c.valor)}</div>
+            <div style={{ fontSize: 11, color: '#7B82A0', marginTop: 4 }}>{MESES[mesRef.mes - 1]}/{mesRef.ano} · {funcionarios.length} funcionário(s)</div>
+          </div>
+        ))}
+      </div>
+      <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+        {[['resumo', '📊 Resumo Mensal'], ['funcionarios', '👤 Funcionários']].map(([k, l]) => (
+          <button key={k} style={st.btn(aba === k ? '#4F8EF7' : '#1A1D2A')} onClick={() => setAba(k as any)}>{l as string}</button>
+        ))}
+      </div>
+      {aba === 'resumo' && (
+        <div style={st.card}>
+          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <thead>
+              <tr>{['Funcionário','Cargo','Salário','Férias+13°','FGTS','Multa 40%','V.Transp.','H.Extras','Total Enc.','% Enc.','Custo Total','H.E. (h)'].map(h => <th key={h} style={st.th}>{h}</th>)}</tr>
+            </thead>
+            <tbody>
+              {calculos.map(f => (
+                <tr key={f.id} onMouseEnter={e=>(e.currentTarget.style.background='#1A1D2A')} onMouseLeave={e=>(e.currentTarget.style.background='transparent')}>
+                  <td style={st.td}><b>{f.nome.split(' ').slice(0,2).join(' ')}</b></td>
+                  <td style={{...st.td,color:'#7B82A0',fontSize:11}}>{f.cargo}</td>
+                  <td style={st.td}>{fmtR(f.calc.sal)}</td>
+                  <td style={st.td}>{fmtR(f.calc.ferias13)}</td>
+                  <td style={st.td}>{fmtR(f.calc.fgts)}</td>
+                  <td style={st.td}>{fmtR(f.calc.multaFgts)}</td>
+                  <td style={st.td}>{fmtR(f.calc.vtValor)}</td>
+                  <td style={st.td}>{f.calc.heValor > 0 ? fmtR(f.calc.heValor) : '—'}</td>
+                  <td style={{...st.td,color:'#FBBF24',fontWeight:700}}>{fmtR(f.calc.totalEncargos)}</td>
+                  <td style={{...st.td,color:'#7B82A0'}}>{(f.calc.pctEncargos*100).toFixed(1)}%</td>
+                  <td style={{...st.td,color:'#34D399',fontWeight:700}}>{fmtR(f.calc.totalEmpresa)}</td>
+                  <td style={{...st.td,padding:'6px 8px'}}>
+                    <input type="number" min="0" step="0.5" value={horas[f.id]||0} onChange={e=>salvarHoras(f.id,+e.target.value)} style={{...st.input,width:55,padding:'4px 6px',fontSize:12,textAlign:'center' as any}} />
+                  </td>
+                </tr>
+              ))}
+              <tr style={{background:'#1A1D2A'}}>
+                <td style={{...st.td,fontWeight:700}} colSpan={2}>TOTAL</td>
+                <td style={st.td}>{fmtR(totalSalarios)}</td>
+                <td style={st.td}>{fmtR(calculos.reduce((s,f)=>s+f.calc.ferias13,0))}</td>
+                <td style={st.td}>{fmtR(calculos.reduce((s,f)=>s+f.calc.fgts,0))}</td>
+                <td style={st.td}>{fmtR(calculos.reduce((s,f)=>s+f.calc.multaFgts,0))}</td>
+                <td style={st.td}>{fmtR(calculos.reduce((s,f)=>s+f.calc.vtValor,0))}</td>
+                <td style={st.td}>{fmtR(calculos.reduce((s,f)=>s+f.calc.heValor,0))}</td>
+                <td style={{...st.td,color:'#FBBF24',fontWeight:700}}>{fmtR(totalEncargosGeral)}</td>
+                <td style={{...st.td,color:'#7B82A0'}}>{totalSalarios>0?(totalEncargosGeral/totalSalarios*100).toFixed(1)+'%':'—'}</td>
+                <td style={{...st.td,color:'#34D399',fontWeight:700}}>{fmtR(totalGeral)}</td>
+                <td style={st.td}/>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      )}
+      {aba === 'funcionarios' && (
+        <div>
+          <div style={{display:'flex',justifyContent:'flex-end',marginBottom:12}}>
+            <button style={st.btn('#34D399')} onClick={()=>{setEditando('novo');setForm({empresa_id:1,vale_alimentacao:250,vale_transporte:true,salario_dinheiro:0})}}>+ Novo Funcionário</button>
+          </div>
+          {editando && (
+            <div style={{...st.card,borderColor:'#4F8EF7',marginBottom:16}}>
+              <div style={{fontSize:14,fontWeight:700,marginBottom:16}}>{form.id?'Editar':'Novo'} Funcionário</div>
+              <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:12,marginBottom:16}}>
+                {[{k:'nome',l:'Nome',t:'text'},{k:'cargo',l:'Cargo',t:'text'},{k:'salario_base',l:'Salário Base (R$)',t:'number'},{k:'vale_alimentacao',l:'Vale Alimentação (R$)',t:'number'},{k:'salario_dinheiro',l:'Sal. em Dinheiro (R$)',t:'number'},{k:'empresa_id',l:'Empresa (1=SIX, 2=ENOVA)',t:'number'}].map(({k,l,t})=>(
+                  <div key={k}><div style={st.label}>{l}</div><input type={t} value={form[k]||''} onChange={e=>setForm((p:any)=>({...p,[k]:t==='number'?+e.target.value:e.target.value}))} style={st.input}/></div>
+                ))}
+                <div><div style={st.label}>Vale Transporte</div>
+                  <select value={form.vale_transporte?'sim':'nao'} onChange={e=>setForm((p:any)=>({...p,vale_transporte:e.target.value==='sim'}))} style={st.input}>
+                    <option value="sim">Sim (desconta 6%)</option><option value="nao">Não</option>
+                  </select>
+                </div>
+              </div>
+              <div style={{display:'flex',gap:10}}>
+                <button style={st.btn('#4F8EF7')} onClick={salvarFuncionario} disabled={salvando}>{salvando?'Salvando...':'💾 Salvar'}</button>
+                <button style={st.btn('#1A1D2A')} onClick={()=>{setEditando(null);setForm({})}}>Cancelar</button>
+              </div>
+            </div>
+          )}
+          <div style={st.card}>
+            <table style={{width:'100%',borderCollapse:'collapse'}}>
+              <thead><tr>{['Nome','Cargo','Empresa','Salário Base','V.Alimentação','V.Transporte','Sal.Dinheiro','Ações'].map(h=><th key={h} style={st.th}>{h}</th>)}</tr></thead>
+              <tbody>
+                {funcionarios.map(f=>(
+                  <tr key={f.id} onMouseEnter={e=>(e.currentTarget.style.background='#1A1D2A')} onMouseLeave={e=>(e.currentTarget.style.background='transparent')}>
+                    <td style={st.td}><b>{f.nome}</b></td>
+                    <td style={{...st.td,color:'#7B82A0'}}>{f.cargo}</td>
+                    <td style={{...st.td,color:f.empresa_id===1?'#4F8EF7':'#34D399'}}>{f.empresa_id===1?'SIX':'ENOVA'}</td>
+                    <td style={st.td}>{fmtR(f.salario_base)}</td>
+                    <td style={st.td}>{fmtR(f.vale_alimentacao)}</td>
+                    <td style={{...st.td,color:f.vale_transporte?'#34D399':'#7B82A0'}}>{f.vale_transporte?'Sim':'Não'}</td>
+                    <td style={st.td}>{f.salario_dinheiro>0?fmtR(f.salario_dinheiro):'—'}</td>
+                    <td style={st.td}><div style={{display:'flex',gap:6}}>
+                      <button style={st.btn('#4F8EF7')} onClick={()=>{setEditando(f.id);setForm({...f})}}>✏️</button>
+                      <button style={st.btn('#F87171')} onClick={()=>excluir(f.id,f.nome)}>🗑️</button>
+                    </div></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}

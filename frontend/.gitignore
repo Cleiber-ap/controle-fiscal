@@ -1,0 +1,63 @@
+import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { authAPI } from '../../api/endpoints'
+
+export default function Login() {
+  const [email, setEmail] = useState('')
+  const [senha, setSenha] = useState('')
+  const [erro, setErro] = useState('')
+  const [loading, setLoading] = useState(false)
+  const navigate = useNavigate()
+
+  async function handleLogin(e: React.FormEvent) {
+    e.preventDefault()
+    setLoading(true)
+    setErro('')
+    try {
+      const res = await authAPI.login(email, senha)
+      const data = res.data
+      localStorage.setItem('access_token', data.access_token)
+      localStorage.setItem('usuario', JSON.stringify({
+        id: data.usuario_id,
+        nome: data.nome,
+        perfil: data.perfil,
+        permissoes: data.permissoes,
+      }))
+      navigate('/dashboard')
+    } catch (err: any) {
+      setErro(err.response?.data?.detail || 'Erro ao fazer login')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <div style={{
+      minHeight: '100vh',
+      background: '#0D0F17',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+    }}>
+      <div style={{
+        background: '#13161F',
+        border: '1px solid #252836',
+        borderRadius: '14px',
+        padding: '40px',
+        width: '100%',
+        maxWidth: '400px',
+      }}>
+        <div style={{textAlign: 'center', marginBottom: '32px'}}>
+          <div style={{
+            width: '48px', height: '48px',
+            background: 'linear-gradient(135deg, #4F8EF7, #34D399)',
+            borderRadius: '12px',
+            margin: '0 auto 16px',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: '20px', fontWeight: 700, color: '#0D0F17',
+          }}>CF</div>
+          <h1 style={{fontSize: '20px', fontWeight: 700, color: '#E8EAF0'}}>Controle Fiscal</h1>
+          <p style={{fontSize: '13px', color: '#7B82A0', marginTop: '4px'}}>Faça login para continuar</p>
+        </div>
+
+        <form o
