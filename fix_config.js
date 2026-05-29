@@ -1,7 +1,8 @@
 const fs = require('fs');
-const f = 'C:/projetos/controle-fiscal/backend/app/config.py';
+
+// Remove env_file do config.py
+const configPath = 'C:/projetos/controle-fiscal/backend/app/config.py';
 const content = `from pydantic_settings import BaseSettings
-import os
 
 class Settings(BaseSettings):
     database_url: str
@@ -10,11 +11,7 @@ class Settings(BaseSettings):
     access_token_expire_minutes: int = 480
     refresh_token_expire_days: int = 7
 
-    class Config:
-        env_file = ".env"
-        env_file_encoding = "utf-8"
-
 settings = Settings()
 `;
-fs.writeFileSync(f, content, 'utf8');
+fs.writeFileSync(configPath, content, 'utf8');
 console.log('ok');
