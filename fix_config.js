@@ -1,16 +1,23 @@
 const fs = require('fs');
 
-fs.writeFileSync('C:/projetos/controle-fiscal/backend/app/config.py', 
+fs.writeFileSync('C:/projetos/controle-fiscal/backend/app/database.py',
 `import os
+from sqlalchemy import create_engine
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker
 
-class Settings:
-    database_url = os.environ.get("DATABASE_URL", "")
-    secret_key = os.environ.get("SECRET_KEY", "")
-    algorithm = os.environ.get("ALGORITHM", "HS256")
-    access_token_expire_minutes = int(os.environ.get("ACCESS_TOKEN_EXPIRE_MINUTES", "480"))
-    refresh_token_expire_days = int(os.environ.get("REFRESH_TOKEN_EXPIRE_DAYS", "7"))
+DATABASE_URL = os.environ.get("DATABASE_URL", "NOT_SET")
+print(f"DATABASE_URL lida: {DATABASE_URL[:30]}...")
 
-settings = Settings()
+engine = create_engine(DATABASE_URL)
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+Base = declarative_base()
+
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
 `, 'utf8');
-
-console.log('config.py ok');
+console.log('ok');
