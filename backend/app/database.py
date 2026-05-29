@@ -8,8 +8,9 @@ DB_PORT = os.environ.get("DB_PORT", "5432")
 DB_USER = os.environ.get("DB_USER", "fiscal_user")
 DB_PASSWORD = os.environ.get("DB_PASSWORD", "fiscal2026")
 DB_NAME = os.environ.get("DB_NAME", "controle_fiscal")
+DB_SSLMODE = os.environ.get("DB_SSLMODE", "disable")
 
-DATABASE_URL = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+DATABASE_URL = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}?sslmode={DB_SSLMODE}"
 
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
