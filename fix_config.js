@@ -1,4 +1,6 @@
-from pydantic_settings import BaseSettings
+const fs = require('fs');
+const f = 'C:/projetos/controle-fiscal/backend/app/config.py';
+const content = `from pydantic_settings import BaseSettings
 import os
 
 class Settings(BaseSettings):
@@ -13,3 +15,6 @@ class Settings(BaseSettings):
         env_file_encoding = "utf-8"
 
 settings = Settings()
+`;
+fs.writeFileSync(f, content, 'utf8');
+console.log('ok');
