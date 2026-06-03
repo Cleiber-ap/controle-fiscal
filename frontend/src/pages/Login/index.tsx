@@ -14,7 +14,7 @@ export default function Login() {
     setLoading(true)
     setErro('')
     try {
-      const res = await axios.post('http://localhost:8000/auth/login', {
+      const res = await axios.post('https://diligent-integrity-production-3f98.up.railway.app/auth/login', {
         email,
         senha,
       })
