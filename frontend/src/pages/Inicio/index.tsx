@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { historicoAPI, dasAPI, empresasAPI } from '../../api/endpoints'
 import axios from 'axios'
-const api = axios.create({ baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8000' })
+const api = axios.create({ baseURL: import.meta.env.VITE_API_URL || 'https://diligent-integrity-production-3f98.up.railway.app' })
 api.interceptors.request.use((c: any) => { const t = localStorage.getItem('access_token'); if (t) c.headers.Authorization = 'Bearer ' + t; return c })
 import { registrarLog } from '../../api/auditoria'
 
@@ -194,7 +194,7 @@ export default function Inicio() {
                         🟢 Crédito Fiscal — NF {cr.nf_referenciada} · R$ {(cr.valor_nf_original*(e.key==='six'?aliqEfetivaSix:aliqEfetivaEnova)).toLocaleString('pt-BR',{minimumFractionDigits:2})}
                       </div>
                       <button onClick={async()=>{
-                        await fetch('http://localhost:8000/notas/creditos/'+cr.id,{method:'PUT',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('access_token')},body:JSON.stringify({status:'autorizado'})})
+                        await fetch('https://diligent-integrity-production-3f98.up.railway.app/notas/creditos/'+cr.id,{method:'PUT',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('access_token')},body:JSON.stringify({status:'autorizado'})})
                         window.location.reload()
                       }} style={{padding:'4px 10px',background:'rgba(167,139,250,0.2)',border:'1px solid #A78BFA',borderRadius:6,color:'#A78BFA',fontSize:11,fontWeight:600,cursor:'pointer'}}>
                         Autorizar
@@ -226,7 +226,7 @@ export default function Inicio() {
                         setSalvando(e.key)
                         try {
                           const val = parseFloat(e.val.replace(',', '.')) || 0
-                          await fetch(`http://localhost:8000/dados/das/${e.key === 'six' ? 1 : 2}`, {
+                          await fetch(`https://diligent-integrity-production-3f98.up.railway.app/dados/das/${e.key === 'six' ? 1 : 2}`, {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('access_token')}` },
                             body: JSON.stringify({ empresa_id: e.key === 'six' ? 1 : 2, ano: anoAtual, mes: mesAtualIdx + 1, valor: val }),
@@ -235,7 +235,7 @@ export default function Inicio() {
                           // Marcar creditos autorizados como utilizados
                           const crs = e.key==='six'?creditosSix:creditosEnova
                           for (const cr of crs.filter((x:any)=>x.status==='autorizado')) {
-                            await fetch('http://localhost:8000/notas/creditos/'+cr.id,{method:'PUT',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('access_token')},body:JSON.stringify({status:'utilizado'})})
+                            await fetch('https://diligent-integrity-production-3f98.up.railway.app/notas/creditos/'+cr.id,{method:'PUT',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('access_token')},body:JSON.stringify({status:'utilizado'})})
                           }
                           window.location.reload()
                         } catch { setSalvando('') }
