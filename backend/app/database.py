@@ -1,18 +1,19 @@
 import os
 from sqlalchemy import create_engine
+from sqlalchemy.engine import URL
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
-DB_HOST = os.environ.get("DB_HOST", "localhost")
-DB_PORT = os.environ.get("DB_PORT", "5432")
-DB_USER = os.environ.get("DB_USER", "fiscal_user")
-DB_PASSWORD = os.environ.get("DB_PASSWORD", "fiscal2026")
-DB_NAME = os.environ.get("DB_NAME", "controle_fiscal")
-DB_SSLMODE = os.environ.get("DB_SSLMODE", "disable")
+url = URL.create(
+    "postgresql",
+    username=os.environ.get("DB_USER", "fiscal_user"),
+    password=os.environ.get("DB_PASSWORD", "fiscal2026"),
+    host=os.environ.get("DB_HOST", "localhost"),
+    port=int(os.environ.get("DB_PORT", "5432")),
+    database=os.environ.get("DB_NAME", "controle_fiscal"),
+)
 
-DATABASE_URL = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}?sslmode={DB_SSLMODE}"
-
-engine = create_engine(DATABASE_URL)
+engine = create_engine(url)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
