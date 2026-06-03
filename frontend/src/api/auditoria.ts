@@ -7,7 +7,7 @@ api.interceptors.request.use(c => {
   return c
 })
 
-export type AcaoAuditoria = 'CRIAR' | 'EDITAR' | 'EXCLUIR' | 'LOGIN' | 'LOGOUT' | 'IMPORTAR' | 'CONFIRMAR' | 'EXPORTAR'
+export type AcaoAuditoria = 'CRIAR' | 'EDITAR' | 'EXCLUIR' | 'LOGIN' | 'LOGOUT' | 'IMPORTAR' | 'CONFIRMAR' | 'EXPORTAR' | 'INCLUIR'
 
 interface LogParams {
   acao: AcaoAuditoria
