@@ -1,4 +1,4 @@
-import axios from 'axios'
+﻿import axios from 'axios'
 
 const api = axios.create({ baseURL: 'https://diligent-integrity-production-3f98.up.railway.app' })
 api.interceptors.request.use(c => {

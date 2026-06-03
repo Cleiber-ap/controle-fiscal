@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react'
+﻿import React, { useEffect, useRef, useState } from 'react'
 import { historicoAPI, empresasAPI } from '../../api/endpoints'
 import api from '../../api/endpoints'
 

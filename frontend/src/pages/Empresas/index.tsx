@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+﻿import { useState, useEffect } from 'react'
 import { empresasAPI } from '../../api/endpoints'
 interface Empresa { id: number; nome: string; razao_social: string; aliquota_das: number; credito_icms: number; ativo: boolean }
 
