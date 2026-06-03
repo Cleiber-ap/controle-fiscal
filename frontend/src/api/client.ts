@@ -1,7 +1,7 @@
 import axios from 'axios'
 
 export const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'https://diligent-integrity-production-3f98.up.railway.app',
+  baseURL: 'https://diligent-integrity-production-3f98.up.railway.app',
 })
 
 // Interceptor: adiciona o token JWT em todas as requisições
