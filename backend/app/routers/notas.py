@@ -228,9 +228,9 @@ def editar_pagamento(pgto_id: int, dados: PgtoInput, db: Session = Depends(get_d
         
         print(f"🔍 eh_ultimo={pagamento_editado_eh_ultimo}, saldo_zerou={saldo_zerou}, len(todos)={len(todos)}")
         
-        if pagamento_editado_eh_ultimo and (saldo_zerou or len(todos) == 1):
+        # Só atualiza data da nota se for o último pagamento
+        if pagamento_editado_eh_ultimo:
             nota.dt_pagamento = dados.dt_pagamento
-            print(f"🔍 Atualizando data da nota para: {dados.dt_pagamento}")
     
     # Forçar commit
     db.commit()
