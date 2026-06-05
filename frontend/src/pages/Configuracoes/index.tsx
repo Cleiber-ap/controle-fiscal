@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { empresasAPI } from '../../api/endpoints'
 import { registrarLog } from '../../api/auditoria'
 
@@ -60,11 +60,11 @@ export default function Configuracoes() {
   const salvarPeriodo = (v: number) => {
     setPeriodoMeses(v)
     localStorage.setItem('periodoMeses', String(v))
-    showNotif('Per�odo atualizado para ' + v + ' meses')
+    showNotif('Período atualizado para ' + v + ' meses')
   }
 
   const salvarSenha = async () => {
-    if (!novaSenha || novaSenha !== confirmarSenha) { showNotif('Senhas n�o conferem', false); return }
+    if (!novaSenha || novaSenha !== confirmarSenha) { showNotif('Senhas não conferem', false); return }
     if (novaSenha.length < 6) { showNotif('Nova senha deve ter ao menos 6 caracteres', false); return }
     setSalvandoSenha(true)
     try {
@@ -91,7 +91,7 @@ export default function Configuracoes() {
 
   return (
     <div style={{ padding: '28px 32px', maxWidth: 860, color: '#E8EAF0' }}>
-      <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 24, color: '#E8EAF0' }}>?? Configura��es</h2>
+      <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 24, color: '#E8EAF0' }}>⚙️ Configurações</h2>
 
       {notif && (
         <div style={{ background: notif.ok ? '#0D3326' : '#2D1B1B', border: '1px solid ' + (notif.ok ? '#34D399' : '#F87171'), borderRadius: 8, padding: '12px 18px', marginBottom: 20, color: notif.ok ? '#34D399' : '#F87171', fontSize: 13 }}>
@@ -112,27 +112,27 @@ export default function Configuracoes() {
               <input style={st.input} value={editEmp[emp.id]?.nome || ''} onChange={e => setEditEmp(p => ({ ...p, [emp.id]: { ...p[emp.id], nome: e.target.value } }))} />
             </div>
             <div>
-              <div style={st.label}>Raz�o Social</div>
+              <div style={st.label}>Razão Social</div>
               <input style={st.input} value={editEmp[emp.id]?.razao_social || ''} onChange={e => setEditEmp(p => ({ ...p, [emp.id]: { ...p[emp.id], razao_social: e.target.value } }))} />
             </div>
             <div>
-              <div style={st.label}>Al�quota DAS (%)</div>
+              <div style={st.label}>Alíquota DAS (%)</div>
               <input style={st.input} value={editEmp[emp.id]?.aliquota_das || ''} onChange={e => setEditEmp(p => ({ ...p, [emp.id]: { ...p[emp.id], aliquota_das: e.target.value } }))} />
             </div>
             <div>
-              <div style={st.label}>Cr�dito ICMS (%)</div>
+              <div style={st.label}>Crédito ICMS (%)</div>
               <input style={st.input} value={editEmp[emp.id]?.credito_icms || ''} onChange={e => setEditEmp(p => ({ ...p, [emp.id]: { ...p[emp.id], credito_icms: e.target.value } }))} />
             </div>
           </div>
           <button style={st.btn(emp.id === 1 ? '#4F8EF7' : '#34D399')} onClick={() => salvarEmpresa(emp.id)} disabled={salvandoEmp === emp.id}>
-            {salvandoEmp === emp.id ? 'Salvando...' : '?? Salvar ' + (editEmp[emp.id]?.nome || emp.nome)}
+            {salvandoEmp === emp.id ? 'Salvando...' : '💾 Salvar ' + (editEmp[emp.id]?.nome || emp.nome)}
           </button>
         </div>
       ))}
 
       {/* PERIODO */}
       <div style={st.card}>
-        <div style={st.secTitle}>?? Per�odo de Exibi��o das NFs</div>
+        <div style={st.secTitle}>📅 Período de Exibição das NFs</div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
           {[3, 4, 6, 12].map(v => (
             <button key={v} onClick={() => salvarPeriodo(v)}
@@ -146,23 +146,23 @@ export default function Configuracoes() {
 
       {/* SENHA */}
       <div style={st.card}>
-        <div style={st.secTitle}>?? Alterar Senha � {usuario?.nome || 'Usu�rio'}</div>
+        <div style={st.secTitle}>🔒 Alterar Senha — {usuario?.nome || 'Usuário'}</div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16, marginBottom: 16 }}>
           <div>
             <div style={st.label}>Senha Atual</div>
-            <input type="password" style={st.input} value={senhaAtual} onChange={e => setSenhaAtual(e.target.value)} placeholder="��������" />
+            <input type="password" style={st.input} value={senhaAtual} onChange={e => setSenhaAtual(e.target.value)} placeholder="••••••••" />
           </div>
           <div>
             <div style={st.label}>Nova Senha</div>
-            <input type="password" style={st.input} value={novaSenha} onChange={e => setNovaSenha(e.target.value)} placeholder="��������" />
+            <input type="password" style={st.input} value={novaSenha} onChange={e => setNovaSenha(e.target.value)} placeholder="••••••••" />
           </div>
           <div>
             <div style={st.label}>Confirmar Nova Senha</div>
-            <input type="password" style={st.input} value={confirmarSenha} onChange={e => setConfirmarSenha(e.target.value)} placeholder="��������" />
+            <input type="password" style={st.input} value={confirmarSenha} onChange={e => setConfirmarSenha(e.target.value)} placeholder="••••••••" />
           </div>
         </div>
         <button style={st.btn('#9333EA')} onClick={salvarSenha} disabled={salvandoSenha}>
-          {salvandoSenha ? 'Salvando...' : '?? Alterar Senha'}
+          {salvandoSenha ? 'Salvando...' : '🔑 Alterar Senha'}
         </button>
       </div>
     </div>
