@@ -379,7 +379,7 @@ export default function Contabilidade() {
           <div style={{ display:'flex', alignItems:'center', gap:8 }}>
               <span style={{ fontSize: '12px', fontWeight: 600, color: '#E8EAF0' }}>{notasFiltradas2.length} notas · {isSix ? 'SIX' : 'ENOVA'} · últimos 6 meses</span>
               <select value={filtroMesPagto} onChange={e=>setFiltroMesPagto(e.target.value)} style={{ background:'#1A1D2A', color:'#E8EAF0', border:'1px solid #353849', borderRadius:6, padding:'2px 8px', fontSize:'12px', cursor:'pointer' }}>
-                <option value="">Todos os meses</option>
+                <option value="">Pagamento: todos</option>
                 {[...new Set(notas.flatMap((r:any)=>{
                   const lista=pagamentos[r.numero_nf]||[]
                   if(lista.length>0) return lista.map((p:any)=>{ const dt=p.dt_pagamento||''; if(!dt) return null; const parts=dt.includes('-')?dt.split('-').reverse():dt.split('/'); const mm=parts[1]; const aa=parts[2]; return (mm&&aa&&!isNaN(+mm)&&!isNaN(+aa)) ? mm.padStart(2,'0')+'/'+aa : null }).filter(Boolean)
