@@ -256,10 +256,10 @@ export default function Encargos() {
                     <td style={st.td}>{fmtR(f.calc.va)}</td>
                     <td style={st.td}>{f.calc.dinheiro>0?fmtR(f.calc.dinheiro):'—'}</td>
                     <td style={{...st.td,padding:'6px 8px'}}>
-                      <input type="number" min="0" step="0.5" value={horas[f.id]||0} onChange={e=>salvarHoras(f.id,+e.target.value)} style={{...st.input,width:55,padding:'4px 6px',fontSize:12,textAlign:'center' as any}} />
+                      <input type="number" min="0" step="0.5" value={horas[f.id]||0} onChange={e=>temPermissao('encargos','editar')&&salvarHoras(f.id,+e.target.value)} disabled={!temPermissao('encargos','editar')} style={{...st.input,width:55,padding:'4px 6px',fontSize:12,textAlign:'center' as any}} />
                     </td>
                     <td style={{...st.td,padding:'6px 8px'}}>
-                      <select value={pctHE[f.id]||1.5} onChange={e=>setPctHE(p=>({...p,[f.id]:+e.target.value}))} style={{...st.input,width:70,padding:'4px 6px',fontSize:11}}>
+                      <select value={pctHE[f.id]||1.5} onChange={e=>temPermissao('encargos','editar')&&setPctHE(p=>({...p,[f.id]:+e.target.value}))} disabled={!temPermissao('encargos','editar')} style={{...st.input,width:70,padding:'4px 6px',fontSize:11}}>
                         <option value={1.5}>50%</option>
                         <option value={2.0}>100%</option>
                       </select>
@@ -306,7 +306,7 @@ export default function Encargos() {
                     <td style={{...st.td,color:'#F87171'}}>{f.calc.desVT>0?fmtR(f.calc.desVT):'—'}</td>
                     <td style={{...st.td,padding:'6px 8px'}}>
                       <input type="text" value={faltasAtrasos[f.id]||0}
-                        onChange={e=>setFaltasAtrasos(p=>({...p,[f.id]:parseFloat(e.target.value.replace(",","."))||0}))}
+                        onChange={e=>temPermissao('encargos','editar')&&setFaltasAtrasos(p=>({...p,[f.id]:parseFloat(e.target.value.replace(",","."))||0}))} disabled={!temPermissao('encargos','editar')}
                         style={{...st.input,width:80,padding:'4px 6px',fontSize:12,textAlign:'center' as any}} />
                     </td>
                     <td style={{...st.td,color:'#F87171'}}>{fmtR(f.calc.vale)}</td>
