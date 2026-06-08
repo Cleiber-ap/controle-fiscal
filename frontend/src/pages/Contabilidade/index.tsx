@@ -48,6 +48,7 @@ export default function Contabilidade() {
   const [editPgtoDt, setEditPgtoDt] = useState('')
   const [editMesLct, setEditMesLct] = useState('')
   const [filtroMesPagto, setFiltroMesPagto] = useState('')
+  const [filtroMesEmissao, setFiltroMesEmissao] = useState('')
   const [creditos, setCreditos] = useState<any[]>([])
   const [ajustes, setAjustes] = useState<any[]>([])
   const [ignorados, setIgnorados] = useState<Set<number>>(new Set())
@@ -164,6 +165,16 @@ export default function Contabilidade() {
         return (mm + '/' + aa) === filtroMesPagto
       })
     : ultimos4
+
+  const notasFiltradas2 = filtroMesEmissao
+    ? notasFiltradas.filter(r => {
+        const dt = r.data_emissao || ''
+        const parts = dt.includes('-') ? dt.split('-').reverse() : dt.split('/')
+        const mm = parts[1]?.padStart(2, '0')
+        const aa = parts[2]
+        return (mm + '/' + aa) === filtroMesEmissao
+      })
+    : notasFiltradas
 
   const dtNoMesFiltro = (dtStr: string | undefined) => {
     if (!filtroMesPagto || !dtStr) return !filtroMesPagto
@@ -366,7 +377,7 @@ export default function Contabilidade() {
       <div style={{ background: '#13161F', border: '1px solid #252836', borderRadius: '14px', overflow: 'hidden' }}>
         <div style={{ padding: '10px 16px', background: '#1A1D2A', borderBottom: '1px solid #252836', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div style={{ display:'flex', alignItems:'center', gap:8 }}>
-              <span style={{ fontSize: '12px', fontWeight: 600, color: '#E8EAF0' }}>{notasFiltradas.length} notas · {isSix ? 'SIX' : 'ENOVA'} · últimos 6 meses</span>
+              <span style={{ fontSize: '12px', fontWeight: 600, color: '#E8EAF0' }}>{notasFiltradas2.length} notas · {isSix ? 'SIX' : 'ENOVA'} · últimos 6 meses</span>
               <select value={filtroMesPagto} onChange={e=>setFiltroMesPagto(e.target.value)} style={{ background:'#1A1D2A', color:'#E8EAF0', border:'1px solid #353849', borderRadius:6, padding:'2px 8px', fontSize:'12px', cursor:'pointer' }}>
                 <option value="">Todos os meses</option>
                 {[...new Set(notas.flatMap((r:any)=>{
@@ -374,6 +385,10 @@ export default function Contabilidade() {
                   if(lista.length>0) return lista.map((p:any)=>{ const dt=p.dt_pagamento||''; if(!dt) return null; const parts=dt.includes('-')?dt.split('-').reverse():dt.split('/'); const mm=parts[1]; const aa=parts[2]; return (mm&&aa&&!isNaN(+mm)&&!isNaN(+aa)) ? mm.padStart(2,'0')+'/'+aa : null }).filter(Boolean)
                   const dtP=r.dt_pagamento||r.data_pagamento||''; if(!dtP) return []; const parts=dtP.includes('-')?dtP.split('-').reverse():dtP.split('/'); const mm=parts[1]; const aa=parts[2]; return (mm&&aa&&!isNaN(+mm)&&!isNaN(+aa)) ? [mm.padStart(2,'0')+'/'+aa] : []
                 }))].filter(Boolean).sort().map((m:any)=>(<option key={m} value={m}>{m}</option>))}
+              </select>
+              <select value={filtroMesEmissao} onChange={e=>setFiltroMesEmissao(e.target.value)} style={{ background:'#1A1D2A', color:'#E8EAF0', border:'1px solid #353849', borderRadius:6, padding:'2px 8px', fontSize:'12px', cursor:'pointer' }}>
+                <option value="">Emissão: todos</option>
+                {[...new Set(notas.map((r:any)=>{ const dt=r.data_emissao||''; if(!dt) return null; const parts=dt.includes('-')?dt.split('-').reverse():dt.split('/'); const mm=parts[1]; const aa=parts[2]; return (mm&&aa&&!isNaN(+mm)&&!isNaN(+aa)) ? mm.padStart(2,'0')+'/'+aa : null }).filter(Boolean))].sort().map((m:any)=>(<option key={m} value={m}>{m}</option>))}
               </select>
             </div>
         </div>
@@ -412,7 +427,7 @@ export default function Contabilidade() {
                 </tr>
               </thead>
               <tbody>
-                {notasFiltradas.map(r => {
+                {notasFiltradas2.map(r => {
                   const valorNF = parseFloat(r.valor_nf || '0')
                   const valorPagoDB = parseFloat(r.valor_pago || '0')
                   const lista = pagamentos[r.numero_nf] || []
