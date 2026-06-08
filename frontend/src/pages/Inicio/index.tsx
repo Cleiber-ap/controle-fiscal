@@ -221,8 +221,8 @@ export default function Inicio() {
                       onFocus={ev => ev.target.style.borderColor = '#FBBF24'}
                       onBlur={ev => ev.target.style.borderColor = '#252836'}
                     />
-                    <button
-                      disabled={salvando === e.key || !temPermissao('inicio', 'editar')}
+                    {temPermissao('inicio', 'editar') && <button
+                      disabled={salvando === e.key}
                       onClick={async () => {
                         setSalvando(e.key)
                         try {
@@ -244,7 +244,7 @@ export default function Inicio() {
                       style={{ padding: '6px 14px', background: '#2E1F06', border: '1px solid rgba(251,191,36,0.3)', borderRadius: '6px', color: '#FBBF24', fontSize: '11px', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap', fontFamily: 'inherit' }}
                     >
                       ✅ Confirmar
-                    </button>
+                    </button>}
                   </div>
                   <div style={{ fontSize: '10px', color: '#4A5070' }}>Edite se necessário antes de confirmar</div>
                 </div>
