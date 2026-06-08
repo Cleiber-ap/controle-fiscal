@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { registrarLog } from '../../api/auditoria'
+import { temPermissao } from '../../utils/permissoes'
 
 const API = 'https://diligent-integrity-production-3f98.up.railway.app'
 const token = () => localStorage.getItem('access_token')
@@ -328,7 +329,7 @@ export default function Encargos() {
       {aba === 'funcionarios' && (
         <div>
           <div style={{display:'flex',justifyContent:'flex-end',marginBottom:12}}>
-            <button style={st.btn('#34D399')} onClick={()=>{setEditando('novo');setForm({empresa_id:1,vale_alimentacao:250,vale_transporte:true,salario_dinheiro:0})}}>+ Novo Funcionário</button>
+            {temPermissao('encargos', 'incluir') && <button style={st.btn('#34D399')} onClick={()=>{setEditando('novo');setForm({empresa_id:1,vale_alimentacao:250,vale_transporte:true,salario_dinheiro:0})}}>+ Novo Funcionário</button>}
           </div>
           {editando && (
             <div style={{...st.card,borderColor:'#4F8EF7',marginBottom:16}}>
@@ -344,7 +345,7 @@ export default function Encargos() {
                 </div>
               </div>
               <div style={{display:'flex',gap:10}}>
-                <button style={st.btn('#4F8EF7')} onClick={salvarFuncionario} disabled={salvando}>{salvando?'Salvando...':'💾 Salvar'}</button>
+                {temPermissao('encargos', 'editar') && <button style={st.btn('#4F8EF7')} onClick={salvarFuncionario} disabled={salvando}>{salvando?'Salvando...':'💾 Salvar'}</button>}
                 <button style={st.btn('#1A1D2A')} onClick={()=>{setEditando(null);setForm({})}}>Cancelar</button>
               </div>
             </div>
@@ -363,8 +364,8 @@ export default function Encargos() {
                     <td style={{...st.td,color:f.vale_transporte?'#34D399':'#7B82A0'}}>{f.vale_transporte?'Sim':'Não'}</td>
                     <td style={st.td}>{f.salario_dinheiro>0?fmtR(f.salario_dinheiro):'—'}</td>
                     <td style={st.td}><div style={{display:'flex',gap:6}}>
-                      <button style={st.btn('#4F8EF7')} onClick={()=>{setEditando(f.id);setForm({...f})}}>✏️</button>
-                      <button style={st.btn('#F87171')} onClick={()=>excluir(f.id,f.nome)}>🗑️</button>
+                      {temPermissao('encargos', 'editar') && <button style={st.btn('#4F8EF7')} onClick={()=>{setEditando(f.id);setForm({...f})}}>✏️</button>}
+                      {temPermissao('encargos', 'apagar') && <button style={st.btn('#F87171')} onClick={()=>excluir(f.id,f.nome)}>🗑️</button>}
                     </div></td>
                   </tr>
                 ))}

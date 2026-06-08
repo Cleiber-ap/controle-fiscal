@@ -61,7 +61,7 @@ function App() {
       <Route path="/relatorios" element={<Layout><RotaProtegida modulo="rel"><Relatorios /></RotaProtegida></Layout>} />
       <Route path="/empresas" element={<Layout><RotaProtegida modulo="empresas"><Empresas /></RotaProtegida></Layout>} />
       <Route path="/usuarios" element={<Layout><RotaProtegida modulo="usuarios"><Usuarios /></RotaProtegida></Layout>} />
-      <Route path="/encargos" element={<Layout><RotaProtegida><Encargos /></RotaProtegida></Layout>} />
+      <Route path="/encargos" element={<Layout><RotaProtegida modulo="encargos"><Encargos /></RotaProtegida></Layout>} />
       <Route path="/configuracoes" element={<Layout><RotaProtegida><Configuracoes /></RotaProtegida></Layout>} />
       <Route path="/auditoria" element={<Layout><RotaProtegida><Auditoria /></RotaProtegida></Layout>} />
       <Route path="*" element={<Navigate to="/login" replace />} />
