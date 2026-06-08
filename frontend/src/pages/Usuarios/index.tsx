@@ -29,6 +29,7 @@ const MODULOS = [
   { id: 'usuarios', nome: 'Usuários' },
   { id: 'xml', nome: 'Importar XML' },
   { id: 'exp', nome: 'Exportar Excel' },
+  { id: 'encargos', nome: 'Encargos' },
 ]
 
 const ACOES = ['visualizar', 'editar', 'incluir', 'apagar'] as const
