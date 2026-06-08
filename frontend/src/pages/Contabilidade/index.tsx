@@ -1,5 +1,6 @@
 ﻿import React, { useEffect, useRef, useState } from 'react'
 import { historicoAPI, empresasAPI } from '../../api/endpoints'
+import { temPermissao } from '../../utils/permissoes'
 import api from '../../api/endpoints'
 
 const MESES = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez']
@@ -386,12 +387,12 @@ export default function Contabilidade() {
                 <div style={{ fontSize: 11, color: '#7B82A0', marginTop: 2 }}>Valor original: {fmtR(aj.valor)} · Crédito estimado: {fmtR(aj.valor * aliqEfetivaCont)}</div>
               </div>
               <div style={{ display: 'flex', gap: 6 }}>
-                <button onClick={async () => {
+                {temPermissao('contab', 'incluir') && <button onClick={async () => {
                   await api.post('/notas/creditos', { empresa_id: empId, valor_nf_original: aj.valor, nf_devolucao: aj.nf_devolucao, nf_referenciada: aj.nf_referenciada, mes_orig: aj.mes, ano_orig: aj.ano })
                   carregarTudo()
                 }} style={{ padding: '5px 12px', background: 'rgba(167,139,250,0.15)', border: '1px solid #A78BFA', borderRadius: 6, color: '#A78BFA', fontSize: 11, fontWeight: 600, cursor: 'pointer' }}>
                   Criar Crédito
-                </button>
+                </button>}
                 <button onClick={() => setIgnorados(prev => new Set([...prev, aj.id]))} style={{ padding: '5px 12px', background: 'transparent', border: '1px solid #2A2D3E', borderRadius: 6, color: '#7B82A0', fontSize: 11, cursor: 'pointer' }}>
                   Ignorar
                 </button>
@@ -470,7 +471,7 @@ export default function Contabilidade() {
                           </span>
                         </td>
                         <td style={tdBase({ textAlign: 'center' })}>
-  {isVenda && <button onClick={() => {
+  {isVenda && temPermissao('contab', 'editar') && <button onClick={() => {
   if (lista.length > 0) {
     // Ja tem pagamento: editar o pagamento existente
     setEditando(null)
@@ -492,7 +493,7 @@ export default function Contabilidade() {
     setEditMesLct(new Date().toLocaleString('pt-BR',{month:'short'}).replace('.','') + '/' + new Date().getFullYear())
   }
 }} style={{ padding: "2px 7px", background: "transparent", border: "none", borderRadius: "4px", color: "#7B82A0", fontSize: "11px", cursor: "pointer" }}>✏️</button>}
-  {isVenda && isPaga && !temHistorico && <button onClick={() => limparPagamento(r.numero_nf)} style={{ padding: "2px 7px", background: "transparent", border: "none", borderRadius: "4px", color: "#F87171", fontSize: "11px", cursor: "pointer" }}>🗑️</button>}
+  {isVenda && isPaga && !temHistorico && temPermissao('contab', 'apagar') && <button onClick={() => limparPagamento(r.numero_nf)} style={{ padding: "2px 7px", background: "transparent", border: "none", borderRadius: "4px", color: "#F87171", fontSize: "11px", cursor: "pointer" }}>🗑️</button>}
 </td>
                       </tr>
 

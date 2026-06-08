@@ -4,6 +4,7 @@ import axios from 'axios'
 const api = axios.create({ baseURL: import.meta.env.VITE_API_URL || 'https://diligent-integrity-production-3f98.up.railway.app' })
 api.interceptors.request.use((c: any) => { const t = localStorage.getItem('access_token'); if (t) c.headers.Authorization = 'Bearer ' + t; return c })
 import { registrarLog } from '../../api/auditoria'
+import { temPermissao } from '../../utils/permissoes'
 
 const MESES = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez']
 
@@ -193,12 +194,12 @@ export default function Inicio() {
                       <div style={{fontSize:11,color:'#A78BFA'}}>
                         🟢 Crédito Fiscal — NF {cr.nf_referenciada} · R$ {(cr.valor_nf_original*(e.key==='six'?aliqEfetivaSix:aliqEfetivaEnova)).toLocaleString('pt-BR',{minimumFractionDigits:2})}
                       </div>
-                      <button onClick={async()=>{
+                      {temPermissao('inicio', 'editar') && <button onClick={async()=>{
                         await fetch('https://diligent-integrity-production-3f98.up.railway.app/notas/creditos/'+cr.id,{method:'PUT',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('access_token')},body:JSON.stringify({status:'autorizado'})})
                         window.location.reload()
                       }} style={{padding:'4px 10px',background:'rgba(167,139,250,0.2)',border:'1px solid #A78BFA',borderRadius:6,color:'#A78BFA',fontSize:11,fontWeight:600,cursor:'pointer'}}>
                         Autorizar
-                      </button>
+                      </button>}
                     </div>
                   ))}
               {e.conf ? (
@@ -221,7 +222,7 @@ export default function Inicio() {
                       onBlur={ev => ev.target.style.borderColor = '#252836'}
                     />
                     <button
-                      disabled={salvando === e.key}
+                      disabled={salvando === e.key || !temPermissao('inicio', 'editar')}
                       onClick={async () => {
                         setSalvando(e.key)
                         try {
