@@ -424,7 +424,7 @@ export default function Contabilidade() {
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
               <thead>
                 <tr style={{ background: '#1A1D2A' }}>
-                  {['Nº NF','Destinatário','CNPJ Dest.','Valor NF','Dt. Emissão','Valor Pago','Restante','Dt. Pagto','Status',''].map((h, i) => (
+                  {['Nº NF','Destinatário','CNPJ Dest.','Valor NF','Dt. Emissão','Valor Pago','Restante','Dt. Pagto','Imposto','Status',''].map((h, i) => (
                     <th key={i} style={{ padding: '8px 12px', textAlign: i >= 3 && i <= 7 ? 'right' : i === 9 ? 'center' : 'left', fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1px', color: '#7B82A0', borderBottom: '1px solid #252836', whiteSpace: 'nowrap' }}>{h}</th>
                   ))}
                 </tr>
@@ -482,6 +482,18 @@ export default function Contabilidade() {
                           {temSaldoReal ? <span style={{ color: '#F87171', fontWeight: 600 }}>{fmtR(saldoTotal)}</span> : (isPaga && restante > 0.01 ? <span style={{ color: '#F87171', fontWeight: 600 }}>{fmtR(restante)}</span> : null)}
                         </td>
                         <td style={tdBase({ textAlign: 'right', color: '#7B82A0', ...mono, fontSize: '11px' })}>{temHistorico ? (lista[0]?.dt_pagamento || '—') : (r.dt_pagamento || r.data_pagamento || '—')}</td>
+                        <td style={tdBase({ textAlign: 'right', ...mono, fontSize: '11px' })}>
+                          {(() => {
+                            const dtPg = temHistorico ? (lista[0]?.dt_pagamento || '') : (r.dt_pagamento || r.data_pagamento || '')
+                            const parts = dtPg.includes('-') ? dtPg.split('-').reverse() : dtPg.split('/')
+                            const mm = parseInt(parts[1])
+                            const aa = parseInt(parts[2])
+                            if (mm === mesAntIdx + 1 && aa === anoAnt && primeiroPagamento > 0) {
+                              return <span style={{ color: '#FBBF24', fontWeight: 600 }}>{fmtR(primeiroPagamento * aliqEfetivaCont)}</span>
+                            }
+                            return <span style={{ color: '#4A5070' }}>—</span>
+                          })()}
+                        </td>
                         <td style={tdBase()}>
                           <span style={{ padding: '3px 8px', borderRadius: '12px', fontSize: '11px', fontWeight: 600, background: stStyle.bg, color: stStyle.cor, display: 'inline-flex', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap' }}>
                             <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: stStyle.cor }} />
@@ -578,6 +590,18 @@ export default function Contabilidade() {
                                 {restanteParcela > 0.01 ? <span style={{ color: '#F87171', fontWeight: 600, ...mono, fontSize: '11px' }}>{fmtR(restanteParcela)}</span> : <span style={{ color: '#34D399', fontSize: '11px' }}>✓ Quitado</span>}
                               </td>
                               <td style={tdSm({ textAlign: 'right', color: '#7B82A0', ...mono, fontSize: '11px' })}>{pg.dt_pagamento || '—'}</td>
+                              <td style={tdSm({ textAlign: 'right', ...mono, fontSize: '11px' })}>
+                                {(() => {
+                                  const dtPg = pg.dt_pagamento || ''
+                                  const parts = dtPg.includes('-') ? dtPg.split('-').reverse() : dtPg.split('/')
+                                  const mm = parseInt(parts[1])
+                                  const aa = parseInt(parts[2])
+                                  if (mm === mesAntIdx + 1 && aa === anoAnt && pg.valor_pago > 0) {
+                                    return <span style={{ color: '#FBBF24', fontWeight: 600 }}>{fmtR(parseFloat(pg.valor_pago) * aliqEfetivaCont)}</span>
+                                  }
+                                  return <span style={{ color: '#4A5070' }}>—</span>
+                                })()}
+                              </td>
                               <td style={tdSm()}>
                                 <span style={{ padding: '3px 8px', borderRadius: '12px', fontSize: '11px', fontWeight: 600, background: 'rgba(79,142,247,0.12)', color: '#4F8EF7', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
                                   <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#4F8EF7' }} />Parcial
@@ -624,6 +648,7 @@ export default function Contabilidade() {
                             <td style={tdSm({ textAlign: 'right', color: '#4A5070', fontSize: '11px' })}>—</td>
                             <td style={tdSm({ textAlign: 'right', color: '#4A5070', fontSize: '11px' })}>—</td>
                             <td style={tdSm({ textAlign: 'right', color: '#4A5070', fontSize: '11px' })}>—</td>
+                            <td style={tdSm({ textAlign: 'right', color: '#4A5070', fontSize: '11px' })}>—</td>
                             <td style={tdSm()}>
                               <span style={{ padding: '3px 8px', borderRadius: '12px', fontSize: '11px', fontWeight: 600, background: 'rgba(248,113,113,0.12)', color: '#F87171', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
                                 <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#F87171' }} />Aguardando
@@ -666,7 +691,7 @@ export default function Contabilidade() {
                   <td style={{ padding: '8px 12px', textAlign: 'right', fontWeight: 700, ...mono, color: corEmp }}>{fmtR(tNF)}</td>
                   <td></td>
                   <td style={{ padding: '8px 12px', textAlign: 'right', fontWeight: 700, ...mono, color: '#34D399' }}>{fmtR(tPago)}</td>
-                  <td></td><td></td><td></td><td></td>
+                  <td></td><td></td><td></td><td></td><td></td>
                 </tr>
               </tfoot>
             </table>
