@@ -291,8 +291,8 @@ export default function Relatorios() {
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
         <div style={{ display: 'flex', gap: '4px', background: '#13161F', border: '1px solid #252836', borderRadius: '10px', padding: '4px' }}>
           {[
-            { key: 'anual', label: '📅 Comparativo Anual' },
             { key: 'mensal', label: '📈 Evolução Mensal' },
+            { key: 'anual', label: '📅 Comparativo Anual' },
             { key: 'impostos', label: '💰 Impostos' },
           ].map(a => (
             <button key={a.key} onClick={() => setAbaAtiva(a.key as any)}
