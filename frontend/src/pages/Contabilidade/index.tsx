@@ -108,10 +108,21 @@ export default function Contabilidade() {
   useEffect(() => {
     if (scrollParaAguardando && !loading) {
       setTimeout(() => {
-        const el = (document.getElementById('primeira-aguardando') || document.querySelector('[data-aguardando-nf]')) as HTMLElement
-        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+        // Tentar linha parcial aguardando (id)
+        let el = document.getElementById('primeira-aguardando') as HTMLElement
+        // Senao buscar primeira célula com texto "aguardando"
+        if (!el) {
+          const spans = Array.from(document.querySelectorAll('td span'))
+          const span = spans.find(s => s.textContent?.trim() === 'aguardando') as HTMLElement
+          if (span) el = span.closest('tr') as HTMLElement
+        }
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+          el.style.outline = '2px solid #FBBF24'
+          setTimeout(() => { if (el) el.style.outline = '' }, 2000)
+        }
         setScrollParaAguardando(false)
-      }, 300)
+      }, 600)
     }
   }, [scrollParaAguardando, loading])
 
