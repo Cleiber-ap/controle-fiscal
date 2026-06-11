@@ -269,6 +269,7 @@ export default function Contabilidade() {
       const dtFinal = editDtp.trim().split('/').length === 2 ? editDtp.trim() + '/' + new Date().getFullYear() : editDtp.trim()
       await api.post('/notas/pagamento', { empresa_id: empId, numero_nf: nf, valor_pago: val, dt_pagamento: dtFinal, mes_lancamento: editMesLct })
       await carregarTudo()
+      setScrollParaAguardando(true)
       setEditando(null); setEditVPg(''); setEditDtp(''); setEditMesLct('')
     } catch(e) { console.error(e) } finally { setSalvando(false) }
   }
@@ -284,6 +285,7 @@ export default function Contabilidade() {
       const novoVal = parseFloat(editVPg.replace(',', '.')) || (nf_val - pago)
       await api.post('/notas/pagamento', { empresa_id: empId, numero_nf: nf, valor_pago: novoVal, dt_pagamento: editDtp })
       await carregarTudo()
+      setScrollParaAguardando(true)
       setEditando(null); setEditVPg(''); setEditDtp('')
     } catch(e) { console.error(e) } finally { setSalvando(false) }
   }
@@ -299,6 +301,7 @@ export default function Contabilidade() {
       console.log('✅ Resposta:', response.data)
       console.log('🔄 Recarregando...')
       await carregarTudo()
+      setScrollParaAguardando(true)
       console.log('✅ Recarregado')
       setEditandoPgto(null)
       setEditPgtoVal('')
