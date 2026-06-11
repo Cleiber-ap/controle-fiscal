@@ -35,7 +35,7 @@ export default function Relatorios() {
   const [dasEnova, setDasEnova] = useState<any[]>([])
   const [empresas, setEmpresas] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
-  const [abaAtiva, setAbaAtiva] = useState<'anual' | 'mensal' | 'impostos'>('anual')
+  const [abaAtiva, setAbaAtiva] = useState<'anual' | 'mensal' | 'impostos'>('mensal')
 
   const now = new Date()
   const mesAntIdx = now.getMonth() === 0 ? 11 : now.getMonth() - 1
