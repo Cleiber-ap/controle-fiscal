@@ -526,8 +526,7 @@ export default function Contabilidade() {
                               <span style={{ fontSize: '11px', color: '#7B82A0' }}>Data Pagto:</span>
                               <input value={editPgtoDt} onChange={e => setEditPgtoDt(e.target.value)} placeholder="DD/MM/AAAA"
                                 style={{ width: '120px', padding: '4px 8px', background: '#252836', border: '1px solid #333750', borderRadius: '5px', color: '#E8EAF0', fontSize: '12px', outline: 'none' }} />
-                              <span style={{ fontSize: '11px', color: '#7B82A0' }}>Mês Lçto:</span>
-                              <input value={editMesLct} onChange={e => setEditMesLct(e.target.value)} placeholder="Mai/2026" style={{ width: '80px', padding: '4px 8px', background: '#252836', border: '1px solid #333750', borderRadius: '5px', color: '#E8EAF0', fontSize: '12px', outline: 'none' }} />
+                              
                               <button onClick={() => editarPagamento(lista[0].id, r.numero_nf)} disabled={salvando}
                                 style={{ padding: '4px 14px', background: '#4F8EF7', border: 'none', borderRadius: '5px', color: '#fff', fontSize: '11px', fontWeight: 600, cursor: 'pointer' }}>{salvando ? '...' : 'Salvar'}</button>
                               <button onClick={() => { setEditandoPgto(null); setEditPgtoVal(''); setEditPgtoDt(''); setEditMesLct('') }}
@@ -548,8 +547,7 @@ export default function Contabilidade() {
                                 onKeyDown={e => { if (e.key === 'Enter') { const v = editDtp.trim(); const pts = v.split('/'); if (pts.length === 2) { setEditDtp(pts[0].padStart(2,'0') + '/' + pts[1].padStart(2,'0') + '/' + new Date().getFullYear()) } else { salvarPagamento(r.numero_nf) } } }}
                                 placeholder="DD/MM/AAAA"
                                 style={{ width: '120px', padding: '4px 8px', background: '#252836', border: '1px solid #333750', borderRadius: '5px', color: '#E8EAF0', fontSize: '12px', outline: 'none' }} />
-                              <span style={{ fontSize: '11px', color: '#7B82A0' }}>Mês Lçto:</span>
-                              <input value={editMesLct} onChange={e => setEditMesLct(e.target.value)} placeholder="Mai/2026" style={{ width: '80px', padding: '4px 8px', background: '#252836', border: '1px solid #333750', borderRadius: '5px', color: '#E8EAF0', fontSize: '12px', outline: 'none' }} />
+                              
                               <button onClick={() => salvarPagamento(r.numero_nf)} disabled={salvando}
                                 style={{ padding: '4px 14px', background: '#4F8EF7', border: 'none', borderRadius: '5px', color: '#fff', fontSize: '11px', fontWeight: 600, cursor: 'pointer' }}>
                                 {salvando ? '...' : 'Salvar'}
@@ -601,8 +599,7 @@ export default function Contabilidade() {
                                       style={{ width: '120px', padding: '4px 8px', background: '#252836', border: '1px solid #333750', borderRadius: '5px', color: '#E8EAF0', fontSize: '12px', outline: 'none' }} />
                                     <input value={editPgtoDt} onChange={e => setEditPgtoDt(e.target.value)} placeholder="DD/MM/AAAA"
                                       style={{ width: '120px', padding: '4px 8px', background: '#252836', border: '1px solid #333750', borderRadius: '5px', color: '#E8EAF0', fontSize: '12px', outline: 'none' }} />
-                                    <span style={{ fontSize: '11px', color: '#7B82A0' }}>Mês Lçto:</span>
-                                    <input value={editMesLct} onChange={e => setEditMesLct(e.target.value)} placeholder="Mai/2026" style={{ width: '80px', padding: '4px 8px', background: '#252836', border: '1px solid #333750', borderRadius: '5px', color: '#E8EAF0', fontSize: '12px', outline: 'none' }} />
+                                    
                                     <button onClick={() => editarPagamento(pg.id, r.numero_nf)} disabled={salvando}
                                       style={{ padding: '4px 14px', background: '#4F8EF7', border: 'none', borderRadius: '5px', color: '#fff', fontSize: '11px', fontWeight: 600, cursor: 'pointer' }}>{salvando ? '...' : 'Salvar'}</button>
                                     <button onClick={() => { setEditandoPgto(null); setEditPgtoVal(''); setEditPgtoDt('') }}
