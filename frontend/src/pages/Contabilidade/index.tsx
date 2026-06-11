@@ -108,11 +108,12 @@ export default function Contabilidade() {
   useEffect(() => {
     if (scrollParaAguardando && !loading) {
       setTimeout(() => {
-        const el = document.getElementById('primeira-aguardando') as HTMLElement
+        const els = Array.from(document.querySelectorAll('.linha-aguardando, tr.linha-aguardando'))
+        const el = els[els.length - 1] as HTMLElement  // último = mais antigo (ordem decrescente)
         if (el) {
-          el.scrollIntoView({ behavior: 'smooth', block: 'center' })
           const tr = el.tagName === 'TR' ? el : el.closest('tr') as HTMLElement
           if (tr) {
+            tr.scrollIntoView({ behavior: 'smooth', block: 'center' })
             tr.style.outline = '2px solid #FBBF24'
             setTimeout(() => { tr.style.outline = '' }, 2000)
           }
@@ -451,7 +452,7 @@ export default function Contabilidade() {
                 </tr>
               </thead>
               <tbody>
-                {(() => { let primeiraAguardandoMarcada = false; return notasFiltradas2.map(r => {
+                {notasFiltradas2.map(r => {
                   const valorNF = parseFloat(r.valor_nf || '0')
                   const valorPagoDB = parseFloat(r.valor_pago || '0')
                   const lista = pagamentos[r.numero_nf] || []
@@ -660,7 +661,7 @@ export default function Contabilidade() {
                       {/* PROXIMA LINHA VAZIA */}
                       {mostrarProxima && !filtroMesPagto && (
                         <>
-                          <tr key={r.numero_nf + '-prox'} id={!primeiraAguardandoMarcada ? (primeiraAguardandoMarcada = true, "primeira-aguardando") : undefined} style={{ background: 'rgba(248,113,113,0.03)', borderLeft: '3px solid #F87171' }}>
+                          <tr key={r.numero_nf + '-prox'} className="linha-aguardando" style={{ background: 'rgba(248,113,113,0.03)', borderLeft: '3px solid #F87171' }}>
                             <td style={tdSm()}><span style={{ background: 'rgba(248,113,113,0.15)', color: '#F87171', borderRadius: '5px', padding: '2px 8px', fontWeight: 700, fontSize: '11px', ...mono }}>{r.numero_nf}/{lista.length + 1}</span></td>
                             <td style={tdSm({ color: '#7B82A0', fontSize: '11px', fontStyle: 'italic' })}>{r.destinatario} — Pagamento parcial {lista.length + 1}</td>
                             <td style={tdSm({ color: '#7B82A0', ...mono, fontSize: '11px' })}>{fmtCNPJ(r.cnpj_dest)}</td>
@@ -704,7 +705,7 @@ export default function Contabilidade() {
                       )}
                     </React.Fragment>
                   )
-                })})()}
+                })}
               </tbody>
               <tfoot>
                 <tr style={{ background: '#1A1D2A', borderTop: '2px solid #252836' }}>
