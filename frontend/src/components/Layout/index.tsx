@@ -127,9 +127,6 @@ export default function Layout({ children, showNovaNF, onNovaNF }: LayoutProps) 
           <NavItem path="/inicio" icon="🏠" label="Início" />
           <NavItem path="/faturamentos" icon="📋" label="Faturamentos" badge={15} />
           <NavItem path="/impostos" icon="💳" label="Impostos Pagos" />
-          <NavItem path="/empresas" icon="🏢" label="Empresas" />
-          <NavItem path="/usuarios" icon="👤" label="Usuários" />
-          <NavItem path="/xml" icon="📥" label="Importar XML" />
         </div>
 
         <div style={{ height: '1px', background: '#252836', margin: '6px 14px' }} />
@@ -138,7 +135,6 @@ export default function Layout({ children, showNovaNF, onNovaNF }: LayoutProps) 
         <div style={{ padding: '4px 10px' }}>
           <div style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1.2px', color: '#4A5070', padding: '0 8px', marginBottom: '4px' }}>Fiscal</div>
           <NavItem path="/contabilidade" icon="🧾" label="Contabilidade" cor="purple" />
-          <NavItem path="/relatorios" icon="📈" label="Relatórios" cor="purple" />
         </div>
         <div style={{ height: '1px', background: '#252836', margin: '6px 14px' }} />
 
@@ -149,6 +145,15 @@ export default function Layout({ children, showNovaNF, onNovaNF }: LayoutProps) 
         </div>
 
         <div style={{ height: '1px', background: '#252836', margin: '6px 14px' }} />
+
+        {/* Configurações */}
+        <div style={{ padding: '4px 10px' }}>
+          <div style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1.2px', color: '#4A5070', padding: '0 8px', marginBottom: '4px' }}>Configurações</div>
+          <NavItem path="/xml" icon="📥" label="Importar XML" />
+          <NavItem path="/relatorios" icon="📈" label="Relatórios" cor="purple" />
+          <NavItem path="/usuarios" icon="👤" label="Usuários" />
+          <NavItem path="/empresas" icon="🏢" label="Empresas" />
+        </div>
 
         {/* RodapÃ©: Auditoria + Configurações */}
         <div style={{ marginTop: 'auto', padding: '10px', borderTop: '1px solid #252836' }}>
