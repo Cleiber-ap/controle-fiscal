@@ -334,15 +334,18 @@ export default function Contabilidade() {
             {e === 'six' ? 'SIX Comercial' : 'ENOVA Comercial'}
           </button>
         ))}
+        <div style={{ marginLeft: 'auto', background: '#13161F', border: '1px solid rgba(167,139,250,0.3)', borderRadius: '10px', padding: '6px 16px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <span style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1px', color: '#A78BFA' }}>SIX + ENOVA Aguardando</span>
+          <span style={{ fontSize: '16px', fontWeight: 700, color: '#A78BFA', fontFamily: 'monospace' }}>{fmtR(valTotalCombinado)}</span>
+        </div>
       </div>
 
       <div style={st}>Resumo Geral das Notas — {MESES[mesAntIdx]}/{anoAnt}<div style={{ flex: 1, height: '1px', background: '#252836' }} /></div>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: '12px', marginBottom: '16px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: '12px', marginBottom: '16px' }}>
         {[
           { label: 'Total em NFs', valor: fmtR(tNF), sub: 'Notas Venda/Parcial de ' + mesAntNome + '/' + anoAnt, cor: '#4F8EF7' },
           { label: 'Total Recebido', valor: fmtR(tPago), sub: 'Pago em ' + mesAntNome + '/' + anoAnt, cor: '#34D399' },
           { label: 'Aguardando Pagamento', valor: fmtR(valAberto), sub: nfsAberto.filter(r => (parseFloat(r.valor_nf)||0)-(parseFloat(r.valor_pago)||0) > 0.01).length + ' em aberto · status Venda', cor: '#FBBF24' },
-          { label: 'Total SIX/ENOVA - Aguardando', valor: fmtR(valTotalCombinado), sub: 'SIX + ENOVA aguardando', cor: '#A78BFA' },
         ].map((k, i) => (
           <div key={i} style={{ background: '#13161F', border: '1px solid #252836', borderRadius: '14px', padding: '18px 20px', position: 'relative', overflow: 'hidden' }}>
             <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '3px', background: k.cor, borderRadius: '14px 14px 0 0' }} />
