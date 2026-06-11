@@ -138,14 +138,6 @@ export default function Layout({ children, showNovaNF, onNovaNF }: LayoutProps) 
         </div>
         <div style={{ height: '1px', background: '#252836', margin: '6px 14px' }} />
 
-        {/* Colaboradores */}
-        <div style={{ padding: '4px 10px' }}>
-          <div style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1.2px', color: '#4A5070', padding: '0 8px', marginBottom: '4px' }}>Colaboradores</div>
-          <NavItem path="/encargos" icon="👷" label="Encargos" />
-        </div>
-
-        <div style={{ height: '1px', background: '#252836', margin: '6px 14px' }} />
-
         {/* Configurações */}
         <div style={{ padding: '4px 10px' }}>
           <div style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1.2px', color: '#4A5070', padding: '0 8px', marginBottom: '4px' }}>Configurações</div>
@@ -153,6 +145,14 @@ export default function Layout({ children, showNovaNF, onNovaNF }: LayoutProps) 
           <NavItem path="/relatorios" icon="📈" label="Relatórios" cor="purple" />
           <NavItem path="/usuarios" icon="👤" label="Usuários" />
           <NavItem path="/empresas" icon="🏢" label="Empresas" />
+        </div>
+
+        <div style={{ height: '1px', background: '#252836', margin: '6px 14px' }} />
+
+        {/* Colaboradores */}
+        <div style={{ padding: '4px 10px' }}>
+          <div style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1.2px', color: '#4A5070', padding: '0 8px', marginBottom: '4px' }}>Colaboradores</div>
+          <NavItem path="/encargos" icon="👷" label="Encargos" />
         </div>
 
         {/* RodapÃ©: Auditoria + Configurações */}
