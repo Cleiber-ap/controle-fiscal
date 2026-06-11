@@ -108,16 +108,21 @@ export default function Contabilidade() {
   useEffect(() => {
     if (scrollParaAguardando && !loading) {
       setTimeout(() => {
-        const els = Array.from(document.querySelectorAll('[data-tipo="aguardando"]'))
-        console.log('Aguardando encontrados:', els.length)
-        const el = els[els.length - 1] as HTMLElement
-        if (el) {
-          const tr = el.tagName === 'TR' ? el : el.closest('tr') as HTMLElement
-          if (tr) {
-            tr.scrollIntoView({ behavior: 'smooth', block: 'center' })
-            tr.style.outline = '2px solid #FBBF24'
-            setTimeout(() => { tr.style.outline = '' }, 2000)
+        // Buscar todas as trs da tabela de notas
+        const trs = Array.from(document.querySelectorAll('table tbody tr'))
+        // Encontrar a última tr que contém "aguardando" no texto
+        let alvo: HTMLElement | null = null
+        for (let i = trs.length - 1; i >= 0; i--) {
+          const tr = trs[i] as HTMLElement
+          if (tr.textContent?.includes('aguardando')) {
+            alvo = tr
+            break
           }
+        }
+        if (alvo) {
+          alvo.scrollIntoView({ behavior: 'smooth', block: 'center' })
+          alvo.style.outline = '2px solid #FBBF24'
+          setTimeout(() => { if (alvo) alvo.style.outline = '' }, 2000)
         }
         setScrollParaAguardando(false)
       }, 800)
@@ -662,7 +667,7 @@ export default function Contabilidade() {
                       {/* PROXIMA LINHA VAZIA */}
                       {mostrarProxima && !filtroMesPagto && (
                         <>
-                          <tr key={r.numero_nf + '-prox'} data-tipo="aguardando" style={{ background: 'rgba(248,113,113,0.03)', borderLeft: '3px solid #F87171' }}>
+                          <tr key={r.numero_nf + '-prox'} style={{ background: 'rgba(248,113,113,0.03)', borderLeft: '3px solid #F87171' }}>
                             <td style={tdSm()}><span style={{ background: 'rgba(248,113,113,0.15)', color: '#F87171', borderRadius: '5px', padding: '2px 8px', fontWeight: 700, fontSize: '11px', ...mono }}>{r.numero_nf}/{lista.length + 1}</span></td>
                             <td style={tdSm({ color: '#7B82A0', fontSize: '11px', fontStyle: 'italic' })}>{r.destinatario} — Pagamento parcial {lista.length + 1}</td>
                             <td style={tdSm({ color: '#7B82A0', ...mono, fontSize: '11px' })}>{fmtCNPJ(r.cnpj_dest)}</td>
