@@ -43,6 +43,7 @@ export default function Contabilidade() {
   const [editVPg, setEditVPg] = useState('')
   const [editDtp, setEditDtp] = useState('')
   const [salvando, setSalvando] = useState(false)
+  const [scrollParaAguardando, setScrollParaAguardando] = useState(false)
   const [editandoPgto, setEditandoPgto] = useState<number | null>(null)
   const [editPgtoVal, setEditPgtoVal] = useState('')
   const [editPgtoDt, setEditPgtoDt] = useState('')
@@ -103,6 +104,16 @@ export default function Contabilidade() {
 }
 
   useEffect(() => { carregarTudo() }, [empresa])
+
+  useEffect(() => {
+    if (scrollParaAguardando && !loading) {
+      setTimeout(() => {
+        const el = (document.querySelector('[data-aguardando="true"]') || document.querySelector('[data-aguardando-nf]')) as HTMLElement
+        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+        setScrollParaAguardando(false)
+      }, 300)
+    }
+  }, [scrollParaAguardando, loading])
 
   const empDados = empresas.find(e => e.nome === (empresa === 'six' ? 'SIX' : 'ENOVA')) || { aliquota_das: empresa === 'six' ? 0.088324 : 0.093254, credito_icms: empresa === 'six' ? 0.029614 : 0.031256 }
   const rbt12Cont = (() => {
@@ -639,7 +650,7 @@ export default function Contabilidade() {
                       {/* PROXIMA LINHA VAZIA */}
                       {mostrarProxima && !filtroMesPagto && (
                         <>
-                          <tr key={r.numero_nf + '-prox'} style={{ background: 'rgba(248,113,113,0.03)', borderLeft: '3px solid #F87171' }}>
+                          <tr key={r.numero_nf + '-prox'} data-aguardando="true" style={{ background: 'rgba(248,113,113,0.03)', borderLeft: '3px solid #F87171' }}>
                             <td style={tdSm()}><span style={{ background: 'rgba(248,113,113,0.15)', color: '#F87171', borderRadius: '5px', padding: '2px 8px', fontWeight: 700, fontSize: '11px', ...mono }}>{r.numero_nf}/{lista.length + 1}</span></td>
                             <td style={tdSm({ color: '#7B82A0', fontSize: '11px', fontStyle: 'italic' })}>{r.destinatario} — Pagamento parcial {lista.length + 1}</td>
                             <td style={tdSm({ color: '#7B82A0', ...mono, fontSize: '11px' })}>{fmtCNPJ(r.cnpj_dest)}</td>
