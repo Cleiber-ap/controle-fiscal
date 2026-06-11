@@ -108,18 +108,14 @@ export default function Contabilidade() {
   useEffect(() => {
     if (scrollParaAguardando && !loading) {
       setTimeout(() => {
-        // Tentar linha parcial aguardando (id)
-        let el = document.getElementById('primeira-aguardando') as HTMLElement
-        // Senao buscar primeira célula com texto "aguardando"
-        if (!el) {
-          const spans = Array.from(document.querySelectorAll('td span'))
-          const span = spans.find(s => s.textContent?.trim() === 'aguardando') as HTMLElement
-          if (span) el = span.closest('tr') as HTMLElement
-        }
+        const el = document.getElementById('primeira-aguardando') as HTMLElement
         if (el) {
           el.scrollIntoView({ behavior: 'smooth', block: 'center' })
-          el.style.outline = '2px solid #FBBF24'
-          setTimeout(() => { if (el) el.style.outline = '' }, 2000)
+          const tr = el.tagName === 'TR' ? el : el.closest('tr') as HTMLElement
+          if (tr) {
+            tr.style.outline = '2px solid #FBBF24'
+            setTimeout(() => { tr.style.outline = '' }, 2000)
+          }
         }
         setScrollParaAguardando(false)
       }, 600)
@@ -455,7 +451,7 @@ export default function Contabilidade() {
                 </tr>
               </thead>
               <tbody>
-                {notasFiltradas2.map(r => {
+                {(() => { let primeiraAguardandoMarcada = false; return notasFiltradas2.map(r => {
                   const valorNF = parseFloat(r.valor_nf || '0')
                   const valorPagoDB = parseFloat(r.valor_pago || '0')
                   const lista = pagamentos[r.numero_nf] || []
@@ -664,7 +660,7 @@ export default function Contabilidade() {
                       {/* PROXIMA LINHA VAZIA */}
                       {mostrarProxima && !filtroMesPagto && (
                         <>
-                          <tr key={r.numero_nf + '-prox'} id="primeira-aguardando" style={{ background: 'rgba(248,113,113,0.03)', borderLeft: '3px solid #F87171' }}>
+                          <tr key={r.numero_nf + '-prox'} id={!primeiraAguardandoMarcada ? (primeiraAguardandoMarcada = true, "primeira-aguardando") : undefined} style={{ background: 'rgba(248,113,113,0.03)', borderLeft: '3px solid #F87171' }}>
                             <td style={tdSm()}><span style={{ background: 'rgba(248,113,113,0.15)', color: '#F87171', borderRadius: '5px', padding: '2px 8px', fontWeight: 700, fontSize: '11px', ...mono }}>{r.numero_nf}/{lista.length + 1}</span></td>
                             <td style={tdSm({ color: '#7B82A0', fontSize: '11px', fontStyle: 'italic' })}>{r.destinatario} — Pagamento parcial {lista.length + 1}</td>
                             <td style={tdSm({ color: '#7B82A0', ...mono, fontSize: '11px' })}>{fmtCNPJ(r.cnpj_dest)}</td>
@@ -708,7 +704,7 @@ export default function Contabilidade() {
                       )}
                     </React.Fragment>
                   )
-                })}
+                })})()}
               </tbody>
               <tfoot>
                 <tr style={{ background: '#1A1D2A', borderTop: '2px solid #252836' }}>
