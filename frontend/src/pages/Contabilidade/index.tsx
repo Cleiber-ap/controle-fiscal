@@ -108,8 +108,9 @@ export default function Contabilidade() {
   useEffect(() => {
     if (scrollParaAguardando && !loading) {
       setTimeout(() => {
-        const els = Array.from(document.querySelectorAll('.linha-aguardando, tr.linha-aguardando'))
-        const el = els[els.length - 1] as HTMLElement  // último = mais antigo (ordem decrescente)
+        const els = Array.from(document.querySelectorAll('[data-tipo="aguardando"]'))
+        console.log('Aguardando encontrados:', els.length)
+        const el = els[els.length - 1] as HTMLElement
         if (el) {
           const tr = el.tagName === 'TR' ? el : el.closest('tr') as HTMLElement
           if (tr) {
@@ -119,7 +120,7 @@ export default function Contabilidade() {
           }
         }
         setScrollParaAguardando(false)
-      }, 600)
+      }, 800)
     }
   }, [scrollParaAguardando, loading])
 
@@ -661,7 +662,7 @@ export default function Contabilidade() {
                       {/* PROXIMA LINHA VAZIA */}
                       {mostrarProxima && !filtroMesPagto && (
                         <>
-                          <tr key={r.numero_nf + '-prox'} className="linha-aguardando" style={{ background: 'rgba(248,113,113,0.03)', borderLeft: '3px solid #F87171' }}>
+                          <tr key={r.numero_nf + '-prox'} data-tipo="aguardando" style={{ background: 'rgba(248,113,113,0.03)', borderLeft: '3px solid #F87171' }}>
                             <td style={tdSm()}><span style={{ background: 'rgba(248,113,113,0.15)', color: '#F87171', borderRadius: '5px', padding: '2px 8px', fontWeight: 700, fontSize: '11px', ...mono }}>{r.numero_nf}/{lista.length + 1}</span></td>
                             <td style={tdSm({ color: '#7B82A0', fontSize: '11px', fontStyle: 'italic' })}>{r.destinatario} — Pagamento parcial {lista.length + 1}</td>
                             <td style={tdSm({ color: '#7B82A0', ...mono, fontSize: '11px' })}>{fmtCNPJ(r.cnpj_dest)}</td>
