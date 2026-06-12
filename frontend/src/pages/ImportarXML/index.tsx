@@ -53,6 +53,7 @@ function parseXML(texto: string, arquivo: string): NFParsed | null {
         nat_op: 'Inutilizacao',
         status: 'Inutilizacao',
         arquivo,
+        cnpjEmitente: cnpjEmitInut,
       }
     } catch { return null }
   }
