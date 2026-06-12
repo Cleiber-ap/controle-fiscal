@@ -17,6 +17,7 @@ interface NFParsed {
   nat_op: string
   status: string
   arquivo: string
+  cnpjEmitente?: string
   refNFe?: string
   mesEmissao?: number
   anoEmissao?: number
@@ -91,6 +92,9 @@ function parseXML(texto: string, arquivo: string): NFParsed | null {
 
     const get = (tag: string) => doc.getElementsByTagName(tag)[0]?.textContent?.trim() || ''
 
+    const emitEl2 = doc.getElementsByTagName('emit')[0]
+    const cnpjEmitente = emitEl2?.getElementsByTagName('CNPJ')[0]?.textContent?.trim() || ''
+
     const numero_nf = get('nNF')
     const destinatario = get('xNome') // primeiro xNome é o emitente, segundo é o destinatário
     // Pegar especificamente o dest > xNome
@@ -164,7 +168,12 @@ export default function ImportarXML() {
       const texto = await file.text()
       const nf = parseXML(texto, file.name)
       if (nf) {
-        novasNotas.push(nf)
+        const cnpjEsperado = CNPJ_EMPRESAS[empresa]
+        if (nf.cnpjEmitente && cnpjEsperado && nf.cnpjEmitente !== cnpjEsperado) {
+          novosErros.push(`${file.name} — CNPJ emitente (${nf.cnpjEmitente}) não corresponde à empresa selecionada`)
+        } else {
+          novasNotas.push(nf)
+        }
       } else {
         novosErros.push(`${file.name} — não foi possível extrair dados da NF`)
       }
