@@ -92,9 +92,9 @@ function parseXML(texto: string, arquivo: string): NFParsed | null {
 
     const get = (tag: string) => doc.getElementsByTagName(tag)[0]?.textContent?.trim() || ''
 
-    const emitEl2 = doc.getElementsByTagName('emit')[0]
-    const cnpjEmitente = emitEl2?.getElementsByTagName('CNPJ')[0]?.textContent?.trim() || ''
-    console.log('DEBUG emitente:', cnpjEmitente, 'emitEl2:', emitEl2)
+    // Extrair CNPJ do emitente via regex (getElementsByTagName falha com namespace XML)
+    const cnpjEmitMatch = texto.match(/<emit>.*?<CNPJ>(\d+)<\/CNPJ>/s) || texto.match(/<emit[^>]*>.*?<CNPJ>(\d+)<\/CNPJ>/s)
+    const cnpjEmitente = cnpjEmitMatch ? cnpjEmitMatch[1] : ''
 
     const numero_nf = get('nNF')
     const destinatario = get('xNome') // primeiro xNome é o emitente, segundo é o destinatário
