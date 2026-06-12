@@ -74,6 +74,9 @@ function parseXML(texto: string, arquivo: string): NFParsed | null {
       const xJust = get('xJust')
       const cnpjEmit = get('CNPJ')
       if (!nNF) return null
+      // Extrair CNPJ emitente do CCE/CAN via regex
+      const cnpjCceMatch = texto.match(/<CNPJ>(\d+)<\/CNPJ>/)
+      const cnpjEmitenteCce = cnpjCceMatch ? cnpjCceMatch[1] : ''
       return {
         numero_nf: nNF + (isCCE ? '-CCE' : '-CAN'),
         destinatario: isCCE ? 'CORRECAO: ' + xJust : 'CANCELAMENTO: ' + xJust,
@@ -83,6 +86,7 @@ function parseXML(texto: string, arquivo: string): NFParsed | null {
         nat_op: isCCE ? 'Carta de Correcao' : 'Cancelamento',
         status: isCCE ? 'Carta de Correcao' : 'Cancelamento',
         arquivo,
+        cnpjEmitente: cnpjEmitenteCce,
       }
     } catch { return null }
   }
