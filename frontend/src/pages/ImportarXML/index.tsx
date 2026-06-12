@@ -42,6 +42,8 @@ function parseXML(texto: string, arquivo: string): NFParsed | null {
         if (!isNaN(d.getTime())) dataEvento = String(d.getDate()).padStart(2,'0') + '/' + String(d.getMonth()+1).padStart(2,'0') + '/' + d.getFullYear()
       }
       if (!nNF) return null
+      const cnpjInutMatch = texto.match(/<CNPJ>(\d+)<\/CNPJ>/)
+      const cnpjEmitInut = cnpjInutMatch ? cnpjInutMatch[1] : ''
       return {
         numero_nf: nNF + '-INUT',
         destinatario: 'INUTILIZADA',
