@@ -94,6 +94,7 @@ function parseXML(texto: string, arquivo: string): NFParsed | null {
 
     const emitEl2 = doc.getElementsByTagName('emit')[0]
     const cnpjEmitente = emitEl2?.getElementsByTagName('CNPJ')[0]?.textContent?.trim() || ''
+    console.log('DEBUG emitente:', cnpjEmitente, 'emitEl2:', emitEl2)
 
     const numero_nf = get('nNF')
     const destinatario = get('xNome') // primeiro xNome é o emitente, segundo é o destinatário
@@ -156,7 +157,7 @@ export default function ImportarXML() {
   const empId = isSix ? 1 : 2
   const mono = { fontFamily: 'monospace' }
 
-  async function processarArquivos(files: FileList) {
+  async function processarArquivos(files: FileList, empresaAtual: string = empresa) {
     const novasNotas: NFParsed[] = []
     const novosErros: string[] = []
 
@@ -168,7 +169,7 @@ export default function ImportarXML() {
       const texto = await file.text()
       const nf = parseXML(texto, file.name)
       if (nf) {
-        const cnpjEsperado = CNPJ_EMPRESAS[empresa]
+        const cnpjEsperado = CNPJ_EMPRESAS[empresaAtual]
         if (nf.cnpjEmitente && cnpjEsperado && nf.cnpjEmitente !== cnpjEsperado) {
           novosErros.push(`${file.name} — CNPJ emitente (${nf.cnpjEmitente}) não corresponde à empresa selecionada`)
         } else {
@@ -191,11 +192,11 @@ export default function ImportarXML() {
   function onDrop(e: React.DragEvent) {
     e.preventDefault()
     setDragging(false)
-    if (e.dataTransfer.files.length > 0) processarArquivos(e.dataTransfer.files)
+    if (e.dataTransfer.files.length > 0) processarArquivos(e.dataTransfer.files, empresa)
   }
 
   function onFileChange(e: React.ChangeEvent<HTMLInputElement>) {
-    if (e.target.files?.length) processarArquivos(e.target.files)
+    if (e.target.files?.length) processarArquivos(e.target.files, empresa)
   }
 
   async function importar() {
