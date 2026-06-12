@@ -3,6 +3,11 @@ import { registrarLog } from '../../api/auditoria'
 import api from '../../api/endpoints'
 
 
+const CNPJ_EMPRESAS: Record<string, string> = {
+  'six': '09648409000193',
+  'enova': '38345220000120',
+}
+
 interface NFParsed {
   numero_nf: string
   destinatario: string
