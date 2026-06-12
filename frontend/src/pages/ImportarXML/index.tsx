@@ -132,6 +132,7 @@ function parseXML(texto: string, arquivo: string): NFParsed | null {
       nat_op: natOp,
       status,
       arquivo,
+      cnpjEmitente,
       refNFe: refNFe || undefined,
       mesEmissao: dataEmissao ? parseInt(dataEmissao.split('/')[1]) : undefined,
       anoEmissao: dataEmissao ? parseInt(dataEmissao.split('/')[2]) : undefined,
