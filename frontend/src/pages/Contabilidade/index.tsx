@@ -523,12 +523,14 @@ export default function Contabilidade() {
                           })()}
                         </td>
                         <td style={tdBase({ textAlign: 'center' })}>
-                          <input type="checkbox" checked={r.ajustado || false}
+                          {isVenda && <input type="checkbox" checked={r.ajustado || false}
                             onChange={async (e) => {
-                              await api.put('/notas/ajustado/' + r.id, { ajustado: e.target.checked })
-                              await carregarTudo()
+                              const val = e.target.checked
+                              // Atualizar otimisticamente
+                              setNotas(prev => prev.map(n => n.numero_nf === r.numero_nf ? {...n, ajustado: val} : n))
+                              await api.put('/notas/ajustado/' + r.id, { ajustado: val })
                             }}
-                            style={{ width: 16, height: 16, cursor: 'pointer', accentColor: '#34D399' }} />
+                            style={{ width: 16, height: 16, cursor: 'pointer', accentColor: '#34D399' }} />}
                         </td>
                         <td style={tdBase()}>
                           <span style={{ padding: '3px 8px', borderRadius: '12px', fontSize: '11px', fontWeight: 600, background: stStyle.bg, color: stStyle.cor, display: 'inline-flex', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap' }}>
