@@ -523,14 +523,15 @@ export default function Contabilidade() {
                           })()}
                         </td>
                         <td style={tdBase({ textAlign: 'center' })}>
-                          {isVenda && <input type="checkbox" checked={r.ajustado || false}
-                            onChange={async (e) => {
-                              const val = e.target.checked
-                              // Atualizar otimisticamente
+                          {isVenda && <button
+                            onClick={async () => {
+                              const val = !(r.ajustado || false)
                               setNotas(prev => prev.map(n => n.numero_nf === r.numero_nf ? {...n, ajustado: val} : n))
                               await api.put('/notas/ajustado/' + r.id, { ajustado: val })
                             }}
-                            style={{ width: 16, height: 16, cursor: 'pointer', accentColor: '#34D399' }} />}
+                            style={{ width: 18, height: 18, borderRadius: 4, border: '1px solid #4A5070', background: r.ajustado ? '#34D399' : '#2A2D3E', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            {r.ajustado && <span style={{ color: '#0D0F17', fontSize: 12, fontWeight: 700, lineHeight: 1 }}>✓</span>}
+                          </button>}
                         </td>
                         <td style={tdBase()}>
                           <span style={{ padding: '3px 8px', borderRadius: '12px', fontSize: '11px', fontWeight: 600, background: stStyle.bg, color: stStyle.cor, display: 'inline-flex', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap' }}>
