@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
-from sqlalchemy import Column, Integer, String, Float, ForeignKey
+from sqlalchemy import Column, Integer, String, Float, ForeignKey, Boolean
 from pydantic import BaseModel
 from typing import Optional
 from app.database import get_db, Base
@@ -21,6 +21,7 @@ class NotaFiscal(Base):
     nat_operacao = Column(String(200), nullable=True)
     status = Column(String(50), default='Venda')
     mes_lancamento = Column(String(10), nullable=True)
+    ajustado = Column(Boolean, default=False, nullable=True)
 
 router = APIRouter()
 
@@ -56,6 +57,7 @@ def listar_notas(empresa_id: int, db: Session = Depends(get_db), usuario=Depends
         "status": n.status,
         "mes_lancamento": n.mes_lancamento,
         "nat_operacao": n.nat_operacao,
+        "ajustado": n.ajustado or False,
     } for n in notas]
 
 @router.put("/{numero_nf}")
@@ -348,3 +350,12 @@ def atualizar_credito(credito_id: int, dados: dict, db: Session = Depends(get_db
     cr.status = dados["status"]
     db.commit(); db.refresh(cr)
     return cr
+
+@router.put("/ajustado/{nota_id}")
+def atualizar_ajustado(nota_id: int, dados: dict, db: Session = Depends(get_db), usuario=Depends(get_current_user)):
+    nota = db.query(NotaFiscal).filter(NotaFiscal.id == nota_id).first()
+    if not nota:
+        return {"error": "Nota nao encontrada"}
+    nota.ajustado = dados.get("ajustado", False)
+    db.commit()
+    return {"message": "OK", "ajustado": nota.ajustado}

@@ -452,7 +452,7 @@ export default function Contabilidade() {
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
               <thead>
                 <tr style={{ background: '#1A1D2A' }}>
-                  {['Nº NF','Destinatário','CNPJ Dest.','Valor NF','Dt. Emissão','Valor Pago','Restante','Dt. Pagto','Imposto','Status',''].map((h, i) => (
+                  {['Nº NF','Destinatário','CNPJ Dest.','Valor NF','Dt. Emissão','Valor Pago','Restante','Dt. Pagto','Imposto','Ajuste','Status',''].map((h, i) => (
                     <th key={i} style={{ padding: '8px 12px', textAlign: i >= 3 && i <= 7 ? 'right' : i === 9 ? 'center' : 'left', fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1px', color: '#7B82A0', borderBottom: '1px solid #252836', whiteSpace: 'nowrap' }}>{h}</th>
                   ))}
                 </tr>
@@ -521,6 +521,14 @@ export default function Contabilidade() {
                             }
                             return <span style={{ color: '#4A5070' }}>—</span>
                           })()}
+                        </td>
+                        <td style={tdBase({ textAlign: 'center' })}>
+                          <input type="checkbox" checked={r.ajustado || false}
+                            onChange={async (e) => {
+                              await api.put('/notas/ajustado/' + r.id, { ajustado: e.target.checked })
+                              await carregarTudo()
+                            }}
+                            style={{ width: 16, height: 16, cursor: 'pointer', accentColor: '#34D399' }} />
                         </td>
                         <td style={tdBase()}>
                           <span style={{ padding: '3px 8px', borderRadius: '12px', fontSize: '11px', fontWeight: 600, background: stStyle.bg, color: stStyle.cor, display: 'inline-flex', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap' }}>
@@ -719,7 +727,7 @@ export default function Contabilidade() {
                   <td style={{ padding: '8px 12px', textAlign: 'right', fontWeight: 700, ...mono, color: corEmp }}>{fmtR(tNF)}</td>
                   <td></td>
                   <td style={{ padding: '8px 12px', textAlign: 'right', fontWeight: 700, ...mono, color: '#34D399' }}>{fmtR(tPago)}</td>
-                  <td></td><td></td><td></td><td></td><td></td>
+                  <td></td><td></td><td></td><td></td><td></td><td></td>
                 </tr>
               </tfoot>
             </table>
