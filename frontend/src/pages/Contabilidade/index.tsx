@@ -529,8 +529,8 @@ export default function Contabilidade() {
                               setNotas(prev => prev.map(n => n.numero_nf === r.numero_nf ? {...n, ajustado: val} : n))
                               await api.put('/notas/ajustado/' + r.id, { ajustado: val })
                             }}
-                            style={{ width: 18, height: 18, borderRadius: 4, border: '1px solid #4A5070', background: r.ajustado ? '#34D399' : '#2A2D3E', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                            {r.ajustado && <span style={{ color: '#0D0F17', fontSize: 12, fontWeight: 700, lineHeight: 1 }}>✓</span>}
+                            style={{ width: 14, height: 14, borderRadius: 3, border: '1px solid #4A5070', background: r.ajustado ? '#34D399' : '#2A2D3E', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            {r.ajustado && <span style={{ color: '#0D0F17', fontSize: 10, fontWeight: 700, lineHeight: 1 }}>✓</span>}
                           </button>}
                         </td>
                         <td style={tdBase()}>
