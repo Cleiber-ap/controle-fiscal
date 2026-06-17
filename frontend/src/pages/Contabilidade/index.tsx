@@ -311,7 +311,12 @@ export default function Contabilidade() {
       const val = editPgtoVal.trim() === '' ? 0 : (parseFloat(editPgtoVal.replace(',', '.')) || 0)
       console.log('📤 Editando pagamento - ID:', pgtoId, 'NF:', nf, 'VALOR:', val, 'DATA:', editPgtoDt)
       const dtPgtoFinal = editPgtoDt.trim().split('/').length === 2 ? editPgtoDt.trim() + '/' + new Date().getFullYear() : editPgtoDt.trim()
-      const response = await api.put('/notas/pagamento/' + pgtoId, { empresa_id: empId, numero_nf: nf, valor_pago: val, dt_pagamento: dtPgtoFinal, mes_lancamento: editMesLct })
+      let response
+      if (val === 0) {
+        response = await api.delete('/notas/pagamento/' + pgtoId + '?empresa_id=' + empId)
+      } else {
+        response = await api.put('/notas/pagamento/' + pgtoId, { empresa_id: empId, numero_nf: nf, valor_pago: val, dt_pagamento: dtPgtoFinal, mes_lancamento: editMesLct })
+      }
       console.log('✅ Resposta:', response.data)
       console.log('🔄 Recarregando...')
       await carregarTudo()
