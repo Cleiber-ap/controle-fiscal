@@ -185,21 +185,25 @@ export default function ExportarExcel() {
         const parts=n.data_emissao.includes("-")?n.data_emissao.split("-"):n.data_emissao.split("/").reverse()
         return !(parseInt(parts[1])===mesAntIdx+1&&parseInt(parts[0])===anoAnt)
       })
+      const mesAtualIdx2 = now.getMonth()
+      const anoAtual2 = now.getFullYear()
       const notasPagas = listaFiltrada.filter((n:any)=>{
         const pgtos=pagamentos[n.numero_nf]||[]
+        const isPagoRef = (mes: number, ano: number) =>
+          (mes===mesAntIdx+1&&ano===anoAnt) || (mes===mesAtualIdx2+1&&ano===anoAtual2)
         if(pgtos.length===0){
           const dtP=n.dt_pagamento||n.data_pagamento; if(!dtP) return false
           const parts=dtP.includes("-")?dtP.split("-"):dtP.split("/").reverse()
-          return parseInt(parts[1])===mesAntIdx+1&&parseInt(parts[0])===anoAnt
+          return isPagoRef(parseInt(parts[1]), parseInt(parts[0]))
         }
-        return pgtos.some((p:any)=>{ const dt=p.dt_pagamento; if(!dt) return false; const parts=dt.includes("-")?dt.split("-"):dt.split("/").reverse(); return parseInt(parts[1])===mesAntIdx+1&&parseInt(parts[0])===anoAnt })
+        return pgtos.some((p:any)=>{ const dt=p.dt_pagamento; if(!dt) return false; const parts=dt.includes("-")?dt.split("-"):dt.split("/").reverse(); return isPagoRef(parseInt(parts[1]), parseInt(parts[0])) })
       })
       const todasNotas = [...new Map([...notasMes,...notasAguardando,...notasPagas].map((n:any)=>[n.numero_nf,n])).values()].sort((a:any,b:any)=>(parseFloat(a.numero_nf)||0)-(parseFloat(b.numero_nf)||0))
       const rows: any[][] = []
       for(const n of todasNotas){
         const pgtos=pagamentos[n.numero_nf]||[]
         const dtEm=parseDate(n.data_emissao)
-        const pgtosMes = pgtos.filter((p:any)=>{ const dt=p.dt_pagamento; if(!dt) return false; const parts=dt.includes("-")?dt.split("-"):dt.split("/").reverse(); return parseInt(parts[1])===mesAntIdx+1&&parseInt(parts[0])===anoAnt })
+        const pgtosMes = pgtos.filter((p:any)=>{ const dt=p.dt_pagamento; if(!dt) return false; const parts=dt.includes("-")?dt.split("-"):dt.split("/").reverse(); const m=parseInt(parts[1]); const a=parseInt(parts[0]); return (m===mesAntIdx+1&&a===anoAnt)||(m===mesAtualIdx2+1&&a===anoAtual2) })
         if(pgtosMes.length>0){
           pgtosMes.forEach((p:any)=>rows.push([n.numero_nf||"",emp,n.cnpj_dest||"",n.destinatario||"",parseFloat(n.valor_nf)||0,dtEm,parseFloat(p.valor_pago)||0,parseDate(p.dt_pagamento),n.nat_operacao||n.status||""]))
         } else {
