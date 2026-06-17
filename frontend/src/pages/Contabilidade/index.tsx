@@ -308,7 +308,7 @@ export default function Contabilidade() {
   async function editarPagamento(pgtoId: number, nf: string) {
     if (editandoRef.current) return; editandoRef.current = true; setSalvando(true)
     try {
-      const val = parseFloat(editPgtoVal.replace(',', '.'))
+      const val = editPgtoVal.trim() === '' ? 0 : (parseFloat(editPgtoVal.replace(',', '.')) || 0)
       console.log('📤 Editando pagamento - ID:', pgtoId, 'NF:', nf, 'VALOR:', val, 'DATA:', editPgtoDt)
       const dtPgtoFinal = editPgtoDt.trim().split('/').length === 2 ? editPgtoDt.trim() + '/' + new Date().getFullYear() : editPgtoDt.trim()
       const response = await api.put('/notas/pagamento/' + pgtoId, { empresa_id: empId, numero_nf: nf, valor_pago: val, dt_pagamento: dtPgtoFinal, mes_lancamento: editMesLct })
