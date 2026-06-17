@@ -279,9 +279,19 @@ export default function Contabilidade() {
     try {
       const nota = notas.find(n => n.numero_nf === nf)
       const nf_val = parseFloat(nota?.valor_nf || '0') || 0
-      const val = editVPg.trim() === '' ? nf_val : (parseFloat(editVPg.replace(',', '.')) ?? nf_val)
+      const val = editVPg.trim() === '' || editVPg.trim() === '0' || editVPg.trim() === '0,00' ? 0 : (parseFloat(editVPg.replace(',', '.')) || nf_val)
       const dtFinal = editDtp.trim().split('/').length === 2 ? editDtp.trim() + '/' + new Date().getFullYear() : editDtp.trim()
-      await api.post('/notas/pagamento', { empresa_id: empId, numero_nf: nf, valor_pago: val, dt_pagamento: dtFinal, mes_lancamento: editMesLct })
+      if (val === 0) {
+        // Valor zerado: remover pagamento existente
+        const lista = pagamentos[nf] || []
+        if (lista.length > 0) {
+          await api.delete('/notas/pagamento/' + lista[lista.length-1].id + '?empresa_id=' + empId)
+        } else {
+          await api.delete('/notas/pagamento/nota/' + nf + '?empresa_id=' + empId)
+        }
+      } else {
+        await api.post('/notas/pagamento', { empresa_id: empId, numero_nf: nf, valor_pago: val, dt_pagamento: dtFinal, mes_lancamento: editMesLct })
+      }
       await carregarTudo()
       setScrollParaAguardando(true)
       setEditando(null); setEditVPg(''); setEditDtp(''); setEditMesLct('')
