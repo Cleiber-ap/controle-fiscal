@@ -279,7 +279,7 @@ export default function Contabilidade() {
     try {
       const nota = notas.find(n => n.numero_nf === nf)
       const nf_val = parseFloat(nota?.valor_nf || '0') || 0
-      const val = parseFloat(editVPg.replace(',', '.')) || nf_val
+      const val = editVPg.trim() === '' ? nf_val : (parseFloat(editVPg.replace(',', '.')) ?? nf_val)
       const dtFinal = editDtp.trim().split('/').length === 2 ? editDtp.trim() + '/' + new Date().getFullYear() : editDtp.trim()
       await api.post('/notas/pagamento', { empresa_id: empId, numero_nf: nf, valor_pago: val, dt_pagamento: dtFinal, mes_lancamento: editMesLct })
       await carregarTudo()
@@ -296,7 +296,7 @@ export default function Contabilidade() {
       const lista = pagamentos[nf] || []
       const pago = lista.reduce((s: number, p: any) => s + (parseFloat(p.valor_pago) || 0), 0)
       const restante = nf_val - pago
-      const novoVal = parseFloat(editVPg.replace(',', '.')) || (nf_val - pago)
+      const novoVal = editVPg.trim() === '' ? (nf_val - pago) : (parseFloat(editVPg.replace(',', '.')) ?? (nf_val - pago))
       await api.post('/notas/pagamento', { empresa_id: empId, numero_nf: nf, valor_pago: novoVal, dt_pagamento: editDtp })
       await carregarTudo()
       setScrollParaAguardando(true)
