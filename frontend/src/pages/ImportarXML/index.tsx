@@ -370,7 +370,7 @@ export default function ImportarXML() {
           } else {
             // Buscar no banco
             try {
-              const res = await api.get('/notas/' + empId)
+              const res = await api.get('/notas/' + empIdDetectado)
               const origDb = res.data.find((n: any) => n.numero_nf === nNFOrig)
               if (origDb) {
                 notaFinal.destinatario = origDb.destinatario
@@ -392,7 +392,7 @@ export default function ImportarXML() {
           const nfOrig = chave.substring(25, 34).replace(/^0+/, '')
           try {
             await api.post('/notas/ajustes', {
-              empresa_id: empId, ano: anoOrig, mes: mesOrig,
+              empresa_id: empIdDetectado, ano: anoOrig, mes: mesOrig,
               valor: notaFinal.valor_nf, nf_devolucao: notaFinal.numero_nf,
               nf_referenciada: nfOrig, chave_ref: chave
             })
@@ -412,7 +412,7 @@ export default function ImportarXML() {
         })
         for (const [key, valor] of Object.entries(porMes)) {
           const [ano, mes] = key.split('-')
-          await api.post('/dados/historico/upsert', { empresa_id: empIdDetectado, ano: parseInt(ano), mes: parseInt(mes), valor })
+          await api.post('/dados/historico/upsert', { empresa_id: notaFinal.empresa_id, ano: parseInt(ano), mes: parseInt(mes), valor })
         }
       }
       setResultado(`✅ ${importadas} nota${importadas !== 1 ? 's' : ''} importada${importadas !== 1 ? 's' : ''} com sucesso!${notasVenda.length > 0 ? ` · Planilha_2 atualizada` : ''}`)
