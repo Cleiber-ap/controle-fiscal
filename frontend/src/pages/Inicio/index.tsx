@@ -122,7 +122,7 @@ export default function Inicio() {
 
   const baseSixMLcto = calcBaseMLcto(pgtosSix, notasSix)
   const baseEnovaMLcto = calcBaseMLcto(pgtosEnova, notasEnova)
-  const calcRbt12 = (hist: any[], ajustes: any[] = []) => { let sum = 0; for (let i=0;i<12;i++){const d=new Date(now.getFullYear(),now.getMonth()-i-1,1);const m=d.getMonth()+1;const a=d.getFullYear();const fat=(hist.find((r:any)=>r.ano===a&&r.mes===m)?.valor||0);const dev=ajustes.filter((aj:any)=>aj.ano===a&&aj.mes===m).reduce((s:number,aj:any)=>s+aj.valor,0);sum+=fat-dev} return sum }
+  const calcRbt12 = (hist: any[], ajustes: any[] = []) => { let sum = 0; for (let i=1;i<13;i++){const d=new Date(now.getFullYear(),now.getMonth()-i-1,1);const m=d.getMonth()+1;const a=d.getFullYear();const fat=(hist.find((r:any)=>r.ano===a&&r.mes===m)?.valor||0);const dev=ajustes.filter((aj:any)=>aj.ano===a&&aj.mes===m).reduce((s:number,aj:any)=>s+aj.valor,0);sum+=fat-dev} return sum }
   const rbt12Six = calcRbt12(histSix, ajustesSix)
   const rbt12Enova = calcRbt12(histEnova, ajustesEnova)
   const faixaSix = FAIXAS_SIMPLES.find(f=>rbt12Six>=f.min&&rbt12Six<=f.max)||FAIXAS_SIMPLES[FAIXAS_SIMPLES.length-1]
