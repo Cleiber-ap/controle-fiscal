@@ -291,8 +291,8 @@ export default function ImportarXML() {
         await api.post('/notas/pagamento', {
           empresa_id: n.empresa_id,
           numero_nf: n.numero_nf,
-          valor_pago: n.valor_pago,
-          dt_pagamento: n.data_pagamento,
+          valor_pago: parseFloat(String(n.valor_pago)) || 0,
+          dt_pagamento: String(n.data_pagamento).split(' ')[0],
         })
         ok++
       }
