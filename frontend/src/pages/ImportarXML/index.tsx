@@ -305,9 +305,8 @@ export default function ImportarXML() {
     }
   }
 
-  const corEmp = isSix ? '#4F8EF7' : '#34D399'
-  const bgEmp = isSix ? '#1C2E52' : '#0D3326'
-  const empId = isSix ? 1 : 2
+  const corEmp = '#4F8EF7'
+  const bgEmp = '#1C2E52'
   const mono = { fontFamily: 'monospace' }
 
   async function processarArquivos(files: FileList) {
@@ -413,8 +412,7 @@ export default function ImportarXML() {
         })
         for (const [key, valor] of Object.entries(porMes)) {
           const [ano, mes] = key.split('-')
-          const empIdHist = notaFinal.empresa_id
-          await api.post('/dados/historico/upsert', { empresa_id: empIdHist, ano: parseInt(ano), mes: parseInt(mes), valor })
+          await api.post('/dados/historico/upsert', { empresa_id: empIdDetectado, ano: parseInt(ano), mes: parseInt(mes), valor })
         }
       }
       setResultado(`✅ ${importadas} nota${importadas !== 1 ? 's' : ''} importada${importadas !== 1 ? 's' : ''} com sucesso!${notasVenda.length > 0 ? ` · Planilha_2 atualizada` : ''}`)
@@ -469,7 +467,7 @@ export default function ImportarXML() {
           border: `1px dashed ${dragging ? corEmp : '#333750'}`,
           borderRadius: '14px', padding: '32px',
           textAlign: 'center', cursor: 'pointer',
-          background: dragging ? (isSix ? 'rgba(79,142,247,0.06)' : 'rgba(52,211,153,0.06)') : '#13161F',
+          background: dragging ? 'rgba(79,142,247,0.06)' : '#13161F',
           transition: 'all .2s', marginBottom: '16px',
         }}>
         <div style={{ fontSize: '32px', marginBottom: '10px' }}>📄</div>
@@ -586,7 +584,7 @@ export default function ImportarXML() {
               Cancelar
             </button>
             <button onClick={importar} disabled={importando}
-              style={{ padding: '8px 20px', background: isSix ? '#1C2E52' : '#0D3326', border: `1px solid ${isSix ? 'rgba(79,142,247,0.3)' : 'rgba(52,211,153,0.3)'}`, borderRadius: '6px', color: corEmp, fontSize: '12px', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
+              style={{ padding: '8px 20px', background: '#1C2E52', border: '1px solid rgba(79,142,247,0.3)', borderRadius: '6px', color: corEmp, fontSize: '12px', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
               {importando ? 'Importando...' : `📥 Importar ${notas.length} nota${notas.length !== 1 ? 's' : ''}`}
             </button>
           </div>
