@@ -586,6 +586,86 @@ export default function ImportarXML() {
           </div>
         </>
       )}
+
+      {/* ==================== IMPORTAR PLANILHA ==================== */}
+      <div style={{ ...st, marginTop: '24px' }}>
+        Importar Planilha de Recebimentos
+        <div style={{ flex: 1, height: '1px', background: '#252836' }} />
+      </div>
+
+      <div style={{ background: '#13161F', border: '1px solid #252836', borderRadius: '14px', padding: '16px 20px', marginBottom: '16px' }}>
+        <div style={{ fontSize: '11px', color: '#7B82A0', marginBottom: '12px' }}>
+          📋 Lê arquivo CSV com colunas: <strong style={{ color: '#E8EAF0' }}>Unidade, NFes autorizadas, Valor, Data do recebimento</strong><br/>
+          O sistema identifica automaticamente a nota de Venda entre as NFs e lança o pagamento.
+        </div>
+        <button onClick={() => inputPlanilhaRef.current?.click()}
+          style={{ padding: '8px 18px', background: '#1C2E52', border: '1px solid rgba(79,142,247,0.3)', borderRadius: '8px', color: '#4F8EF7', fontSize: '12px', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
+          📂 Selecionar CSV
+        </button>
+        <input ref={inputPlanilhaRef} type="file" accept=".csv,.xls" onChange={e => { if (e.target.files?.[0]) processarPlanilha(e.target.files[0]) }} style={{ display: 'none' }} />
+      </div>
+
+      {planilhaErros.length > 0 && (
+        <div style={{ background: '#3B1010', border: '1px solid rgba(248,113,113,0.3)', borderRadius: '14px', padding: '12px 16px', marginBottom: '16px' }}>
+          {planilhaErros.map((e, i) => <div key={i} style={{ fontSize: '11px', color: '#F87171', marginBottom: '3px' }}>⚠️ {e}</div>)}
+        </div>
+      )}
+
+      {resultadoPlanilha && (
+        <div style={{ background: resultadoPlanilha.startsWith('✅') ? '#0D3326' : '#3B1010', border: `1px solid ${resultadoPlanilha.startsWith('✅') ? 'rgba(52,211,153,0.3)' : 'rgba(248,113,113,0.3)'}`, borderRadius: '14px', padding: '12px 16px', marginBottom: '16px', fontSize: '12px', fontWeight: 600, color: resultadoPlanilha.startsWith('✅') ? '#34D399' : '#F87171' }}>
+          {resultadoPlanilha}
+        </div>
+      )}
+
+      {planilhaNotas.length > 0 && (
+        <>
+          <div style={{ ...st }}>
+            Preview — {planilhaNotas.length} pagamento{planilhaNotas.length !== 1 ? 's' : ''} identificado{planilhaNotas.length !== 1 ? 's' : ''}
+            <div style={{ flex: 1, height: '1px', background: '#252836' }} />
+          </div>
+          <div style={{ background: '#13161F', border: '1px solid #252836', borderRadius: '14px', overflow: 'hidden', marginBottom: '16px' }}>
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
+                <thead>
+                  <tr style={{ background: '#1A1D2A' }}>
+                    {['Empresa','Nº NF','Destinatário','Valor NF','Valor Pago','Data Pagto','Status'].map((h, i) => (
+                      <th key={i} style={{ padding: '8px 12px', textAlign: 'left', fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.8px', color: '#4A5070', borderBottom: '1px solid #252836', whiteSpace: 'nowrap' }}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {planilhaNotas.map((n, i) => (
+                    <tr key={i} style={{ borderBottom: '1px solid #252836' }}>
+                      <td style={{ padding: '8px 12px', color: n.empresa_id === 1 ? '#4F8EF7' : '#34D399', fontWeight: 600, fontSize: '11px' }}>{n.empresa}</td>
+                      <td style={{ padding: '8px 12px', fontWeight: 700, color: n.empresa_id === 1 ? '#4F8EF7' : '#34D399', fontFamily: 'monospace' }}>{n.numero_nf}</td>
+                      <td style={{ padding: '8px 12px', color: '#7B82A0', maxWidth: '180px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{n.destinatario}</td>
+                      <td style={{ padding: '8px 12px', fontFamily: 'monospace', fontSize: '11px', color: '#E8EAF0' }}>{fmtR(n.valor_nf)}</td>
+                      <td style={{ padding: '8px 12px', fontFamily: 'monospace', fontSize: '11px', fontWeight: 600, color: '#34D399' }}>{fmtR(n.valor_pago)}</td>
+                      <td style={{ padding: '8px 12px', fontFamily: 'monospace', fontSize: '11px', color: '#7B82A0' }}>{n.data_pagamento}</td>
+                      <td style={{ padding: '8px 12px' }}>
+                        {n.ja_pago
+                          ? <span style={{ padding: '2px 8px', borderRadius: '999px', fontSize: '10px', fontWeight: 600, background: 'rgba(251,191,36,0.15)', color: '#FBBF24' }}>⚠️ Já tem pagamento</span>
+                          : <span style={{ padding: '2px 8px', borderRadius: '999px', fontSize: '10px', fontWeight: 600, background: 'rgba(52,211,153,0.15)', color: '#34D399' }}>✓ Novo</span>
+                        }
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+            <button onClick={() => { setPlanilhaNotas([]); setPlanilhaErros([]); setResultadoPlanilha(null) }}
+              style={{ padding: '8px 16px', background: 'transparent', border: '1px solid #252836', borderRadius: '6px', color: '#7B82A0', fontSize: '12px', cursor: 'pointer', fontFamily: 'inherit' }}>
+              Cancelar
+            </button>
+            <button onClick={importarPlanilha} disabled={importandoPlanilha}
+              style={{ padding: '8px 20px', background: '#1C2E52', border: '1px solid rgba(79,142,247,0.3)', borderRadius: '6px', color: '#4F8EF7', fontSize: '12px', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
+              {importandoPlanilha ? 'Lançando...' : `💾 Lançar ${planilhaNotas.length} pagamento${planilhaNotas.length !== 1 ? 's' : ''}`}
+            </button>
+          </div>
+        </>
+      )}
     </div>
   )
 }
