@@ -117,8 +117,8 @@ export default function ImpostosPagos() {
           <tbody>
             {totAnuais.map(d=>(
               <tr key={d.ano} style={{background:d.ano===anoAtual?'rgba(251,191,36,0.04)':''}}>
-                <td style={{padding:'8px 16px',borderBottom:'1px solid #252836',fontFamily:'JetBrains Mono,monospace',fontSize:12,fontWeight:d.ano===anoAtual?700:600,color:d.ano===anoAtual?'#FBBF24':'#E8EAF0',textAlign:'left'}}>
-                  {d.ano}{d.ano===anoAtual&&<span style={{fontSize:9,background:'rgba(251,191,36,0.15)',color:'#FBBF24',padding:'1px 5px',borderRadius:999,marginLeft:6}}>atual</span>}
+                <td style={{padding:'8px 16px',borderBottom:'1px solid #252836',fontFamily:'JetBrains Mono,monospace',fontSize:12,fontWeight:600,color:'#E8EAF0',textAlign:'left'}}>
+                  {d.ano}
                 </td>
                 <td style={{padding:'8px 16px',borderBottom:'1px solid #252836',textAlign:'right',fontFamily:'JetBrains Mono,monospace',fontSize:11,color:'#4F8EF7'}}>{d.six>0?fmtR(d.six):'--'}</td>
                 <td style={{padding:'8px 16px',borderBottom:'1px solid #252836',textAlign:'right',fontFamily:'JetBrains Mono,monospace',fontSize:11,color:'#34D399'}}>{d.enova>0?fmtR(d.enova):'--'}</td>
@@ -159,10 +159,10 @@ export default function ImpostosPagos() {
                       <div style={{color:'#4A5070'}}>Dados serao inseridos em breve</div>
                     </td></tr>
                   ):dados.map(r=>(
-                    <tr key={r.id} style={{background:isMesAnt(r.ano,r.mes)?'rgba(251,191,36,0.06)':''}}>
-                      <td style={{padding:'7px 14px',borderBottom:'1px solid #252836',color:isMesAnt(r.ano,r.mes)?'#FBBF24':'#7B82A0',fontWeight:isMesAnt(r.ano,r.mes)?700:400}}>
+                    <tr key={r.id} style={{}}>
+                      <td style={{padding:'7px 14px',borderBottom:'1px solid #252836',color:'#7B82A0',fontWeight:400}}>
                         {MESES[r.mes-1]}/{r.ano}
-                        {isMesAnt(r.ano,r.mes)&&<span style={{fontSize:9,background:'rgba(251,191,36,0.15)',color:'#FBBF24',padding:'1px 5px',borderRadius:999,marginLeft:5}}>ant.</span>}
+                        
                       </td>
                       <td style={{padding:'7px 14px',borderBottom:'1px solid #252836',textAlign:'right',fontFamily:'JetBrains Mono,monospace',fontSize:11,fontWeight:600,color:'#FBBF24'}}>{fmtR(r.valor)}</td>
                     </tr>
