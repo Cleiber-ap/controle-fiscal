@@ -159,101 +159,6 @@ export default function ImportarXML() {
   const [creditoPendente, setCreditoPendente] = useState<{nota: any, valorOrig: number} | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
-  const isSix = empresa === 'six'
-  const corEmp = isSix ? '#4F8EF7' : '#34D399'
-  const bgEmp = isSix ? '#1C2E52' : '#0D3326'
-  const empId = isSix ? 1 : 2
-  const mono = { fontFamily: 'monospace' }
-
-  async function processarArquivos(files: FileList, empresaAtual: string = empresa) {
-    const novasNotas: NFParsed[] = []
-    const novosErros: string[] = []
-
-    for (const file of Array.from(files)) {
-      if (!file.name.endsWith('.xml')) {
-        novosErros.push(`${file.name} — não é um arquivo XML`)
-        continue
-      }
-      const texto = await file.text()
-      const nf = parseXML(texto, file.name)
-      if (nf) {
-        const cnpjEsperado = CNPJ_EMPRESAS[empresaAtual]
-        if (nf.cnpjEmitente && cnpjEsperado && nf.cnpjEmitente !== cnpjEsperado) {
-          novosErros.push(`${file.name} — CNPJ emitente (${nf.cnpjEmitente}) não corresponde à empresa selecionada`)
-        } else {
-          novasNotas.push(nf)
-        }
-      } else {
-        novosErros.push(`${file.name} — não foi possível extrair dados da NF`)
-      }
-    }
-
-    setNotas(prev => {
-      // Evitar duplicatas por numero_nf
-      const existentes = new Set(prev.map(n => n.numero_nf))
-      return [...prev, ...novasNotas.filter(n => !existentes.has(n.numero_nf))]
-    })
-    setErros(prev => [...prev, ...novosErros])
-    setResultado(null)
-  }
-
-  function onDrop(e: React.DragEvent) {
-    e.preventDefault()
-    setDragging(false)
-    if (e.dataTransfer.files.length > 0) processarArquivos(e.dataTransfer.files, empresa)
-  }
-
-  function onFileChange(e: React.ChangeEvent<HTMLInputElement>) {
-    if (e.target.files?.length) processarArquivos(e.target.files, empresa)
-  }
-
-  async function importar() {
-    if (notas.length === 0) return
-    setImportando(true)
-    try {
-      let importadas = 0
-      for (const nota of notas) {
-        // Se for CAN ou CCE, buscar destinatario/cnpj da nota original
-        let notaFinal = { ...nota, empresa_id: empId }
-        if (nota.cnpj_dest?.startsWith('_lookup_')) {
-          const nNFOrig = nota.cnpj_dest.replace('_lookup_', '')
-          const orig = notas.find(n => n.numero_nf === nNFOrig)
-          if (orig) {
-            notaFinal.destinatario = orig.destinatario
-            notaFinal.cnpj_dest = orig.cnpj_dest
-          } else {
-            // Buscar no banco
-            try {
-              const res = await api.get('/notas/' + empId)
-              const origDb = res.data.find((n: any) => n.numero_nf === nNFOrig)
-              if (origDb) {
-                notaFinal.destinatario = origDb.destinatario
-                notaFinal.cnpj_dest = origDb.cnpj_dest
-              } else {
-                notaFinal.cnpj_dest = ''
-              }
-            } catch { notaFinal.cnpj_dest = '' }
-          }
-        }
-        await api.post('/notas/importar', notaFinal)
-        importadas++
-        // Se for devolucao com refNFe: registrar ajuste para subtrair do RBT12
-        const isDev = (notaFinal.nat_op || '').toLowerCase().includes('devolu')
-        if (isDev && notaFinal.refNFe && notaFinal.refNFe.length >= 25) {
-          const chave = notaFinal.refNFe
-          const anoOrig = parseInt('20' + chave.substring(2, 4))
-          const mesOrig = parseInt(chave.substring(4, 6))
-          const nfOrig = chave.substring(25, 34).replace(/^0+/, '')
-          try {
-            await api.post('/notas/ajustes', {
-              empresa_id: empId, ano: anoOrig, mes: mesOrig,
-              valor: notaFinal.valor_nf, nf_devolucao: notaFinal.numero_nf,
-              nf_referenciada: nfOrig, chave_ref: chave
-            })
-            } catch(e) { console.warn('Ajuste devolucao nao registrado', e) }
-        }
-      }
-      // Atualizar historico de faturamento se houver notas de venda
     
   // ==================== IMPORTAR PLANILHA ====================
   const [planilhaNotas, setPlanilhaNotas] = useState<any[]>([])
@@ -381,7 +286,102 @@ export default function ImportarXML() {
       setImportandoPlanilha(false)
     }
   }
-  const notasVenda = notas.filter(n => n.status === 'Venda')
+
+  const isSix = empresa === 'six'
+  const corEmp = isSix ? '#4F8EF7' : '#34D399'
+  const bgEmp = isSix ? '#1C2E52' : '#0D3326'
+  const empId = isSix ? 1 : 2
+  const mono = { fontFamily: 'monospace' }
+
+  async function processarArquivos(files: FileList, empresaAtual: string = empresa) {
+    const novasNotas: NFParsed[] = []
+    const novosErros: string[] = []
+
+    for (const file of Array.from(files)) {
+      if (!file.name.endsWith('.xml')) {
+        novosErros.push(`${file.name} — não é um arquivo XML`)
+        continue
+      }
+      const texto = await file.text()
+      const nf = parseXML(texto, file.name)
+      if (nf) {
+        const cnpjEsperado = CNPJ_EMPRESAS[empresaAtual]
+        if (nf.cnpjEmitente && cnpjEsperado && nf.cnpjEmitente !== cnpjEsperado) {
+          novosErros.push(`${file.name} — CNPJ emitente (${nf.cnpjEmitente}) não corresponde à empresa selecionada`)
+        } else {
+          novasNotas.push(nf)
+        }
+      } else {
+        novosErros.push(`${file.name} — não foi possível extrair dados da NF`)
+      }
+    }
+
+    setNotas(prev => {
+      // Evitar duplicatas por numero_nf
+      const existentes = new Set(prev.map(n => n.numero_nf))
+      return [...prev, ...novasNotas.filter(n => !existentes.has(n.numero_nf))]
+    })
+    setErros(prev => [...prev, ...novosErros])
+    setResultado(null)
+  }
+
+  function onDrop(e: React.DragEvent) {
+    e.preventDefault()
+    setDragging(false)
+    if (e.dataTransfer.files.length > 0) processarArquivos(e.dataTransfer.files, empresa)
+  }
+
+  function onFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    if (e.target.files?.length) processarArquivos(e.target.files, empresa)
+  }
+
+  async function importar() {
+    if (notas.length === 0) return
+    setImportando(true)
+    try {
+      let importadas = 0
+      for (const nota of notas) {
+        // Se for CAN ou CCE, buscar destinatario/cnpj da nota original
+        let notaFinal = { ...nota, empresa_id: empId }
+        if (nota.cnpj_dest?.startsWith('_lookup_')) {
+          const nNFOrig = nota.cnpj_dest.replace('_lookup_', '')
+          const orig = notas.find(n => n.numero_nf === nNFOrig)
+          if (orig) {
+            notaFinal.destinatario = orig.destinatario
+            notaFinal.cnpj_dest = orig.cnpj_dest
+          } else {
+            // Buscar no banco
+            try {
+              const res = await api.get('/notas/' + empId)
+              const origDb = res.data.find((n: any) => n.numero_nf === nNFOrig)
+              if (origDb) {
+                notaFinal.destinatario = origDb.destinatario
+                notaFinal.cnpj_dest = origDb.cnpj_dest
+              } else {
+                notaFinal.cnpj_dest = ''
+              }
+            } catch { notaFinal.cnpj_dest = '' }
+          }
+        }
+        await api.post('/notas/importar', notaFinal)
+        importadas++
+        // Se for devolucao com refNFe: registrar ajuste para subtrair do RBT12
+        const isDev = (notaFinal.nat_op || '').toLowerCase().includes('devolu')
+        if (isDev && notaFinal.refNFe && notaFinal.refNFe.length >= 25) {
+          const chave = notaFinal.refNFe
+          const anoOrig = parseInt('20' + chave.substring(2, 4))
+          const mesOrig = parseInt(chave.substring(4, 6))
+          const nfOrig = chave.substring(25, 34).replace(/^0+/, '')
+          try {
+            await api.post('/notas/ajustes', {
+              empresa_id: empId, ano: anoOrig, mes: mesOrig,
+              valor: notaFinal.valor_nf, nf_devolucao: notaFinal.numero_nf,
+              nf_referenciada: nfOrig, chave_ref: chave
+            })
+            } catch(e) { console.warn('Ajuste devolucao nao registrado', e) }
+        }
+      }
+      // Atualizar historico de faturamento se houver notas de venda  const notasVenda = notas.filter(n => n.status === 'Venda')
       if (notasVenda.length > 0) {
         // Agrupar por mês/ano
         const porMes: Record<string, number> = {}
