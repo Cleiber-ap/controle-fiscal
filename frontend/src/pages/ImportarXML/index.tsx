@@ -172,9 +172,27 @@ export default function ImportarXML() {
     const linhas = texto.split('\n').filter(l => l.trim())
     if (linhas.length < 2) { setPlanilhaErros(['Arquivo vazio ou inválido']); return }
 
-    // Detectar separador
-    const sep = linhas[0].includes(';') ? ';' : ','
-    const header = linhas[0].split(sep).map(h => h.trim().replace(/"/g, '').toLowerCase())
+    // Parser CSV que respeita aspas (campos com vírgula dentro de aspas)
+    function parseCSVLine(line: string): string[] {
+      const result: string[] = []
+      let current = ''
+      let inQuotes = false
+      for (let i = 0; i < line.length; i++) {
+        const ch = line[i]
+        if (ch === '"') {
+          inQuotes = !inQuotes
+        } else if ((ch === ',' || ch === ';') && !inQuotes) {
+          result.push(current.trim())
+          current = ''
+        } else {
+          current += ch
+        }
+      }
+      result.push(current.trim())
+      return result
+    }
+    const header = parseCSVLine(linhas[0]).map(h => h.replace(/"/g, '').toLowerCase())
+    const sep = ','  // não usado mas mantido para compatibilidade
 
     // Encontrar índices das colunas
     const idxNF = header.findIndex(h => h.includes('nf') || h.includes('autorizada'))
@@ -198,7 +216,7 @@ export default function ImportarXML() {
     const erros: string[] = []
 
     for (let i = 1; i < linhas.length; i++) {
-      const cols = linhas[i].split(sep).map(c => c.trim().replace(/"/g, ''))
+      const cols = parseCSVLine(linhas[i]).map(c => c.replace(/"/g, ''))
       if (!cols[idxNF] || cols[idxNF].trim() === '' || cols[idxNF].includes('&nbsp')) continue
 
       const nfsLinha = cols[idxNF].split(',').map(n => n.trim()).filter(n => n && !isNaN(Number(n)))
