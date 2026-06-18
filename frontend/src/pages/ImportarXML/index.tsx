@@ -18,6 +18,7 @@ interface NFParsed {
   status: string
   arquivo: string
   cnpjEmitente?: string
+  empresaDetectada?: string
   refNFe?: string
   mesEmissao?: number
   anoEmissao?: number
@@ -304,7 +305,6 @@ export default function ImportarXML() {
     }
   }
 
-  const isSix = empresa === 'six'
   const corEmp = isSix ? '#4F8EF7' : '#34D399'
   const bgEmp = isSix ? '#1C2E52' : '#0D3326'
   const empId = isSix ? 1 : 2
@@ -418,7 +418,7 @@ export default function ImportarXML() {
         }
       }
       setResultado(`✅ ${importadas} nota${importadas !== 1 ? 's' : ''} importada${importadas !== 1 ? 's' : ''} com sucesso!${notasVenda.length > 0 ? ` · Planilha_2 atualizada` : ''}`)
-      await registrarLog({ acao: 'IMPORTAR', modulo: 'notas', descricao: `${importadas} nota${importadas !== 1 ? 's' : ''} importada${importadas !== 1 ? 's' : ''} via XML · ${notasVenda.length} Venda`, valorDepois: { empresa, total: importadas, vendas: notasVenda.length, notas: notas.map(n => n.numero_nf) } })
+      await registrarLog({ acao: 'IMPORTAR', modulo: 'notas', descricao: `${importadas} nota${importadas !== 1 ? 's' : ''} importada${importadas !== 1 ? 's' : ''} via XML · ${notasVenda.length} Venda`, valorDepois: { total: importadas, vendas: notasVenda.length, notas: notas.map(n => n.numero_nf) } })
       setNotas([])
     } catch (err: any) {
       setResultado(`❌ Erro ao importar: ${err?.response?.data?.detail || err.message}`)
