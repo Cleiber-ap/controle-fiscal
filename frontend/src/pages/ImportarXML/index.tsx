@@ -150,7 +150,6 @@ function parseXML(texto: string, arquivo: string): NFParsed | null {
 }
 
 export default function ImportarXML() {
-  const [empresa, setEmpresa] = useState<'six' | 'enova'>('six')
   const [dragging, setDragging] = useState(false)
   const [notas, setNotas] = useState<NFParsed[]>([])
   const [erros, setErros] = useState<string[]>([])
@@ -311,7 +310,7 @@ export default function ImportarXML() {
   const empId = isSix ? 1 : 2
   const mono = { fontFamily: 'monospace' }
 
-  async function processarArquivos(files: FileList, empresaAtual: string = empresa) {
+  async function processarArquivos(files: FileList) {
     const novasNotas: NFParsed[] = []
     const novosErros: string[] = []
 
@@ -323,11 +322,12 @@ export default function ImportarXML() {
       const texto = await file.text()
       const nf = parseXML(texto, file.name)
       if (nf) {
-        const cnpjEsperado = CNPJ_EMPRESAS[empresaAtual]
-        if (nf.cnpjEmitente && cnpjEsperado && nf.cnpjEmitente !== cnpjEsperado) {
-          novosErros.push(`${file.name} — CNPJ emitente (${nf.cnpjEmitente}) não corresponde à empresa selecionada`)
+        // Detectar empresa pelo CNPJ do emitente
+        const empresaDetectada = nf.cnpjEmitente === '09648409000193' ? 'six' : nf.cnpjEmitente === '38345220000120' ? 'enova' : null
+        if (!empresaDetectada) {
+          novosErros.push(`${file.name} — CNPJ emitente (${nf.cnpjEmitente || 'não encontrado'}) não reconhecido`)
         } else {
-          novasNotas.push(nf)
+          novasNotas.push({...nf, empresaDetectada})
         }
       } else {
         novosErros.push(`${file.name} — não foi possível extrair dados da NF`)
@@ -346,11 +346,11 @@ export default function ImportarXML() {
   function onDrop(e: React.DragEvent) {
     e.preventDefault()
     setDragging(false)
-    if (e.dataTransfer.files.length > 0) processarArquivos(e.dataTransfer.files, empresa)
+    if (e.dataTransfer.files.length > 0) processarArquivos(e.dataTransfer.files)
   }
 
   function onFileChange(e: React.ChangeEvent<HTMLInputElement>) {
-    if (e.target.files?.length) processarArquivos(e.target.files, empresa)
+    if (e.target.files?.length) processarArquivos(e.target.files)
   }
 
   async function importar() {
@@ -360,7 +360,8 @@ export default function ImportarXML() {
       let importadas = 0
       for (const nota of notas) {
         // Se for CAN ou CCE, buscar destinatario/cnpj da nota original
-        let notaFinal = { ...nota, empresa_id: empId }
+        const empIdDetectado = (nota as any).empresaDetectada === 'six' ? 1 : 2
+        let notaFinal = { ...nota, empresa_id: empIdDetectado }
         if (nota.cnpj_dest?.startsWith('_lookup_')) {
           const nNFOrig = nota.cnpj_dest.replace('_lookup_', '')
           const orig = notas.find(n => n.numero_nf === nNFOrig)
@@ -412,11 +413,12 @@ export default function ImportarXML() {
         })
         for (const [key, valor] of Object.entries(porMes)) {
           const [ano, mes] = key.split('-')
-          await api.post('/dados/historico/upsert', { empresa_id: empId, ano: parseInt(ano), mes: parseInt(mes), valor })
+          const empIdHist = notaFinal.empresa_id
+          await api.post('/dados/historico/upsert', { empresa_id: empIdHist, ano: parseInt(ano), mes: parseInt(mes), valor })
         }
       }
       setResultado(`✅ ${importadas} nota${importadas !== 1 ? 's' : ''} importada${importadas !== 1 ? 's' : ''} com sucesso!${notasVenda.length > 0 ? ` · Planilha_2 atualizada` : ''}`)
-      await registrarLog({ acao: 'IMPORTAR', modulo: 'notas', descricao: `${importadas} nota${importadas !== 1 ? 's' : ''} importada${importadas !== 1 ? 's' : ''} via XML · Empresa: ${empresa.toUpperCase()} · ${notasVenda.length} Venda`, valorDepois: { empresa, total: importadas, vendas: notasVenda.length, notas: notas.map(n => n.numero_nf) } })
+      await registrarLog({ acao: 'IMPORTAR', modulo: 'notas', descricao: `${importadas} nota${importadas !== 1 ? 's' : ''} importada${importadas !== 1 ? 's' : ''} via XML · ${notasVenda.length} Venda`, valorDepois: { empresa, total: importadas, vendas: notasVenda.length, notas: notas.map(n => n.numero_nf) } })
       setNotas([])
     } catch (err: any) {
       setResultado(`❌ Erro ao importar: ${err?.response?.data?.detail || err.message}`)
@@ -450,20 +452,6 @@ export default function ImportarXML() {
       <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', color: '#4A5070', marginBottom: '16px' }}>
         <span>Início</span><span style={{ margin: '0 4px' }}>›</span>
         <span style={{ color: '#7B82A0' }}>Importar XML</span>
-      </div>
-
-      {/* Seletor de empresa */}
-      <div style={{ background: '#13161F', border: '1px solid #252836', borderRadius: '14px', padding: '12px 16px', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '12px' }}>
-        <div style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1px', color: '#4A5070', whiteSpace: 'nowrap' }}>Empresa ativa</div>
-        <div style={{ display: 'flex', gap: '8px' }}>
-          {[{ key: 'six', label: 'SIX Comercial', cor: '#4F8EF7', bg: '#1C2E52' }, { key: 'enova', label: 'ENOVA Comercial', cor: '#34D399', bg: '#0D3326' }].map(e => (
-            <div key={e.key} onClick={() => { setEmpresa(e.key as any); setNotas([]); setErros([]); setResultado(null) }}
-              style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '5px 14px', borderRadius: '6px', cursor: 'pointer', fontSize: '12px', fontWeight: 500, color: empresa === e.key ? e.cor : '#7B82A0', background: empresa === e.key ? e.bg : 'transparent' }}>
-              <div style={{ width: '7px', height: '7px', borderRadius: '50%', background: e.cor }} />
-              {e.label}
-            </div>
-          ))}
-        </div>
       </div>
 
       {/* Drop zone */}
@@ -514,7 +502,7 @@ export default function ImportarXML() {
       <div style={{ background: '#0D3326', border: '1px solid #134D38', borderRadius: '14px', padding: '12px 16px', marginBottom: '16px' }}>
         <div style={{ fontSize: '11px', color: '#34D399', fontWeight: 500, marginBottom: '3px' }}>📤 Lançamento automático na Planilha_2</div>
         <div style={{ fontSize: '11px', color: '#7B82A0' }}>
-          Somatória das NFs de <strong style={{ color: '#34D399' }}>Venda</strong> do mês será gravada automaticamente no histórico de faturamento · Empresa: <strong style={{ color: corEmp }}>{isSix ? 'SIX' : 'ENOVA'} Comercial</strong>
+          Somatória das NFs de <strong style={{ color: '#34D399' }}>Venda</strong> do mês será gravada automaticamente no histórico de faturamento · Empresa detectada pelo CNPJ do emitente
         </div>
       </div>
 
@@ -559,7 +547,7 @@ export default function ImportarXML() {
                   {notas.map(n => (
                     <tr key={n.numero_nf}>
                       <td style={{ padding: '8px 12px', borderBottom: '1px solid #252836' }}>
-                        <span style={{ ...mono, fontSize: '12px', fontWeight: 700, color: corEmp, background: bgEmp, padding: '2px 8px', borderRadius: '6px' }}>{n.numero_nf}</span>
+                        <span style={{ ...mono, fontSize: '12px', fontWeight: 700, color: (n as any).empresaDetectada === 'enova' ? '#34D399' : '#4F8EF7', background: (n as any).empresaDetectada === 'enova' ? '#0D3326' : '#1C2E52', padding: '2px 8px', borderRadius: '6px' }}>{n.numero_nf}</span>
                       </td>
                       <td style={{ padding: '8px 12px', borderBottom: '1px solid #252836', color: '#7B82A0', maxWidth: '180px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{n.destinatario || '—'}</td>
                       <td style={{ padding: '8px 12px', borderBottom: '1px solid #252836', ...mono, fontSize: '11px', color: '#7B82A0' }}>{fmtCNPJ(n.cnpj_dest)}</td>
