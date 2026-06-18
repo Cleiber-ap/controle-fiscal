@@ -409,13 +409,7 @@ export default function ImportarXML() {
             const key = `${a}-${m}`
             porMes[key] = (porMes[key] || 0) + n.valor_nf
           }
-        })
-        for (const [key, valor] of Object.entries(porMes)) {
-          const [ano, mes] = key.split('-')
-          // Agrupar por empresa também
-        const empIdHist = (n as any).empresaDetectada === 'enova' ? 2 : 1
-        await api.post('/dados/historico/upsert', { empresa_id: empIdHist, ano: parseInt(ano), mes: parseInt(mes), valor })
-        }
+        })
       }
       setResultado(`✅ ${importadas} nota${importadas !== 1 ? 's' : ''} importada${importadas !== 1 ? 's' : ''} com sucesso!${notasVenda.length > 0 ? ` · Planilha_2 atualizada` : ''}`)
       await registrarLog({ acao: 'IMPORTAR', modulo: 'notas', descricao: `${importadas} nota${importadas !== 1 ? 's' : ''} importada${importadas !== 1 ? 's' : ''} via XML · ${notasVenda.length} Venda`, valorDepois: { total: importadas, vendas: notasVenda.length, notas: notas.map(n => n.numero_nf) } })
