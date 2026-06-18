@@ -254,7 +254,134 @@ export default function ImportarXML() {
         }
       }
       // Atualizar historico de faturamento se houver notas de venda
-      const notasVenda = notas.filter(n => n.status === 'Venda')
+    
+  // ==================== IMPORTAR PLANILHA ====================
+  const [planilhaNotas, setPlanilhaNotas] = useState<any[]>([])
+  const [planilhaErros, setPlanilhaErros] = useState<string[]>([])
+  const [importandoPlanilha, setImportandoPlanilha] = useState(false)
+  const [resultadoPlanilha, setResultadoPlanilha] = useState<string | null>(null)
+  const inputPlanilhaRef = useRef<HTMLInputElement>(null)
+
+  async function processarPlanilha(file: File) {
+    const texto = await file.text()
+    const linhas = texto.split('\n').filter(l => l.trim())
+    if (linhas.length < 2) { setPlanilhaErros(['Arquivo vazio ou inválido']); return }
+
+    // Detectar separador
+    const sep = linhas[0].includes(';') ? ';' : ','
+    const header = linhas[0].split(sep).map(h => h.trim().replace(/"/g, '').toLowerCase())
+
+    // Encontrar índices das colunas
+    const idxNF = header.findIndex(h => h.includes('nf') || h.includes('autorizada'))
+    const idxValor = header.findIndex(h => h.includes('valor') && !h.includes('receb'))
+    const idxData = header.findIndex(h => h.includes('data') || h.includes('recebimento'))
+    const idxUnidade = header.findIndex(h => h.includes('unidade'))
+
+    if (idxNF === -1 || idxValor === -1 || idxData === -1) {
+      setPlanilhaErros(['Colunas obrigatórias não encontradas: NFes autorizadas, Valor, Data do recebimento'])
+      return
+    }
+
+    // Buscar notas do sistema
+    const [notasSix, notasEnova] = await Promise.all([
+      api.get('/notas/1').then(r => r.data).catch(() => []),
+      api.get('/notas/2').then(r => r.data).catch(() => []),
+    ])
+    const todasNotas = [...notasSix.map((n: any) => ({...n, empresa_id: 1})), ...notasEnova.map((n: any) => ({...n, empresa_id: 2}))]
+
+    const resultado: any[] = []
+    const erros: string[] = []
+
+    for (let i = 1; i < linhas.length; i++) {
+      const cols = linhas[i].split(sep).map(c => c.trim().replace(/"/g, ''))
+      if (!cols[idxNF] || cols[idxNF].trim() === '' || cols[idxNF].includes('&nbsp')) continue
+
+      const nfsLinha = cols[idxNF].split(',').map(n => n.trim()).filter(n => n && !isNaN(Number(n)))
+      const valorStr = (cols[idxValor] || '').replace(/\./g, '').replace(',', '.').replace(/[^0-9.]/g, '')
+      const valor = parseFloat(valorStr) || 0
+      const dataRaw = cols[idxData] || ''
+      const dataParts = dataRaw.split(' ')[0] // remover hora
+      // Converter para DD/MM/AAAA
+      let data = dataParts
+      if (dataParts.includes('/') && dataParts.split('/')[2]?.length === 4) {
+        data = dataParts // já está no formato correto
+      }
+
+      // Filtro de unidade (se disponível)
+      const unidade = idxUnidade >= 0 ? (cols[idxUnidade] || '').toLowerCase() : ''
+
+      if (nfsLinha.length === 0) {
+        erros.push(`Linha ${i}: nenhum número de NF válido encontrado em "${cols[idxNF]}"`)
+        continue
+      }
+
+      // Encontrar a nota de Venda entre as NFs da linha
+      let notaVenda: any = null
+      for (const nfNum of nfsLinha) {
+        const nota = todasNotas.find((n: any) => {
+          const numMatch = n.numero_nf === nfNum
+          const isVenda = (n.nat_operacao || n.status || '').toLowerCase().includes('venda')
+          // Filtrar por unidade se disponível
+          if (unidade && unidade.includes('six') && n.empresa_id !== 1) return false
+          if (unidade && unidade.includes('enova') && n.empresa_id !== 2) return false
+          return numMatch && isVenda
+        })
+        if (nota) { notaVenda = nota; break }
+      }
+
+      if (!notaVenda) {
+        // Verificar se alguma NF existe mas não é Venda
+        const notaExistente = todasNotas.find((n: any) => nfsLinha.includes(n.numero_nf))
+        if (notaExistente) {
+          erros.push(`Linha ${i}: NFs [${nfsLinha.join(', ')}] — nenhuma é Venda (nat_op: ${notaExistente.nat_operacao || notaExistente.status})`)
+        } else {
+          erros.push(`Linha ${i}: NFs [${nfsLinha.join(', ')}] não encontradas no sistema`)
+        }
+        continue
+      }
+
+      resultado.push({
+        numero_nf: notaVenda.numero_nf,
+        empresa_id: notaVenda.empresa_id,
+        empresa: notaVenda.empresa_id === 1 ? 'SIX' : 'ENOVA',
+        destinatario: notaVenda.destinatario,
+        valor_nf: parseFloat(notaVenda.valor_nf) || 0,
+        valor_pago: valor,
+        data_pagamento: data,
+        ja_pago: notaVenda.valor_pago ? parseFloat(notaVenda.valor_pago) > 0 : false,
+        valor_atual: parseFloat(notaVenda.valor_pago) || 0,
+        id: notaVenda.id,
+      })
+    }
+
+    setPlanilhaNotas(resultado)
+    setPlanilhaErros(erros)
+    setResultadoPlanilha(null)
+  }
+
+  async function importarPlanilha() {
+    if (planilhaNotas.length === 0) return
+    setImportandoPlanilha(true)
+    try {
+      let ok = 0
+      for (const n of planilhaNotas) {
+        await api.post('/notas/pagamento', {
+          empresa_id: n.empresa_id,
+          numero_nf: n.numero_nf,
+          valor_pago: n.valor_pago,
+          dt_pagamento: n.data_pagamento,
+        })
+        ok++
+      }
+      setResultadoPlanilha(`✅ ${ok} pagamento${ok !== 1 ? 's' : ''} lançado${ok !== 1 ? 's' : ''} com sucesso!`)
+      setPlanilhaNotas([])
+    } catch (err: any) {
+      setResultadoPlanilha(`❌ Erro: ${err?.response?.data?.detail || err.message}`)
+    } finally {
+      setImportandoPlanilha(false)
+    }
+  }
+  const notasVenda = notas.filter(n => n.status === 'Venda')
       if (notasVenda.length > 0) {
         // Agrupar por mês/ano
         const porMes: Record<string, number> = {}

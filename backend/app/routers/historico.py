@@ -53,7 +53,7 @@ def upsert_historico(dados: HistoricoUpsertInput, db: Session = Depends(get_db),
         HistoricoFaturamento.mes == dados.mes
     ).first()
     if existing:
-        existing.valor = existing.valor + dados.valor  # acumular
+        existing.valor = dados.valor  # substituir pelo valor recalculado do frontend
     else:
         novo = HistoricoFaturamento(empresa_id=dados.empresa_id, ano=dados.ano, mes=dados.mes, valor=dados.valor)
         db.add(novo)
