@@ -1,6 +1,6 @@
 ﻿import { useState, useRef } from 'react'
 import { registrarLog } from '../../api/auditoria'
-import api from '../../api/endpoints'
+import api, { historicoAPI } from '../../api/endpoints'
 
 
 const CNPJ_EMPRESAS: Record<string, string> = {
@@ -399,25 +399,22 @@ export default function ImportarXML() {
             } catch(e) { console.warn('Ajuste devolucao nao registrado', e) }
         }
       }
-      // Atualizar historico de faturamento se houver notas de venda  const notasVenda = notas.filter(n => n.status === 'Venda')
-      if (notasVenda.length > 0) {
-        // Agrupar por mês/ano
-        const porMes: Record<string, number> = {}
-        notasVenda.forEach(n => {
-          if (n.data_emissao) {
-            const [, m, a] = n.data_emissao.split('/')
-            const key = `${a}-${m}`
-            porMes[key] = (porMes[key] || 0) + n.valor_nf
-          }
-        })
-      }
-              const histAtual = await historicoAPI.listar(empIdDetectado).then((r: any) => r.data).catch(() => [])
-        for (const key of Object.keys(porMes)) {
-          const [a, m] = key.split('-')
-          const existente = histAtual.find((h: any) => h.ano === +a && h.mes === +m)
-          const valorFinal = (existente?.valor || 0) + porMes[key]
-          await historicoAPI.upsert({ empresa_id: empIdDetectado, ano: +a, mes: +m, valor: valorFinal })
+      // Atualizar historico de faturamento agrupado por empresa e mes
+      const porEmpresaMes: Record<string, number> = {}
+      notas.filter(n => n.status === 'Venda').forEach(n => {
+        const emp = (n as any).empresaDetectada === 'six' ? 1 : 2
+        if (n.data_emissao) {
+          const [, m, a] = n.data_emissao.split('/')
+          const key = `${emp}-${a}-${m}`
+          porEmpresaMes[key] = (porEmpresaMes[key] || 0) + n.valor_nf
         }
+      })
+      for (const key of Object.keys(porEmpresaMes)) {
+        const [emp, a, m] = key.split('-')
+        const histAtual = await historicoAPI.listar(+emp).then((r: any) => r.data).catch(() => [])
+        const existente = histAtual.find((h: any) => h.ano === +a && h.mes === +m)
+        const valorFinal = (existente?.valor || 0) + porEmpresaMes[key]
+        await historicoAPI.upsert({ empresa_id: +emp, ano: +a, mes: +m, valor: valorFinal })
       }
       setResultado(`✅ ${importadas} nota${importadas !== 1 ? 's' : ''} importada${importadas !== 1 ? 's' : ''} com sucesso!${notasVenda.length > 0 ? ` · Planilha_2 atualizada` : ''}`)
       await registrarLog({ acao: 'IMPORTAR', modulo: 'notas', descricao: `${importadas} nota${importadas !== 1 ? 's' : ''} importada${importadas !== 1 ? 's' : ''} via XML · ${notasVenda.length} Venda`, valorDepois: { total: importadas, vendas: notasVenda.length, notas: notas.map(n => n.numero_nf) } })

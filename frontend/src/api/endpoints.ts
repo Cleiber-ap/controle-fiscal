@@ -25,6 +25,7 @@ export const usuariosAPI = {
 }
 export const historicoAPI = {
   listar: (empresaId: number) => api.get(`/dados/historico/${empresaId}`),
+  upsert: (data: any) => api.post('/dados/historico/upsert', data),
 }
 export const dasAPI = {
   listar: (empresaId: number) => api.get(`/dados/das/${empresaId}`),
