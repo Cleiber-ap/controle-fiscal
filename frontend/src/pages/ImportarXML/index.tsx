@@ -411,6 +411,11 @@ export default function ImportarXML() {
           }
         })
       }
+              for (const key of Object.keys(porMes)) {
+          const [a, m] = key.split('-')
+          await historicoAPI.upsert({ empresa_id: empIdDetectado, ano: +a, mes: +m, valor: porMes[key] })
+        }
+      }
       setResultado(`✅ ${importadas} nota${importadas !== 1 ? 's' : ''} importada${importadas !== 1 ? 's' : ''} com sucesso!${notasVenda.length > 0 ? ` · Planilha_2 atualizada` : ''}`)
       await registrarLog({ acao: 'IMPORTAR', modulo: 'notas', descricao: `${importadas} nota${importadas !== 1 ? 's' : ''} importada${importadas !== 1 ? 's' : ''} via XML · ${notasVenda.length} Venda`, valorDepois: { total: importadas, vendas: notasVenda.length, notas: notas.map(n => n.numero_nf) } })
       setNotas([])
