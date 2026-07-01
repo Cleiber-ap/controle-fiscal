@@ -15,7 +15,7 @@ function fmtCNPJ(v: string) {
 const mono = { fontFamily: 'monospace' }
 function statusStyle(s: string) {
   const sl = (s || '').toLowerCase()
-  if (sl.includes('venda')) return { bg: 'rgba(52,211,153,0.12)', cor: '#34D399' }
+  if (sl.includes('venda') || sl.includes('complemento de frete')) return { bg: 'rgba(52,211,153,0.12)', cor: '#34D399' }
   if (sl.includes('cancelamento')) return { bg: 'rgba(248,113,113,0.12)', cor: '#F87171' }
   if (sl.includes('carta') || sl.includes('correcao') || sl.includes('cce')) return { bg: 'rgba(79,142,247,0.12)', cor: '#4F8EF7' }
   if (sl.includes('inutiliz')) return { bg: 'rgba(251,191,36,0.12)', cor: '#FBBF24' }
