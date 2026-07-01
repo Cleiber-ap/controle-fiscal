@@ -404,7 +404,7 @@ export default function ImportarXML() {
       for (const emp of empresasImportadas) {
         const todasNotas = await api.get('/notas/' + emp).then((r: any) => r.data).catch(() => [])
         const porMesRecalc: Record<string, number> = {}
-        todasNotas.filter((n: any) => (n.nat_operacao || n.status || '').toLowerCase().includes('venda') && !(n.nat_operacao || '').toLowerCase().includes('devolu')).forEach((n: any) => {
+        todasNotas.filter((n: any) => { const st = (n.nat_operacao || n.status || '').toLowerCase(); return (st.includes('venda') && !st.includes('devolu')) || st.includes('complemento de frete') }).forEach((n: any) => {
           if (n.data_emissao) {
             const [, m, a] = n.data_emissao.split('/')
             const key = `${a}-${m}`
