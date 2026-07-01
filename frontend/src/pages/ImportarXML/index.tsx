@@ -399,22 +399,22 @@ export default function ImportarXML() {
             } catch(e) { console.warn('Ajuste devolucao nao registrado', e) }
         }
       }
-      // Atualizar historico de faturamento agrupado por empresa e mes
-      const porEmpresaMes: Record<string, number> = {}
-      notas.filter(n => n.status === 'Venda').forEach(n => {
-        const emp = (n as any).empresaDetectada === 'six' ? 1 : 2
-        if (n.data_emissao) {
-          const [, m, a] = n.data_emissao.split('/')
-          const key = `${emp}-${a}-${m}`
-          porEmpresaMes[key] = (porEmpresaMes[key] || 0) + n.valor_nf
+      // Recalcular historico a partir das notas ja salvas no banco
+      const empresasImportadas = [...new Set(notas.map(n => (n as any).empresaDetectada === 'six' ? 1 : 2))]
+      for (const emp of empresasImportadas) {
+        const todasNotas = await api.get('/notas/' + emp).then((r: any) => r.data).catch(() => [])
+        const porMesRecalc: Record<string, number> = {}
+        todasNotas.filter((n: any) => (n.nat_operacao || n.status || '').toLowerCase().includes('venda') && !(n.nat_operacao || '').toLowerCase().includes('devolu')).forEach((n: any) => {
+          if (n.data_emissao) {
+            const [, m, a] = n.data_emissao.split('/')
+            const key = `${a}-${m}`
+            porMesRecalc[key] = (porMesRecalc[key] || 0) + (parseFloat(n.valor_nf) || 0)
+          }
+        })
+        for (const key of Object.keys(porMesRecalc)) {
+          const [a, m] = key.split('-')
+          await historicoAPI.upsert({ empresa_id: emp, ano: +a, mes: +m, valor: porMesRecalc[key] })
         }
-      })
-      for (const key of Object.keys(porEmpresaMes)) {
-        const [emp, a, m] = key.split('-')
-        const histAtual = await historicoAPI.listar(+emp).then((r: any) => r.data).catch(() => [])
-        const existente = histAtual.find((h: any) => h.ano === +a && h.mes === +m)
-        const valorFinal = (existente?.valor || 0) + porEmpresaMes[key]
-        await historicoAPI.upsert({ empresa_id: +emp, ano: +a, mes: +m, valor: valorFinal })
       }
       setResultado(`✅ ${importadas} nota${importadas !== 1 ? 's' : ''} importada${importadas !== 1 ? 's' : ''} com sucesso!${notasVenda.length > 0 ? ` · Planilha_2 atualizada` : ''}`)
       await registrarLog({ acao: 'IMPORTAR', modulo: 'notas', descricao: `${importadas} nota${importadas !== 1 ? 's' : ''} importada${importadas !== 1 ? 's' : ''} via XML · ${notasVenda.length} Venda`, valorDepois: { total: importadas, vendas: notasVenda.length, notas: notas.map(n => n.numero_nf) } })
