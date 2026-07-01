@@ -411,9 +411,12 @@ export default function ImportarXML() {
           }
         })
       }
-              for (const key of Object.keys(porMes)) {
+              const histAtual = await historicoAPI.listar(empIdDetectado).then((r: any) => r.data).catch(() => [])
+        for (const key of Object.keys(porMes)) {
           const [a, m] = key.split('-')
-          await historicoAPI.upsert({ empresa_id: empIdDetectado, ano: +a, mes: +m, valor: porMes[key] })
+          const existente = histAtual.find((h: any) => h.ano === +a && h.mes === +m)
+          const valorFinal = (existente?.valor || 0) + porMes[key]
+          await historicoAPI.upsert({ empresa_id: empIdDetectado, ano: +a, mes: +m, valor: valorFinal })
         }
       }
       setResultado(`✅ ${importadas} nota${importadas !== 1 ? 's' : ''} importada${importadas !== 1 ? 's' : ''} com sucesso!${notasVenda.length > 0 ? ` · Planilha_2 atualizada` : ''}`)
