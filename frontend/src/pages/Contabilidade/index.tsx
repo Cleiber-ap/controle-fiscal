@@ -155,7 +155,7 @@ export default function Contabilidade() {
   })
   const creditosAtivos = creditos.filter(cr => cr.status === 'pendente' || cr.status === 'autorizado')
   const totalCredito = creditosAtivos.reduce((s: number, cr: any) => s + cr.valor_nf_original * aliqEfetivaCont, 0)
-  const nfsCanceladas = new Set(notas.filter(r => r.numero_nf?.endsWith('-CAN')).map(r => r.numero_nf.replace('-CAN', '')))
+  const nfsCanceladas = new Set([...notas.filter(r => r.numero_nf?.endsWith('-CAN')).map(r => r.numero_nf.replace('-CAN', '')), ...ajustes.filter((aj: any) => aj.nf_referenciada).map((aj: any) => aj.nf_referenciada)])
 
   const parseDate = (d: string) => {
     if (!d) return null
