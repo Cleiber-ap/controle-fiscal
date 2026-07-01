@@ -211,7 +211,7 @@ export default function Contabilidade() {
 
   const isVendaOuParcial = (r: any) => {
     const st = (r.nat_operacao || r.status || '').toLowerCase()
-    return st.includes('venda') && !st.includes('devolu')
+    return (st.includes('venda') && !st.includes('devolu')) || st.includes('complemento de frete')
   }
 
   // tNF e tPago: notas Venda ou Parcial do mes anterior
