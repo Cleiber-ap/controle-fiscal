@@ -683,6 +683,14 @@ export default function Contabilidade() {
                                 <span style={{ padding: '3px 8px', borderRadius: '12px', fontSize: '11px', fontWeight: 600, background: 'rgba(79,142,247,0.12)', color: '#4F8EF7', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
                                   <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#4F8EF7' }} />Parcial
                                 </span>
+                              <td style={tdBase({ textAlign: 'center', width: '30px', maxWidth: '30px' })}>
+                                {isVenda && <button onClick={async () => {
+                                  const val = !(pg.ajustado || false)
+                                  await api.put('/notas/ajustado/' + pg.id, { ajustado: val })
+                                  carregarTudo()
+                                }} style={{ width: 14, height: 14, borderRadius: 3, border: '1px solid #4A5070', background: pg.ajustado ? '#34D399' : '#2A2D3E', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                  {pg.ajustado && <span style={{ color: '#1A2A1A', fontSize: 10, fontWeight: 700 }}>?</span>}
+                                </button>}
                               </td>
                               <td style={tdBase({ textAlign: 'center', width: '30px', maxWidth: '30px' })}></td>
                               <td style={tdBase({ textAlign: 'center', whiteSpace: 'nowrap' })}>
