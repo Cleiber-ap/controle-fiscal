@@ -515,7 +515,7 @@ export default function Contabilidade() {
                       {/* LINHA ORIGINAL */}
                       {linhaOriginalNoFiltro && (<>
                       <tr style={rowStyle}>
-                        <td style={tdBase()}><span style={{ background: nfBg, color: nfCor, borderRadius: '5px', padding: '2px 8px', fontWeight: 700, fontSize: '12px', ...mono }}>{r.numero_nf}</span></td>
+                        <td style={tdBase({ width: '70px', maxWidth: '70px' })}><span style={{ background: nfBg, color: nfCor, borderRadius: '5px', padding: '2px 8px', fontWeight: 700, fontSize: '12px', ...mono }}>{r.numero_nf}</span></td>
                         <td style={tdBase({ color: '#E8EAF0', maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' })}>{r.destinatario}</td>
                         <td style={tdBase({ color: '#7B82A0', ...mono, fontSize: '11px' })}>{fmtCNPJ(r.cnpj_dest)}</td>
                         <td style={tdBase({ textAlign: 'right', fontWeight: 600, ...mono, color: '#E8EAF0' })}>{r.valor_nf ? fmtR(valorNF) : '—'}</td>
@@ -539,7 +539,7 @@ export default function Contabilidade() {
                             return <span style={{ color: '#4A5070' }}>—</span>
                           })()}
                         </td>
-                        <td style={tdBase({ textAlign: 'center' })}>
+                        <td style={tdBase({ textAlign: 'center', width: '50px', maxWidth: '50px' })}>
                           {isVenda && <button
                             onClick={async () => {
                               const val = !(r.ajustado || false)
