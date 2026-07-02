@@ -458,7 +458,7 @@ export default function Contabilidade() {
                 }} style={{ padding: '5px 12px', background: 'rgba(167,139,250,0.15)', border: '1px solid #A78BFA', borderRadius: 6, color: '#A78BFA', fontSize: 11, fontWeight: 600, cursor: 'pointer' }}>
                   Criar Crédito
                 </button>}
-                <button onClick={() => setIgnorados(prev => { const n = new Set([...prev, aj.id]); localStorage.setItem('ignorados_dev', JSON.stringify([...n])); return n })} style={{ padding: '5px 12px', background: 'transparent', border: '1px solid #2A2D3E', borderRadius: 6, color: '#7B82A0', fontSize: 11, cursor: 'pointer' }}>
+                <button onClick={async () => { await api.post('/notas/creditos', { empresa_id: empId, valor_nf_original: aj.valor, nf_devolucao: aj.nf_devolucao, nf_referenciada: aj.nf_referenciada, mes_orig: aj.mes, ano_orig: aj.ano, status: 'ignorado' }); carregarTudo() }} style={{ padding: '5px 12px', background: 'transparent', border: '1px solid #2A2D3E', borderRadius: 6, color: '#7B82A0', fontSize: 11, cursor: 'pointer' }}>
                   Ignorar
                 </button>
               </div>
