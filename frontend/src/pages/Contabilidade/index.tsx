@@ -53,7 +53,9 @@ export default function Contabilidade() {
   const [filtroMesEmissao, setFiltroMesEmissao] = useState('')
   const [creditos, setCreditos] = useState<any[]>([])
   const [ajustes, setAjustes] = useState<any[]>([])
-  const [ignorados, setIgnorados] = useState<Set<number>>(new Set())
+  const [ignorados, setIgnorados] = useState<Set<number>>(() => {
+    try { const s = localStorage.getItem('ignorados_dev'); return s ? new Set(JSON.parse(s)) : new Set() } catch { return new Set() }
+  })
 
   const now = new Date()
   const mesAtual = now.getMonth()
@@ -456,7 +458,7 @@ export default function Contabilidade() {
                 }} style={{ padding: '5px 12px', background: 'rgba(167,139,250,0.15)', border: '1px solid #A78BFA', borderRadius: 6, color: '#A78BFA', fontSize: 11, fontWeight: 600, cursor: 'pointer' }}>
                   Criar Crédito
                 </button>}
-                <button onClick={() => setIgnorados(prev => new Set([...prev, aj.id]))} style={{ padding: '5px 12px', background: 'transparent', border: '1px solid #2A2D3E', borderRadius: 6, color: '#7B82A0', fontSize: 11, cursor: 'pointer' }}>
+                <button onClick={() => setIgnorados(prev => { const n = new Set([...prev, aj.id]); localStorage.setItem('ignorados_dev', JSON.stringify([...n])); return n })} style={{ padding: '5px 12px', background: 'transparent', border: '1px solid #2A2D3E', borderRadius: 6, color: '#7B82A0', fontSize: 11, cursor: 'pointer' }}>
                   Ignorar
                 </button>
               </div>
