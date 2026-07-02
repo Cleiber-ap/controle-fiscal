@@ -520,10 +520,10 @@ export default function Contabilidade() {
                         <td style={tdBase({ color: '#7B82A0', ...mono, fontSize: '11px', width: '150px', minWidth: '150px', whiteSpace: 'nowrap' })}>{fmtCNPJ(r.cnpj_dest)}</td>
                         <td style={tdBase({ textAlign: 'right', fontWeight: 600, ...mono, color: '#E8EAF0', whiteSpace: 'nowrap', minWidth: '110px' })}>{r.valor_nf ? fmtR(valorNF) : '—'}</td>
                         <td style={tdBase({ textAlign: 'right', color: '#7B82A0', ...mono, fontSize: '11px' })}>{r.data_emissao || '—'}</td>
-                        <td style={tdBase({ textAlign: 'right', ...mono, fontSize: '11px' })}>
+                        <td style={tdBase({ textAlign: 'right', ...mono, fontSize: '11px', whiteSpace: 'nowrap', minWidth: '100px' })}>
                           {isPaga ? <span style={{ color: '#34D399', fontWeight: 600 }}>{fmtR(primeiroPagamento)}</span> : isVenda ? <span style={{ color: '#4A5070', fontStyle: 'italic' }}>aguardando</span> : null}
                         </td>
-                        <td style={tdBase({ textAlign: 'right', ...mono, fontSize: '11px' })}>
+                        <td style={tdBase({ textAlign: 'right', ...mono, fontSize: '11px', whiteSpace: 'nowrap', minWidth: '100px' })}>
                           {temSaldoReal ? <span style={{ color: '#F87171', fontWeight: 600 }}>{fmtR(saldoTotal)}</span> : (isPaga && restante > 0.01 ? <span style={{ color: '#F87171', fontWeight: 600 }}>{fmtR(restante)}</span> : null)}
                         </td>
                         <td style={tdBase({ textAlign: 'right', color: '#7B82A0', ...mono, fontSize: '11px' })}>{temHistorico ? (lista[0]?.dt_pagamento || '—') : (r.dt_pagamento || r.data_pagamento || '—')}</td>
