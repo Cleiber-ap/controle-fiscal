@@ -539,7 +539,7 @@ export default function Contabilidade() {
                             return <span style={{ color: '#4A5070' }}>—</span>
                           })()}
                         </td>
-                        <td style={tdBase({ textAlign: 'center', width: '50px', maxWidth: '50px' })}>
+                        <td style={tdBase({ textAlign: 'center', width: '30px', maxWidth: '30px', padding: '8px 4px' })}>
                           {isVenda && <button
                             onClick={async () => {
                               const val = !(r.ajustado || false)
