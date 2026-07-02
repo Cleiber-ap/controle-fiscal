@@ -646,18 +646,18 @@ export default function Contabilidade() {
                         return (
                           <>
                             <tr key={r.numero_nf + '-pg-' + idx} style={{ background: 'rgba(79,142,247,0.04)', borderLeft: '3px solid #4F8EF7' }}>
-                              <td style={tdSm()}><span style={{ background: 'rgba(79,142,247,0.15)', color: '#4F8EF7', borderRadius: '5px', padding: '2px 8px', fontWeight: 700, fontSize: '11px', ...mono }}>{r.numero_nf}/{idx + 2}</span></td>
-                              <td style={tdSm({ width: '20px', minWidth: '20px', maxWidth: '20px', padding: '8px 2px' })}></td>
-                              <td style={tdSm({ color: '#7B82A0', fontSize: '11px', fontStyle: 'italic', width: '180px', minWidth: '180px', maxWidth: '180px', overflow: 'hidden', textOverflow: 'ellipsis' })}>{r.destinatario} — Pagamento parcial {idx + 2}</td>
-                              <td style={tdSm({ color: '#7B82A0', ...mono, fontSize: '11px' })}>{fmtCNPJ(r.cnpj_dest)}</td>
-                              <td style={tdSm()}></td>
-                              <td style={tdSm()}></td>
-                              <td style={tdSm({ textAlign: 'right' })}><span style={{ color: '#4F8EF7', fontWeight: 600, ...mono, fontSize: '11px' }}>{fmtR(pg.valor_pago)}</span></td>
-                              <td style={tdSm({ textAlign: 'right' })}>
+                              <td style={tdBase()}><span style={{ background: 'rgba(79,142,247,0.15)', color: '#4F8EF7', borderRadius: '5px', padding: '2px 8px', fontWeight: 700, fontSize: '11px', ...mono }}>{r.numero_nf}/{idx + 2}</span></td>
+                              <td style={tdBase({ width: '20px', minWidth: '20px', maxWidth: '20px', padding: '8px 2px' })}></td>
+                              <td style={tdBase({ color: '#7B82A0', fontSize: '11px', fontStyle: 'italic', width: '180px', minWidth: '180px', maxWidth: '180px', overflow: 'hidden', textOverflow: 'ellipsis' })}>{r.destinatario} — Pagamento parcial {idx + 2}</td>
+                              <td style={tdBase({ color: '#7B82A0', ...mono, fontSize: '11px' })}>{fmtCNPJ(r.cnpj_dest)}</td>
+                              <td style={tdBase()}></td>
+                              <td style={tdBase()}></td>
+                              <td style={tdBase({ textAlign: 'right' })}><span style={{ color: '#4F8EF7', fontWeight: 600, ...mono, fontSize: '11px' }}>{fmtR(pg.valor_pago)}</span></td>
+                              <td style={tdBase({ textAlign: 'right' })}>
                                 {restanteParcela > 0.01 ? <span style={{ color: '#F87171', fontWeight: 600, ...mono, fontSize: '11px' }}>{fmtR(restanteParcela)}</span> : <span style={{ color: '#34D399', fontSize: '11px' }}>✓ Quitado</span>}
                               </td>
-                              <td style={tdSm({ textAlign: 'right', color: '#7B82A0', ...mono, fontSize: '11px' })}>{pg.dt_pagamento || '—'}</td>
-                              <td style={tdSm({ textAlign: 'right', ...mono, fontSize: '11px' })}>
+                              <td style={tdBase({ textAlign: 'right', color: '#7B82A0', ...mono, fontSize: '11px' })}>{pg.dt_pagamento || '—'}</td>
+                              <td style={tdBase({ textAlign: 'right', ...mono, fontSize: '11px' })}>
                                 {(() => {
                                   const dtPg = pg.dt_pagamento || ''
                                   const parts = dtPg.includes('-') ? dtPg.split('-').reverse() : dtPg.split('/')
@@ -669,13 +669,13 @@ export default function Contabilidade() {
                                   return <span style={{ color: '#4A5070' }}>—</span>
                                 })()}
                               </td>
-                              <td style={tdSm()}>
+                              <td style={tdBase()}>
                                 <span style={{ padding: '3px 8px', borderRadius: '12px', fontSize: '11px', fontWeight: 600, background: 'rgba(79,142,247,0.12)', color: '#4F8EF7', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
                                   <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#4F8EF7' }} />Parcial
                                 </span>
                               </td>
-                              <td style={tdSm({ textAlign: 'center', width: '30px', maxWidth: '30px' })}></td>
-                              <td style={tdSm({ textAlign: 'center' })}>
+                              <td style={tdBase({ textAlign: 'center', width: '30px', maxWidth: '30px' })}></td>
+                              <td style={tdBase({ textAlign: 'center' })}>
                                 <button onClick={() => { setEditandoPgto(isEditPg ? null : pg.id); setEditPgtoVal(String(pg.valor_pago).replace('.', ',')); setEditPgtoDt(pg.dt_pagamento || ''); setEditMesLct(pg.mes_lancamento || (MESES[new Date().getMonth()].toLowerCase() + '/' + new Date().getFullYear())) }}
                                   style={{ padding: '2px 7px', background: '#1A1D2A', border: '1px solid #252836', borderRadius: '4px', color: '#7B82A0', fontSize: '11px', cursor: 'pointer', marginRight: '4px' }}>✏️</button>
                                 <button onClick={() => excluirPagamento(pg.id)}
