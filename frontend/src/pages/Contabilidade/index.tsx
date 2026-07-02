@@ -718,21 +718,22 @@ export default function Contabilidade() {
                       {mostrarProxima && !filtroMesPagto && (
                         <>
                           <tr key={r.numero_nf + '-prox'} style={{ background: 'rgba(248,113,113,0.03)', borderLeft: '3px solid #F87171' }}>
-                            <td style={tdSm()}><span style={{ background: 'rgba(248,113,113,0.15)', color: '#F87171', borderRadius: '5px', padding: '2px 8px', fontWeight: 700, fontSize: '11px', ...mono }}>{r.numero_nf}/{lista.length + 1}</span></td>
-                            <td style={tdSm({ color: '#7B82A0', fontSize: '11px', fontStyle: 'italic' })}>Parcial {lista.length + 1}</td>
-                            <td style={tdSm({ color: '#7B82A0', ...mono, fontSize: '11px' })}>{fmtCNPJ(r.cnpj_dest)}</td>
-                            <td style={tdSm()}></td>
-                            <td style={tdSm()}></td>
-                            <td style={tdSm({ textAlign: 'right', color: '#4A5070', fontSize: '11px' })}>—</td>
-                            <td style={tdSm({ textAlign: 'right', color: '#4A5070', fontSize: '11px' })}>—</td>
-                            <td style={tdSm({ textAlign: 'right', color: '#4A5070', fontSize: '11px' })}>—</td>
-                            <td style={tdSm({ textAlign: 'right', color: '#4A5070', fontSize: '11px' })}>—</td>
-                            <td style={tdSm()}>
+                            <td style={tdBase()}><span style={{ background: 'rgba(248,113,113,0.15)', color: '#F87171', borderRadius: '5px', padding: '2px 8px', fontWeight: 700, fontSize: '11px', ...mono }}>{r.numero_nf}/{lista.length + 1}</span></td>
+                            <td style={tdBase({ width: '20px', minWidth: '20px', maxWidth: '20px', padding: '8px 2px' })}></td>
+                            <td style={tdBase({ color: '#7B82A0', fontSize: '11px', fontStyle: 'italic' })}>Parcial {lista.length + 1}</td>
+                            <td style={tdBase({ color: '#7B82A0', ...mono, fontSize: '11px' })}>{fmtCNPJ(r.cnpj_dest)}</td>
+                            <td style={tdBase()}></td>
+                            <td style={tdBase()}></td>
+                            <td style={tdBase({ textAlign: 'right', color: '#4A5070', fontSize: '11px' })}>—</td>
+                            <td style={tdBase({ textAlign: 'right', color: '#4A5070', fontSize: '11px' })}>—</td>
+                            <td style={tdBase({ textAlign: 'right', color: '#4A5070', fontSize: '11px' })}>—</td>
+                            <td style={tdBase({ textAlign: 'right', color: '#4A5070', fontSize: '11px' })}>—</td>
+                            <td style={tdBase()}>
                               <span style={{ padding: '3px 8px', borderRadius: '12px', fontSize: '11px', fontWeight: 600, background: 'rgba(248,113,113,0.12)', color: '#F87171', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
                                 <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#F87171' }} />Aguardando
                               </span>
                             </td>
-                            <td style={tdSm({ textAlign: 'center' })}>
+                            <td style={tdBase({ textAlign: 'center' })}>
                               <button onClick={() => { setEditando(isSaldoEdit ? null : r.numero_nf + '-saldo'); setEditVPg(''); setEditDtp('') }}
                                 style={{ padding: '3px 9px', background: '#1A1D2A', border: '1px solid #252836', borderRadius: '5px', color: '#7B82A0', fontSize: '11px', cursor: 'pointer' }}>✏️</button>
                             </td>
