@@ -22,6 +22,7 @@ class NotaFiscal(Base):
     status = Column(String(50), default='Venda')
     mes_lancamento = Column(String(10), nullable=True)
     ajustado = Column(Boolean, default=False, nullable=True)
+    tipo = Column(String(10), default='saida', nullable=True)
 
 router = APIRouter()
 
@@ -58,6 +59,7 @@ def listar_notas(empresa_id: int, db: Session = Depends(get_db), usuario=Depends
         "mes_lancamento": n.mes_lancamento,
         "nat_operacao": n.nat_operacao,
         "ajustado": n.ajustado or False,
+        "tipo": n.tipo or "saida",
     } for n in notas]
 
 @router.put("/{numero_nf}")
@@ -85,6 +87,7 @@ class NotaImportInput(BaseModel):
     nat_op: Optional[str] = None
     status: Optional[str] = 'Venda'
     arquivo: Optional[str] = None
+    tipo: Optional[str] = 'saida'
 
 @router.post("/importar")
 def importar_nota(dados: NotaImportInput, db: Session = Depends(get_db), usuario=Depends(get_current_user)):
@@ -99,6 +102,7 @@ def importar_nota(dados: NotaImportInput, db: Session = Depends(get_db), usuario
         existing.dt_emissao = dados.data_emissao
         existing.status = (dados.status or "")[:50]
         existing.nat_operacao = (dados.nat_op or "")[:50]
+        existing.tipo = dados.tipo or 'saida'
     else:
         nova = NotaFiscal(
             empresa_id=dados.empresa_id,
@@ -109,6 +113,7 @@ def importar_nota(dados: NotaImportInput, db: Session = Depends(get_db), usuario
             dt_emissao=dados.data_emissao,
             status=(dados.status or "")[:50],
             nat_operacao=(dados.nat_op or "")[:50],
+            tipo=dados.tipo or 'saida',
         )
         db.add(nova)
     db.commit()
