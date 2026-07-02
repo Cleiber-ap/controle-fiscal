@@ -22,6 +22,7 @@ interface NFParsed {
   refNFe?: string
   mesEmissao?: number
   anoEmissao?: number
+  tipo?: string
 }
 
 function parseXML(texto: string, arquivo: string): NFParsed | null {
