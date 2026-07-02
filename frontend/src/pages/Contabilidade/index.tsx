@@ -370,7 +370,7 @@ export default function Contabilidade() {
   const bgEmp = isSix ? '#1A2A4A' : '#1A3A2A'
   const st = { fontSize: '10px', fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '1.2px', color: '#7B82A0', marginBottom: '8px', marginTop: '16px', display: 'flex', alignItems: 'center', gap: '8px' }
   const tdBase = (extra?: any) => ({ padding: '8px 12px', borderBottom: '1px solid #252836', ...extra })
-  const tdSm = (extra?: any) => ({ padding: '5px 12px', borderBottom: '1px solid #1A1D2A', ...extra })
+  const tdSm = (extra?: any) => ({ padding: '5px 12px', borderBottom: '1px solid #1A1D2A', whiteSpace: 'nowrap', ...extra })
 
   return (
     <div style={{ padding: '16px 24px' }}>
