@@ -114,6 +114,8 @@ function parseXML(texto: string, arquivo: string): NFParsed | null {
     const dhEmi = get('dhEmi') || get('dEmi')
     const natOp = get('natOp')
     const refNFe = get('refNFe') || ''
+    const tpNFMatch = texto.match(/<tpNF>(\d)<\/tpNF>/)
+    const tipo = tpNFMatch && tpNFMatch[1] === '0' ? 'entrada' : 'saida'
 
     // Converter data para DD/MM/AAAA
     let dataEmissao = ''
@@ -142,6 +144,7 @@ function parseXML(texto: string, arquivo: string): NFParsed | null {
       arquivo,
       cnpjEmitente,
       refNFe: refNFe || undefined,
+      tipo,
       mesEmissao: dataEmissao ? parseInt(dataEmissao.split('/')[1]) : undefined,
       anoEmissao: dataEmissao ? parseInt(dataEmissao.split('/')[2]) : undefined,
     }
