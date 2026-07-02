@@ -551,7 +551,7 @@ export default function Contabilidade() {
                           </button>}
                         </td>
                         <td style={tdBase()}>
-                          <span style={{ padding: '3px 8px', borderRadius: '12px', fontSize: '10px', fontWeight: 600, background: stStyle.bg, color: stStyle.cor, display: 'inline-flex', alignItems: 'center', gap: '4px', maxWidth: '90px' }}>
+                          <span style={{ padding: '3px 8px', borderRadius: '12px', fontSize: '10px', fontWeight: 600, background: stStyle.bg, color: stStyle.cor, display: 'inline-flex', alignItems: 'center', gap: '4px', maxWidth: '180px' }}>
                             <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: stStyle.cor }} />
                             {foiCancelada ? (r.nat_operacao || r.status || 'Sem status') + '/Cancelada' : (r.nat_operacao || r.status || 'Sem status')}
                           </span>
