@@ -469,7 +469,7 @@ export default function Contabilidade() {
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
               <thead>
                 <tr style={{ background: '#1A1D2A' }}>
-                  {['Nº NF','Destinatário','CNPJ Dest.','Valor NF','Dt. Emissão','Valor Pago','Restante','Dt. Pagto','Imposto','Ajuste','Status',''].map((h, i) => (
+                  {['Nº NF','Destinatário','Tipo','CNPJ Dest.','Valor NF','Dt. Emissão','Valor Pago','Restante','Dt. Pagto','Imposto','Ajuste','Status',''].map((h, i) => (
                     <th key={i} style={{ padding: '8px 12px', textAlign: i >= 3 && i <= 7 ? 'right' : i === 9 ? 'center' : 'left', fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1px', color: '#7B82A0', borderBottom: '1px solid #252836', whiteSpace: 'nowrap' }}>{h}</th>
                   ))}
                 </tr>
@@ -516,6 +516,7 @@ export default function Contabilidade() {
                       {linhaOriginalNoFiltro && (<>
                       <tr style={rowStyle}>
                         <td style={tdBase({ width: '70px', maxWidth: '70px', whiteSpace: 'nowrap' })}><span style={{ background: nfBg, color: nfCor, borderRadius: '5px', padding: '2px 8px', fontWeight: 700, fontSize: '12px', ...mono }}>{r.numero_nf}</span></td>
+                        <td style={tdBase({ textAlign: 'center', width: '60px', minWidth: '60px', whiteSpace: 'nowrap', fontSize: '10px' })}><span style={{ padding: '2px 6px', borderRadius: '8px', background: (r.tipo||'saida')==='entrada' ? 'rgba(79,142,247,0.15)' : 'rgba(52,211,153,0.15)', color: (r.tipo||'saida')==='entrada' ? '#4F8EF7' : '#34D399', fontWeight: 600 }}>{(r.tipo||'saida')==='entrada' ? 'E' : 'S'}</span></td>
                         <td style={tdBase({ color: '#E8EAF0', maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' })}>{r.destinatario}</td>
                         <td style={tdBase({ color: '#7B82A0', ...mono, fontSize: '11px', width: '150px', minWidth: '150px', whiteSpace: 'nowrap' })}>{fmtCNPJ(r.cnpj_dest)}</td>
                         <td style={tdBase({ textAlign: 'right', fontWeight: 600, ...mono, color: '#E8EAF0', whiteSpace: 'nowrap', minWidth: '110px' })}>{r.valor_nf ? fmtR(valorNF) : '—'}</td>
