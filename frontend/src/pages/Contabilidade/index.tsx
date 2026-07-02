@@ -556,7 +556,7 @@ export default function Contabilidade() {
                             {foiCancelada ? (r.nat_operacao || r.status || 'Sem status') + '/Cancelada' : (r.nat_operacao || r.status || 'Sem status')}
                           </span>
                         </td>
-                        <td style={tdBase({ textAlign: 'center' })}>
+                        <td style={tdBase({ textAlign: 'center', whiteSpace: 'nowrap' })}>
   {isVenda && temPermissao('contab', 'editar') && <button onClick={() => {
   if (lista.length > 0) {
     // Ja tem pagamento: editar o pagamento existente
