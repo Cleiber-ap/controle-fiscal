@@ -517,7 +517,7 @@ export default function Contabilidade() {
                       <tr style={rowStyle}>
                         <td style={tdBase({ width: '70px', maxWidth: '70px', whiteSpace: 'nowrap' })}><span style={{ background: nfBg, color: nfCor, borderRadius: '5px', padding: '2px 8px', fontWeight: 700, fontSize: '12px', ...mono }}>{r.numero_nf}</span></td>
                         <td style={tdBase({ textAlign: 'center', width: '20px', minWidth: '20px', padding: '8px 2px', whiteSpace: 'nowrap', fontSize: '10px' })}><span style={{ borderRadius: '8px', padding: '1px 3px', background: (r.tipo||'saida')==='entrada' ? 'rgba(251,191,36,0.15)' : 'rgba(52,211,153,0.15)', color: (r.tipo||'saida')==='entrada' ? '#FBBF24' : '#34D399', fontWeight: 600 }}>{(r.tipo||'saida')==='entrada' ? 'E' : 'S'}</span></td>
-                        <td style={tdBase({ color: '#E8EAF0', maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' })}>{r.destinatario}</td>
+                        <td style={tdBase({ color: '#E8EAF0', width: '180px', minWidth: '180px', maxWidth: '180px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' })}>{r.destinatario}</td>
                         <td style={tdBase({ color: '#7B82A0', ...mono, fontSize: '11px', width: '150px', minWidth: '150px', whiteSpace: 'nowrap' })}>{fmtCNPJ(r.cnpj_dest)}</td>
                         <td style={tdBase({ textAlign: 'right', fontWeight: 600, ...mono, color: '#E8EAF0', whiteSpace: 'nowrap', minWidth: '110px' })}>{r.valor_nf ? fmtR(valorNF) : '—'}</td>
                         <td style={tdBase({ textAlign: 'right', color: '#7B82A0', ...mono, fontSize: '11px' })}>{r.data_emissao || '—'}</td>
