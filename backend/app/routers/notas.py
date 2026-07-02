@@ -364,3 +364,5 @@ def atualizar_ajustado(nota_id: int, dados: dict, db: Session = Depends(get_db),
     nota.ajustado = dados.get("ajustado", False)
     db.commit()
     return {"message": "OK", "ajustado": nota.ajustado}
+#   u p d a t e d  
+ 
