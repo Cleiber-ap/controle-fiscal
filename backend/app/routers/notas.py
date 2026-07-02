@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+﻿from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from sqlalchemy import Column, Integer, String, Float, ForeignKey, Boolean
 from pydantic import BaseModel
@@ -69,7 +69,7 @@ def atualizar_pagamento(numero_nf: str, dados: PagamentoInput, db: Session = Dep
         NotaFiscal.empresa_id == dados.empresa_id
     ).first()
     if not nota:
-        return {"error": "Nota não encontrada"}
+        return {"error": "Nota nÃ£o encontrada"}
     if dados.valor_pago is not None:
         nota.valor_pago = dados.valor_pago
     if dados.data_pagamento is not None:
@@ -156,13 +156,13 @@ def registrar_pagamento(dados: PgtoInput, db: Session = Depends(get_db), usuario
         nota.mes_lancamento = dados.mes_lancamento
     
     # REGRA CORRIGIDA:
-    # Só atualiza a data da nota (linha original Status Venda) se:
+    # SÃ³ atualiza a data da nota (linha original Status Venda) se:
     # O pagamento atual ZEROU o saldo restante (pagamento final)
-    # Pagamentos intermediários (que ainda deixam saldo) NÃO devem alterar a data da nota
+    # Pagamentos intermediÃ¡rios (que ainda deixam saldo) NÃƒO devem alterar a data da nota
     if restante_apos <= 0.01:
         # Pagamento final: atualiza a data da nota
         nota.dt_pagamento = dados.dt_pagamento
-    # Se restante_apos > 0.01 (pagamento parcial), NÃO altera nota.dt_pagamento
+    # Se restante_apos > 0.01 (pagamento parcial), NÃƒO altera nota.dt_pagamento
     
     db.commit()
 
@@ -200,8 +200,8 @@ def editar_pagamento(pgto_id: int, dados: PgtoInput, db: Session = Depends(get_d
     if not pgto:
         return {"error": "Pagamento nao encontrado"}
     
-    print(f"🔍 ANTES: ID={pgto.id}, valor={pgto.valor_pago}, data={pgto.dt_pagamento}")
-    print(f"🔍 DADOS: valor={dados.valor_pago}, data={dados.dt_pagamento}")
+    print(f"ðŸ” ANTES: ID={pgto.id}, valor={pgto.valor_pago}, data={pgto.dt_pagamento}")
+    print(f"ðŸ” DADOS: valor={dados.valor_pago}, data={dados.dt_pagamento}")
     
     # Atualizar pagamento
     pgto.valor_pago = dados.valor_pago
@@ -209,7 +209,7 @@ def editar_pagamento(pgto_id: int, dados: PgtoInput, db: Session = Depends(get_d
     if dados.mes_lancamento:
         pgto.mes_lancamento = dados.mes_lancamento
     
-    print(f"🔍 DEPOIS: ID={pgto.id}, valor={pgto.valor_pago}, data={pgto.dt_pagamento}")
+    print(f"ðŸ” DEPOIS: ID={pgto.id}, valor={pgto.valor_pago}, data={pgto.dt_pagamento}")
     
     nota = db.query(NotaFiscal).filter(
         NotaFiscal.numero_nf == pgto.numero_nf,
@@ -227,24 +227,24 @@ def editar_pagamento(pgto_id: int, dados: PgtoInput, db: Session = Depends(get_d
         novo_total_pago = sum(p.valor_pago for p in todos)
         nota.valor_pago = novo_total_pago
         
-        print(f"🔍 NOTA: ID={nota.id}, valor_nf={nota.valor_nf}, novo_total={novo_total_pago}")
+        print(f"ðŸ” NOTA: ID={nota.id}, valor_nf={nota.valor_nf}, novo_total={novo_total_pago}")
         
-        # Verificar se é o último pagamento
+        # Verificar se Ã© o Ãºltimo pagamento
         pagamento_editado_eh_ultimo = (todos and todos[-1].id == pgto_id)
         saldo_zerou = (nota.valor_nf - novo_total_pago) <= 0.01
         
-        print(f"🔍 eh_ultimo={pagamento_editado_eh_ultimo}, saldo_zerou={saldo_zerou}, len(todos)={len(todos)}")
+        print(f"ðŸ” eh_ultimo={pagamento_editado_eh_ultimo}, saldo_zerou={saldo_zerou}, len(todos)={len(todos)}")
         
-        # Só atualiza data da nota se for o último pagamento
+        # SÃ³ atualiza data da nota se for o Ãºltimo pagamento
         if pagamento_editado_eh_ultimo:
             nota.dt_pagamento = dados.dt_pagamento
     
-    # Forçar commit
+    # ForÃ§ar commit
     db.commit()
     
     # Verificar se salvou
     pgto_verificado = db.query(PagamentoNF).filter(PagamentoNF.id == pgto_id).first()
-    print(f"🔍 VERIFICAÇÃO: ID={pgto_verificado.id}, valor={pgto_verificado.valor_pago}, data={pgto_verificado.dt_pagamento}")
+    print(f"ðŸ” VERIFICAÃ‡ÃƒO: ID={pgto_verificado.id}, valor={pgto_verificado.valor_pago}, data={pgto_verificado.dt_pagamento}")
     
     return {"message": "OK", "total_pago": nota.valor_pago if nota else 0}
 
@@ -364,5 +364,6 @@ def atualizar_ajustado(nota_id: int, dados: dict, db: Session = Depends(get_db),
     nota.ajustado = dados.get("ajustado", False)
     db.commit()
     return {"message": "OK", "ajustado": nota.ajustado}
-#   u p d a t e d  
+#   u p d a t e d 
+ 
  
