@@ -1,4 +1,4 @@
-﻿from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from sqlalchemy import Column, Integer, String, Float, ForeignKey, Boolean
 from pydantic import BaseModel
@@ -22,7 +22,6 @@ class NotaFiscal(Base):
     status = Column(String(50), default='Venda')
     mes_lancamento = Column(String(10), nullable=True)
     ajustado = Column(Boolean, default=False, nullable=True)
-    tipo = Column(String(10), default='saida', nullable=True)
 
 router = APIRouter()
 
@@ -59,7 +58,6 @@ def listar_notas(empresa_id: int, db: Session = Depends(get_db), usuario=Depends
         "mes_lancamento": n.mes_lancamento,
         "nat_operacao": n.nat_operacao,
         "ajustado": n.ajustado or False,
-        "tipo": n.tipo or "saida",
     } for n in notas]
 
 @router.put("/{numero_nf}")
@@ -69,7 +67,7 @@ def atualizar_pagamento(numero_nf: str, dados: PagamentoInput, db: Session = Dep
         NotaFiscal.empresa_id == dados.empresa_id
     ).first()
     if not nota:
-        return {"error": "Nota nÃ£o encontrada"}
+        return {"error": "Nota não encontrada"}
     if dados.valor_pago is not None:
         nota.valor_pago = dados.valor_pago
     if dados.data_pagamento is not None:
@@ -87,7 +85,6 @@ class NotaImportInput(BaseModel):
     nat_op: Optional[str] = None
     status: Optional[str] = 'Venda'
     arquivo: Optional[str] = None
-    tipo: Optional[str] = 'saida'
 
 @router.post("/importar")
 def importar_nota(dados: NotaImportInput, db: Session = Depends(get_db), usuario=Depends(get_current_user)):
@@ -102,7 +99,6 @@ def importar_nota(dados: NotaImportInput, db: Session = Depends(get_db), usuario
         existing.dt_emissao = dados.data_emissao
         existing.status = (dados.status or "")[:50]
         existing.nat_operacao = (dados.nat_op or "")[:50]
-        existing.tipo = dados.tipo or 'saida'
     else:
         nova = NotaFiscal(
             empresa_id=dados.empresa_id,
@@ -113,7 +109,6 @@ def importar_nota(dados: NotaImportInput, db: Session = Depends(get_db), usuario
             dt_emissao=dados.data_emissao,
             status=(dados.status or "")[:50],
             nat_operacao=(dados.nat_op or "")[:50],
-            tipo=dados.tipo or 'saida',
         )
         db.add(nova)
     db.commit()
@@ -156,13 +151,13 @@ def registrar_pagamento(dados: PgtoInput, db: Session = Depends(get_db), usuario
         nota.mes_lancamento = dados.mes_lancamento
     
     # REGRA CORRIGIDA:
-    # SÃ³ atualiza a data da nota (linha original Status Venda) se:
+    # Só atualiza a data da nota (linha original Status Venda) se:
     # O pagamento atual ZEROU o saldo restante (pagamento final)
-    # Pagamentos intermediÃ¡rios (que ainda deixam saldo) NÃƒO devem alterar a data da nota
+    # Pagamentos intermediários (que ainda deixam saldo) NÃO devem alterar a data da nota
     if restante_apos <= 0.01:
         # Pagamento final: atualiza a data da nota
         nota.dt_pagamento = dados.dt_pagamento
-    # Se restante_apos > 0.01 (pagamento parcial), NÃƒO altera nota.dt_pagamento
+    # Se restante_apos > 0.01 (pagamento parcial), NÃO altera nota.dt_pagamento
     
     db.commit()
 
@@ -200,8 +195,8 @@ def editar_pagamento(pgto_id: int, dados: PgtoInput, db: Session = Depends(get_d
     if not pgto:
         return {"error": "Pagamento nao encontrado"}
     
-    print(f"ðŸ” ANTES: ID={pgto.id}, valor={pgto.valor_pago}, data={pgto.dt_pagamento}")
-    print(f"ðŸ” DADOS: valor={dados.valor_pago}, data={dados.dt_pagamento}")
+    print(f"🔍 ANTES: ID={pgto.id}, valor={pgto.valor_pago}, data={pgto.dt_pagamento}")
+    print(f"🔍 DADOS: valor={dados.valor_pago}, data={dados.dt_pagamento}")
     
     # Atualizar pagamento
     pgto.valor_pago = dados.valor_pago
@@ -209,7 +204,7 @@ def editar_pagamento(pgto_id: int, dados: PgtoInput, db: Session = Depends(get_d
     if dados.mes_lancamento:
         pgto.mes_lancamento = dados.mes_lancamento
     
-    print(f"ðŸ” DEPOIS: ID={pgto.id}, valor={pgto.valor_pago}, data={pgto.dt_pagamento}")
+    print(f"🔍 DEPOIS: ID={pgto.id}, valor={pgto.valor_pago}, data={pgto.dt_pagamento}")
     
     nota = db.query(NotaFiscal).filter(
         NotaFiscal.numero_nf == pgto.numero_nf,
@@ -227,24 +222,24 @@ def editar_pagamento(pgto_id: int, dados: PgtoInput, db: Session = Depends(get_d
         novo_total_pago = sum(p.valor_pago for p in todos)
         nota.valor_pago = novo_total_pago
         
-        print(f"ðŸ” NOTA: ID={nota.id}, valor_nf={nota.valor_nf}, novo_total={novo_total_pago}")
+        print(f"🔍 NOTA: ID={nota.id}, valor_nf={nota.valor_nf}, novo_total={novo_total_pago}")
         
-        # Verificar se Ã© o Ãºltimo pagamento
+        # Verificar se é o último pagamento
         pagamento_editado_eh_ultimo = (todos and todos[-1].id == pgto_id)
         saldo_zerou = (nota.valor_nf - novo_total_pago) <= 0.01
         
-        print(f"ðŸ” eh_ultimo={pagamento_editado_eh_ultimo}, saldo_zerou={saldo_zerou}, len(todos)={len(todos)}")
+        print(f"🔍 eh_ultimo={pagamento_editado_eh_ultimo}, saldo_zerou={saldo_zerou}, len(todos)={len(todos)}")
         
-        # SÃ³ atualiza data da nota se for o Ãºltimo pagamento
+        # Só atualiza data da nota se for o último pagamento
         if pagamento_editado_eh_ultimo:
             nota.dt_pagamento = dados.dt_pagamento
     
-    # ForÃ§ar commit
+    # Forçar commit
     db.commit()
     
     # Verificar se salvou
     pgto_verificado = db.query(PagamentoNF).filter(PagamentoNF.id == pgto_id).first()
-    print(f"ðŸ” VERIFICAÃ‡ÃƒO: ID={pgto_verificado.id}, valor={pgto_verificado.valor_pago}, data={pgto_verificado.dt_pagamento}")
+    print(f"🔍 VERIFICAÇÃO: ID={pgto_verificado.id}, valor={pgto_verificado.valor_pago}, data={pgto_verificado.dt_pagamento}")
     
     return {"message": "OK", "total_pago": nota.valor_pago if nota else 0}
 
@@ -364,6 +359,3 @@ def atualizar_ajustado(nota_id: int, dados: dict, db: Session = Depends(get_db),
     nota.ajustado = dados.get("ajustado", False)
     db.commit()
     return {"message": "OK", "ajustado": nota.ajustado}
-# updated
-
-
