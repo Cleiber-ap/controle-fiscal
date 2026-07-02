@@ -517,7 +517,7 @@ export default function Contabilidade() {
                       <tr style={rowStyle}>
                         <td style={tdBase({ width: '70px', maxWidth: '70px' })}><span style={{ background: nfBg, color: nfCor, borderRadius: '5px', padding: '2px 8px', fontWeight: 700, fontSize: '12px', ...mono }}>{r.numero_nf}</span></td>
                         <td style={tdBase({ color: '#E8EAF0', maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' })}>{r.destinatario}</td>
-                        <td style={tdBase({ color: '#7B82A0', ...mono, fontSize: '11px' })}>{fmtCNPJ(r.cnpj_dest)}</td>
+                        <td style={tdBase({ color: '#7B82A0', ...mono, fontSize: '11px', width: '120px', maxWidth: '120px' })}>{fmtCNPJ(r.cnpj_dest)}</td>
                         <td style={tdBase({ textAlign: 'right', fontWeight: 600, ...mono, color: '#E8EAF0' })}>{r.valor_nf ? fmtR(valorNF) : '—'}</td>
                         <td style={tdBase({ textAlign: 'right', color: '#7B82A0', ...mono, fontSize: '11px' })}>{r.data_emissao || '—'}</td>
                         <td style={tdBase({ textAlign: 'right', ...mono, fontSize: '11px' })}>
