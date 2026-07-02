@@ -683,6 +683,7 @@ export default function Contabilidade() {
                                 <span style={{ padding: '3px 8px', borderRadius: '12px', fontSize: '11px', fontWeight: 600, background: 'rgba(79,142,247,0.12)', color: '#4F8EF7', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
                                   <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#4F8EF7' }} />Parcial
                                 </span>
+                              </td>
                               <td style={tdBase({ textAlign: 'center', width: '30px', maxWidth: '30px' })}>
                                 {isVenda && <button onClick={async () => {
                                   const val = !(pg.ajustado || false)
