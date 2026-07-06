@@ -711,7 +711,7 @@ export default function Contabilidade() {
                           <tr key={r.numero_nf + '-prox'} style={{ background: 'rgba(248,113,113,0.03)', borderLeft: '3px solid #F87171' }}>
                             <td style={tdSm()}><span style={{ background: 'rgba(248,113,113,0.15)', color: '#F87171', borderRadius: '5px', padding: '2px 8px', fontWeight: 700, fontSize: '11px', ...mono }}>{r.numero_nf}/{lista.length + 1}</span></td>
                             <td style={tdSm({ color: '#7B82A0', fontSize: '11px', fontStyle: 'italic' })}>Pagamento parcial {lista.length + 1}</td>
-                            <td style={tdSm({ color: '#7B82A0', ...mono, fontSize: '11px' })}>{fmtCNPJ(r.cnpj_dest)}</td>
+                            <td style={tdSm({ color: '#7B82A0', ...mono, fontSize: '11px' })}></td>
                             <td style={tdSm()}></td>
                             <td style={tdSm()}></td>
                             <td style={tdSm({ textAlign: 'right', color: '#4A5070', fontSize: '11px' })}>—</td>
