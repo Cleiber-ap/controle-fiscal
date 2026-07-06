@@ -674,6 +674,7 @@ export default function Contabilidade() {
                                   <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#4F8EF7' }} />Parcial
                                 </span>
                               </td>
+                              <td style={tdSm({ textAlign: 'center' })}></td>
                               <td style={tdSm({ textAlign: 'center' })}>
                                 <button onClick={() => { setEditandoPgto(isEditPg ? null : pg.id); setEditPgtoVal(String(pg.valor_pago).replace('.', ',')); setEditPgtoDt(pg.dt_pagamento || ''); setEditMesLct(pg.mes_lancamento || (MESES[new Date().getMonth()].toLowerCase() + '/' + new Date().getFullYear())) }}
                                   style={{ padding: '2px 7px', background: '#1A1D2A', border: '1px solid #252836', borderRadius: '4px', color: '#7B82A0', fontSize: '11px', cursor: 'pointer', marginRight: '4px' }}>✏️</button>
