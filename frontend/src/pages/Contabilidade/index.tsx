@@ -649,8 +649,8 @@ export default function Contabilidade() {
                           <>
                             <tr key={r.numero_nf + '-pg-' + idx} style={{ background: 'rgba(79,142,247,0.04)', borderLeft: '3px solid #4F8EF7' }}>
                               <td style={tdSm()}><span style={{ background: 'rgba(79,142,247,0.15)', color: '#4F8EF7', borderRadius: '5px', padding: '2px 8px', fontWeight: 700, fontSize: '11px', ...mono }}>{r.numero_nf}/{idx + 2}</span></td>
-                              <td style={tdSm({ color: '#7B82A0', fontSize: '11px', fontStyle: 'italic' })}>{r.destinatario} — Pagamento parcial {idx + 2}</td>
-                              <td style={tdSm({ color: '#7B82A0', ...mono, fontSize: '11px' })}>{fmtCNPJ(r.cnpj_dest)}</td>
+                              <td style={tdSm({ color: '#7B82A0', fontSize: '11px', fontStyle: 'italic' })}>Pagamento parcial {idx + 2}</td>
+                              <td style={tdSm({ color: '#7B82A0', ...mono, fontSize: '11px' })}></td>
                               <td style={tdSm()}></td>
                               <td style={tdSm()}></td>
                               <td style={tdSm({ textAlign: 'right' })}><span style={{ color: '#4F8EF7', fontWeight: 600, ...mono, fontSize: '11px' }}>{fmtR(pg.valor_pago)}</span></td>
@@ -710,8 +710,8 @@ export default function Contabilidade() {
                         <>
                           <tr key={r.numero_nf + '-prox'} style={{ background: 'rgba(248,113,113,0.03)', borderLeft: '3px solid #F87171' }}>
                             <td style={tdSm()}><span style={{ background: 'rgba(248,113,113,0.15)', color: '#F87171', borderRadius: '5px', padding: '2px 8px', fontWeight: 700, fontSize: '11px', ...mono }}>{r.numero_nf}/{lista.length + 1}</span></td>
-                            <td style={tdSm({ color: '#7B82A0', fontSize: '11px', fontStyle: 'italic' })}>{r.destinatario} — Pagamento parcial {lista.length + 1}</td>
-                            <td style={tdSm({ color: '#7B82A0', ...mono, fontSize: '11px' })}>{fmtCNPJ(r.cnpj_dest)}</td>
+                            <td style={tdSm({ color: '#7B82A0', fontSize: '11px', fontStyle: 'italic' })}>Pagamento parcial {lista.length + 1}</td>
+                            <td style={tdSm({ color: '#7B82A0', ...mono, fontSize: '11px' })}></td>
                             <td style={tdSm()}></td>
                             <td style={tdSm()}></td>
                             <td style={tdSm({ textAlign: 'right', color: '#4A5070', fontSize: '11px' })}>—</td>
