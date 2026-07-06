@@ -681,7 +681,7 @@ export default function Contabilidade() {
                                 <button onClick={() => { setEditandoPgto(isEditPg ? null : pg.id); setEditPgtoVal(String(pg.valor_pago).replace('.', ',')); setEditPgtoDt(pg.dt_pagamento || ''); setEditMesLct(pg.mes_lancamento || (MESES[new Date().getMonth()].toLowerCase() + '/' + new Date().getFullYear())) }}
                                   style={{ padding: '2px 7px', background: '#1A1D2A', border: '1px solid #252836', borderRadius: '4px', color: '#7B82A0', fontSize: '11px', cursor: 'pointer', marginRight: '4px' }}>✏️</button>
                                 <button onClick={() => excluirPagamento(pg.id)}
-                                  style={{ padding: '2px 7px', background: '#1A1D2A', border: '1px solid #F87171', borderRadius: '4px', color: '#F87171', fontSize: '11px', cursor: 'pointer' }}>🗑️</button>
+                                  style={{ padding: '2px 7px', background: '#1A1D2A', border: '1px solid #252836', borderRadius: '4px', color: '#F87171', fontSize: '11px', cursor: 'pointer' }}>🗑️</button>
                               </td>
                             </tr>
                             {isEditPg && (
@@ -726,7 +726,7 @@ export default function Contabilidade() {
                               </span>
                             </td>
                             <td style={tdSm({ textAlign: 'center' })}></td>
-                            <td style={tdSm({ textAlign: 'center' })}>
+                            <td style={tdSm({ textAlign: 'center', whiteSpace: 'nowrap' })}>
                               <button onClick={() => { setEditando(isSaldoEdit ? null : r.numero_nf + '-saldo'); setEditVPg(''); setEditDtp('') }}
                                 style={{ padding: '3px 9px', background: '#1A1D2A', border: '1px solid #252836', borderRadius: '5px', color: '#7B82A0', fontSize: '11px', cursor: 'pointer' }}>✏️</button>
                             </td>
