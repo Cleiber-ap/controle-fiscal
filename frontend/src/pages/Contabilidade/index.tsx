@@ -51,12 +51,9 @@ export default function Contabilidade() {
   const [editMesLct, setEditMesLct] = useState('')
   const [filtroMesPagto, setFiltroMesPagto] = useState('')
   const [filtroMesEmissao, setFiltroMesEmissao] = useState('')
-  const [filtroTipo, setFiltroTipo] = useState('')
   const [creditos, setCreditos] = useState<any[]>([])
   const [ajustes, setAjustes] = useState<any[]>([])
-  const [ignorados, setIgnorados] = useState<Set<number>>(() => {
-    try { const s = localStorage.getItem('ignorados_dev'); return s ? new Set(JSON.parse(s)) : new Set() } catch { return new Set() }
-  })
+  const [ignorados, setIgnorados] = useState<Set<number>>(new Set())
 
   const now = new Date()
   const mesAtual = now.getMonth()
@@ -205,7 +202,6 @@ export default function Contabilidade() {
       })
     : notasFiltradas
 
-  const notasFiltradas3 = filtroTipo ? notasFiltradas2.filter((r: any) => (r.tipo || 'saida') === filtroTipo) : notasFiltradas2
   const dtNoMesFiltro = (dtStr: string | undefined) => {
     if (!filtroMesPagto || !dtStr) return !filtroMesPagto
     const parts = dtStr.includes('-') ? dtStr.split('-').reverse() : dtStr.split('/')
@@ -370,7 +366,7 @@ export default function Contabilidade() {
   const bgEmp = isSix ? '#1A2A4A' : '#1A3A2A'
   const st = { fontSize: '10px', fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '1.2px', color: '#7B82A0', marginBottom: '8px', marginTop: '16px', display: 'flex', alignItems: 'center', gap: '8px' }
   const tdBase = (extra?: any) => ({ padding: '8px 12px', borderBottom: '1px solid #252836', ...extra })
-  const tdSm = (extra?: any) => ({ padding: '6px 12px', borderBottom: '1px solid #1A1D2A', whiteSpace: 'nowrap', ...extra })
+  const tdSm = (extra?: any) => ({ padding: '5px 12px', borderBottom: '1px solid #1A1D2A', ...extra })
 
   return (
     <div style={{ padding: '16px 24px' }}>
@@ -429,7 +425,7 @@ export default function Contabilidade() {
       <div style={{ background: '#13161F', border: '1px solid #252836', borderRadius: '14px', overflow: 'hidden' }}>
         <div style={{ padding: '10px 16px', background: '#1A1D2A', borderBottom: '1px solid #252836', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div style={{ display:'flex', alignItems:'center', gap:8 }}>
-              <span style={{ fontSize: '12px', fontWeight: 600, color: '#E8EAF0' }}>{notasFiltradas3.length} notas · {isSix ? 'SIX' : 'ENOVA'} · últimos 6 meses</span>
+              <span style={{ fontSize: '12px', fontWeight: 600, color: '#E8EAF0' }}>{notasFiltradas2.length} notas · {isSix ? 'SIX' : 'ENOVA'} · últimos 6 meses</span>
               <select value={filtroMesPagto} onChange={e=>setFiltroMesPagto(e.target.value)} style={{ background:'#1A1D2A', color:'#E8EAF0', border:'1px solid #353849', borderRadius:6, padding:'2px 8px', fontSize:'12px', cursor:'pointer' }}>
                 <option value="">Pagamento: todos</option>
                 {[...new Set(notas.flatMap((r:any)=>{
@@ -441,11 +437,6 @@ export default function Contabilidade() {
               <select value={filtroMesEmissao} onChange={e=>setFiltroMesEmissao(e.target.value)} style={{ background:'#1A1D2A', color:'#E8EAF0', border:'1px solid #353849', borderRadius:6, padding:'2px 8px', fontSize:'12px', cursor:'pointer' }}>
                 <option value="">Emissão: todos</option>
                 {[...new Set(notas.map((r:any)=>{ const dt=r.data_emissao||''; if(!dt) return null; const parts=dt.includes('-')?dt.split('-').reverse():dt.split('/'); const mm=parts[1]; const aa=parts[2]; return (mm&&aa&&!isNaN(+mm)&&!isNaN(+aa)) ? mm.padStart(2,'0')+'/'+aa : null }).filter(Boolean))].sort().map((m:any)=>(<option key={m} value={m}>{m}</option>))}
-              </select>
-              <select value={filtroTipo} onChange={e=>setFiltroTipo(e.target.value)} style={{ background:'#1A1D2A', color:'#E8EAF0', border:'1px solid #353849', borderRadius:6, padding:'2px 8px', fontSize:'12px', cursor:'pointer' }}>
-                <option value="">Tipo: todos</option>
-                <option value="saida">Saída</option>
-                <option value="entrada">Entrada</option>
               </select>
             </div>
         </div>
@@ -465,7 +456,7 @@ export default function Contabilidade() {
                 }} style={{ padding: '5px 12px', background: 'rgba(167,139,250,0.15)', border: '1px solid #A78BFA', borderRadius: 6, color: '#A78BFA', fontSize: 11, fontWeight: 600, cursor: 'pointer' }}>
                   Criar Crédito
                 </button>}
-                <button onClick={async () => { await api.post('/notas/creditos', { empresa_id: empId, valor_nf_original: aj.valor, nf_devolucao: aj.nf_devolucao, nf_referenciada: aj.nf_referenciada, mes_orig: aj.mes, ano_orig: aj.ano, status: 'ignorado' }); carregarTudo() }} style={{ padding: '5px 12px', background: 'transparent', border: '1px solid #2A2D3E', borderRadius: 6, color: '#7B82A0', fontSize: 11, cursor: 'pointer' }}>
+                <button onClick={() => setIgnorados(prev => new Set([...prev, aj.id]))} style={{ padding: '5px 12px', background: 'transparent', border: '1px solid #2A2D3E', borderRadius: 6, color: '#7B82A0', fontSize: 11, cursor: 'pointer' }}>
                   Ignorar
                 </button>
               </div>
@@ -478,23 +469,13 @@ export default function Contabilidade() {
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
               <thead>
                 <tr style={{ background: '#1A1D2A' }}>
-                  <th style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase' as const, letterSpacing: '1px', color: '#7B82A0', borderBottom: '1px solid #252836', whiteSpace: 'nowrap' as const, padding: '8px 6px', width: '70px' }}>Nº NF</th>
-                  <th style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase' as const, letterSpacing: '1px', color: '#7B82A0', borderBottom: '1px solid #252836', whiteSpace: 'nowrap' as const, padding: '8px 6px', width: '28px', textAlign: 'center' as const }}>Tipo</th>
-                  <th style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase' as const, letterSpacing: '1px', color: '#7B82A0', borderBottom: '1px solid #252836', whiteSpace: 'nowrap' as const, padding: '8px 6px', width: '180px' }}>Destinatário</th>
-                  <th style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase' as const, letterSpacing: '1px', color: '#7B82A0', borderBottom: '1px solid #252836', whiteSpace: 'nowrap' as const, padding: '8px 6px', width: '140px' }}>CNPJ Dest.</th>
-                  <th style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase' as const, letterSpacing: '1px', color: '#7B82A0', borderBottom: '1px solid #252836', whiteSpace: 'nowrap' as const, padding: '8px 6px', width: '110px', textAlign: 'right' as const }}>Valor NF</th>
-                  <th style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase' as const, letterSpacing: '1px', color: '#7B82A0', borderBottom: '1px solid #252836', whiteSpace: 'nowrap' as const, padding: '8px 6px', width: '90px', textAlign: 'right' as const }}>Dt. Emissão</th>
-                  <th style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase' as const, letterSpacing: '1px', color: '#7B82A0', borderBottom: '1px solid #252836', whiteSpace: 'nowrap' as const, padding: '8px 6px', width: '110px', textAlign: 'right' as const }}>Valor Pago</th>
-                  <th style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase' as const, letterSpacing: '1px', color: '#7B82A0', borderBottom: '1px solid #252836', whiteSpace: 'nowrap' as const, padding: '8px 6px', width: '100px', textAlign: 'right' as const }}>Restante</th>
-                  <th style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase' as const, letterSpacing: '1px', color: '#7B82A0', borderBottom: '1px solid #252836', whiteSpace: 'nowrap' as const, padding: '8px 6px', width: '90px', textAlign: 'right' as const }}>Dt. Pagto</th>
-                  <th style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase' as const, letterSpacing: '1px', color: '#7B82A0', borderBottom: '1px solid #252836', whiteSpace: 'nowrap' as const, padding: '8px 6px', width: '100px', textAlign: 'right' as const }}>Imposto</th>
-                  <th style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase' as const, letterSpacing: '1px', color: '#7B82A0', borderBottom: '1px solid #252836', whiteSpace: 'nowrap' as const, padding: '8px 6px', width: '30px', textAlign: 'center' as const }}>Ajuste</th>
-                  <th style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase' as const, letterSpacing: '1px', color: '#7B82A0', borderBottom: '1px solid #252836', whiteSpace: 'nowrap' as const, padding: '8px 6px', width: '160px' }}>Status</th>
-                  <th style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase' as const, letterSpacing: '1px', color: '#7B82A0', borderBottom: '1px solid #252836', whiteSpace: 'nowrap' as const, padding: '8px 6px', width: '60px' }}></th>
+                  {['Nº NF','Destinatário','CNPJ Dest.','Valor NF','Dt. Emissão','Valor Pago','Restante','Dt. Pagto','Imposto','Ajuste','Status',''].map((h, i) => (
+                    <th key={i} style={{ padding: '8px 12px', textAlign: i >= 3 && i <= 7 ? 'right' : i === 9 ? 'center' : 'left', fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1px', color: '#7B82A0', borderBottom: '1px solid #252836', whiteSpace: 'nowrap' }}>{h}</th>
+                  ))}
                 </tr>
               </thead>
               <tbody>
-                {notasFiltradas3.map(r => {
+                {notasFiltradas2.map(r => {
                   const valorNF = parseFloat(r.valor_nf || '0')
                   const valorPagoDB = parseFloat(r.valor_pago || '0')
                   const lista = pagamentos[r.numero_nf] || []
@@ -535,8 +516,7 @@ export default function Contabilidade() {
                       {linhaOriginalNoFiltro && (<>
                       <tr style={rowStyle}>
                         <td style={tdBase({ width: '70px', maxWidth: '70px', whiteSpace: 'nowrap' })}><span style={{ background: nfBg, color: nfCor, borderRadius: '5px', padding: '2px 8px', fontWeight: 700, fontSize: '12px', ...mono }}>{r.numero_nf}</span></td>
-                        <td style={tdBase({ textAlign: 'center', width: '28px', minWidth: '28px', padding: '8px 2px', whiteSpace: 'nowrap', fontSize: '10px' })}><span style={{ borderRadius: '8px', padding: '1px 3px', background: (r.tipo||'saida')==='entrada' ? 'rgba(251,191,36,0.15)' : 'rgba(52,211,153,0.15)', color: (r.tipo||'saida')==='entrada' ? '#FBBF24' : '#34D399', fontWeight: 600 }}>{(r.tipo||'saida')==='entrada' ? 'E' : 'S'}</span></td>
-                        <td style={tdBase({ color: '#E8EAF0', width: '180px', minWidth: '180px', maxWidth: '180px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' })}>{r.destinatario}</td>
+                        <td style={tdBase({ color: '#E8EAF0', maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' })}>{r.destinatario}</td>
                         <td style={tdBase({ color: '#7B82A0', ...mono, fontSize: '11px', width: '150px', minWidth: '150px', whiteSpace: 'nowrap' })}>{fmtCNPJ(r.cnpj_dest)}</td>
                         <td style={tdBase({ textAlign: 'right', fontWeight: 600, ...mono, color: '#E8EAF0', whiteSpace: 'nowrap', minWidth: '110px' })}>{r.valor_nf ? fmtR(valorNF) : '—'}</td>
                         <td style={tdBase({ textAlign: 'right', color: '#7B82A0', ...mono, fontSize: '11px' })}>{r.data_emissao || '—'}</td>
@@ -570,8 +550,8 @@ export default function Contabilidade() {
                             {r.ajustado && <span style={{ color: '#0D0F17', fontSize: 10, fontWeight: 700, lineHeight: 1 }}>✓</span>}
                           </button>}
                         </td>
-                        <td style={tdBase({ overflow: 'hidden' })}>
-                          <span style={{ padding: '3px 8px', borderRadius: '12px', fontSize: '10px', fontWeight: 600, background: stStyle.bg, color: stStyle.cor, display: 'inline-flex', alignItems: 'center', gap: '4px', maxWidth: '180px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        <td style={tdBase()}>
+                          <span style={{ padding: '3px 8px', borderRadius: '12px', fontSize: '10px', fontWeight: 600, background: stStyle.bg, color: stStyle.cor, display: 'inline-flex', alignItems: 'center', gap: '4px', maxWidth: '180px' }}>
                             <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: stStyle.cor }} />
                             {foiCancelada ? (r.nat_operacao || r.status || 'Sem status') + '/Cancelada' : (r.nat_operacao || r.status || 'Sem status')}
                           </span>
@@ -656,18 +636,17 @@ export default function Contabilidade() {
                         return (
                           <>
                             <tr key={r.numero_nf + '-pg-' + idx} style={{ background: 'rgba(79,142,247,0.04)', borderLeft: '3px solid #4F8EF7' }}>
-                              <td style={tdBase()}><span style={{ background: 'rgba(79,142,247,0.15)', color: '#4F8EF7', borderRadius: '5px', padding: '2px 8px', fontWeight: 700, fontSize: '11px', ...mono }}>{r.numero_nf}/{idx + 2}</span></td>
-                              <td style={tdBase({ width: '20px', minWidth: '20px', maxWidth: '20px', padding: '8px 2px' })}></td>
-                              <td style={tdBase({ color: '#7B82A0', fontSize: '11px', fontStyle: 'italic', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' })}>Parcial {idx + 2}</td>
-                              <td style={tdBase({ color: '#7B82A0', ...mono, fontSize: '11px' })}>{fmtCNPJ(r.cnpj_dest)}</td>
-                              <td style={tdBase()}></td>
-                              <td style={tdBase()}></td>
-                              <td style={tdBase({ textAlign: 'right' })}><span style={{ color: '#4F8EF7', fontWeight: 600, ...mono, fontSize: '11px' }}>{fmtR(pg.valor_pago)}</span></td>
-                              <td style={tdBase({ textAlign: 'right' })}>
+                              <td style={tdSm()}><span style={{ background: 'rgba(79,142,247,0.15)', color: '#4F8EF7', borderRadius: '5px', padding: '2px 8px', fontWeight: 700, fontSize: '11px', ...mono }}>{r.numero_nf}/{idx + 2}</span></td>
+                              <td style={tdSm({ color: '#7B82A0', fontSize: '11px', fontStyle: 'italic' })}>{r.destinatario} — Pagamento parcial {idx + 2}</td>
+                              <td style={tdSm({ color: '#7B82A0', ...mono, fontSize: '11px' })}>{fmtCNPJ(r.cnpj_dest)}</td>
+                              <td style={tdSm()}></td>
+                              <td style={tdSm()}></td>
+                              <td style={tdSm({ textAlign: 'right' })}><span style={{ color: '#4F8EF7', fontWeight: 600, ...mono, fontSize: '11px' }}>{fmtR(pg.valor_pago)}</span></td>
+                              <td style={tdSm({ textAlign: 'right' })}>
                                 {restanteParcela > 0.01 ? <span style={{ color: '#F87171', fontWeight: 600, ...mono, fontSize: '11px' }}>{fmtR(restanteParcela)}</span> : <span style={{ color: '#34D399', fontSize: '11px' }}>✓ Quitado</span>}
                               </td>
-                              <td style={tdBase({ textAlign: 'right', color: '#7B82A0', ...mono, fontSize: '11px' })}>{pg.dt_pagamento || '—'}</td>
-                              <td style={tdBase({ textAlign: 'right', ...mono, fontSize: '11px' })}>
+                              <td style={tdSm({ textAlign: 'right', color: '#7B82A0', ...mono, fontSize: '11px' })}>{pg.dt_pagamento || '—'}</td>
+                              <td style={tdSm({ textAlign: 'right', ...mono, fontSize: '11px' })}>
                                 {(() => {
                                   const dtPg = pg.dt_pagamento || ''
                                   const parts = dtPg.includes('-') ? dtPg.split('-').reverse() : dtPg.split('/')
@@ -679,22 +658,12 @@ export default function Contabilidade() {
                                   return <span style={{ color: '#4A5070' }}>—</span>
                                 })()}
                               </td>
-                              <td style={tdBase()}>
+                              <td style={tdSm()}>
                                 <span style={{ padding: '3px 8px', borderRadius: '12px', fontSize: '11px', fontWeight: 600, background: 'rgba(79,142,247,0.12)', color: '#4F8EF7', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
                                   <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#4F8EF7' }} />Parcial
                                 </span>
                               </td>
-                              <td style={tdBase({ textAlign: 'center', width: '30px', maxWidth: '30px' })}>
-                                {isVenda && <button onClick={async () => {
-                                  const val = !(pg.ajustado || false)
-                                  await api.put('/notas/ajustado/' + pg.id, { ajustado: val })
-                                  carregarTudo()
-                                }} style={{ width: 14, height: 14, borderRadius: 3, border: '1px solid #4A5070', background: pg.ajustado ? '#34D399' : '#2A2D3E', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                  {pg.ajustado && <span style={{ color: '#1A2A1A', fontSize: 10, fontWeight: 700 }}>?</span>}
-                                </button>}
-                              </td>
-                              <td style={tdBase({ textAlign: 'center', width: '30px', maxWidth: '30px' })}></td>
-                              <td style={tdBase({ textAlign: 'center', whiteSpace: 'nowrap' })}>
+                              <td style={tdSm({ textAlign: 'center' })}>
                                 <button onClick={() => { setEditandoPgto(isEditPg ? null : pg.id); setEditPgtoVal(String(pg.valor_pago).replace('.', ',')); setEditPgtoDt(pg.dt_pagamento || ''); setEditMesLct(pg.mes_lancamento || (MESES[new Date().getMonth()].toLowerCase() + '/' + new Date().getFullYear())) }}
                                   style={{ padding: '2px 7px', background: '#1A1D2A', border: '1px solid #252836', borderRadius: '4px', color: '#7B82A0', fontSize: '11px', cursor: 'pointer', marginRight: '4px' }}>✏️</button>
                                 <button onClick={() => excluirPagamento(pg.id)}
@@ -727,22 +696,21 @@ export default function Contabilidade() {
                       {mostrarProxima && !filtroMesPagto && (
                         <>
                           <tr key={r.numero_nf + '-prox'} style={{ background: 'rgba(248,113,113,0.03)', borderLeft: '3px solid #F87171' }}>
-                            <td style={tdBase()}><span style={{ background: 'rgba(248,113,113,0.15)', color: '#F87171', borderRadius: '5px', padding: '2px 8px', fontWeight: 700, fontSize: '11px', ...mono }}>{r.numero_nf}/{lista.length + 1}</span></td>
-                            <td style={tdBase({ width: '20px', minWidth: '20px', maxWidth: '20px', padding: '8px 2px' })}></td>
-                            <td style={tdBase({ color: '#7B82A0', fontSize: '11px', fontStyle: 'italic' })}>Parcial {lista.length + 1}</td>
-                            <td style={tdBase({ color: '#7B82A0', ...mono, fontSize: '11px' })}>{fmtCNPJ(r.cnpj_dest)}</td>
-                            <td style={tdBase()}></td>
-                            <td style={tdBase()}></td>
-                            <td style={tdBase({ textAlign: 'right', color: '#4A5070', fontSize: '11px' })}>—</td>
-                            <td style={tdBase({ textAlign: 'right', color: '#4A5070', fontSize: '11px' })}>—</td>
-                            <td style={tdBase({ textAlign: 'right', color: '#4A5070', fontSize: '11px' })}>—</td>
-                            <td style={tdBase({ textAlign: 'right', color: '#4A5070', fontSize: '11px' })}>—</td>
-                            <td style={tdBase()}>
+                            <td style={tdSm()}><span style={{ background: 'rgba(248,113,113,0.15)', color: '#F87171', borderRadius: '5px', padding: '2px 8px', fontWeight: 700, fontSize: '11px', ...mono }}>{r.numero_nf}/{lista.length + 1}</span></td>
+                            <td style={tdSm({ color: '#7B82A0', fontSize: '11px', fontStyle: 'italic' })}>{r.destinatario} — Pagamento parcial {lista.length + 1}</td>
+                            <td style={tdSm({ color: '#7B82A0', ...mono, fontSize: '11px' })}>{fmtCNPJ(r.cnpj_dest)}</td>
+                            <td style={tdSm()}></td>
+                            <td style={tdSm()}></td>
+                            <td style={tdSm({ textAlign: 'right', color: '#4A5070', fontSize: '11px' })}>—</td>
+                            <td style={tdSm({ textAlign: 'right', color: '#4A5070', fontSize: '11px' })}>—</td>
+                            <td style={tdSm({ textAlign: 'right', color: '#4A5070', fontSize: '11px' })}>—</td>
+                            <td style={tdSm({ textAlign: 'right', color: '#4A5070', fontSize: '11px' })}>—</td>
+                            <td style={tdSm()}>
                               <span style={{ padding: '3px 8px', borderRadius: '12px', fontSize: '11px', fontWeight: 600, background: 'rgba(248,113,113,0.12)', color: '#F87171', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
                                 <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#F87171' }} />Aguardando
                               </span>
                             </td>
-                            <td style={tdBase({ textAlign: 'center' })}>
+                            <td style={tdSm({ textAlign: 'center' })}>
                               <button onClick={() => { setEditando(isSaldoEdit ? null : r.numero_nf + '-saldo'); setEditVPg(''); setEditDtp('') }}
                                 style={{ padding: '3px 9px', background: '#1A1D2A', border: '1px solid #252836', borderRadius: '5px', color: '#7B82A0', fontSize: '11px', cursor: 'pointer' }}>✏️</button>
                             </td>
@@ -789,3 +757,4 @@ export default function Contabilidade() {
     </div>
   )
 }
+ 
