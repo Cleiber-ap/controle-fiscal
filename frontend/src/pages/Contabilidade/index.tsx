@@ -475,7 +475,7 @@ export default function Contabilidade() {
       )}
       {loading ? <div style={{ padding: 24, textAlign: 'center', color: '#7B82A0' }}>Carregando...</div> : (
           <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', tableLayout: 'fixed' }}>
               <thead>
                 <tr style={{ background: '#1A1D2A' }}>
                   <th style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase' as const, letterSpacing: '1px', color: '#7B82A0', borderBottom: '1px solid #252836', whiteSpace: 'nowrap' as const, padding: '8px 6px', width: '70px' }}>Nº NF</th>
