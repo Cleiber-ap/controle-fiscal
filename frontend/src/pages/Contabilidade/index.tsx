@@ -495,7 +495,7 @@ export default function Contabilidade() {
                   const primeiroPagamento = temHistorico ? parseFloat(lista[0].valor_pago || '0') : valorPagoDB
                   const totalPago = temHistorico ? lista.reduce((s: number, p: any) => s + (parseFloat(p.valor_pago) || 0), 0) : valorPagoDB
                   const isPaga = totalPago > 0
-                  const restante = valorNF - totalPago  // exibido na coluna Restante da linha original
+                  const restante = valorNF - primeiroPagamento  // exibido na coluna Restante da linha original
                   const saldoTotal = valorNF - totalPago        // saldo real considerando todos os pagamentos
                   const temSaldo = isPaga && restante > 0.01    // para exibir Restante na linha original
                   const temSaldoReal = isPaga && saldoTotal > 0.01  // para criar proxima linha vazia
