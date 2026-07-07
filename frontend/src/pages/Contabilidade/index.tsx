@@ -651,7 +651,7 @@ export default function Contabilidade() {
                               <td style={tdBase()}><span style={{ background: 'rgba(79,142,247,0.15)', color: '#4F8EF7', borderRadius: '5px', padding: '2px 8px', fontWeight: 700, fontSize: '11px', ...mono }}>{r.numero_nf}/{idx + 2}</span></td>
                               <td style={tdBase()}></td>
                               <td style={tdBase({ color: '#7B82A0', fontSize: '11px', fontStyle: 'italic', whiteSpace: 'nowrap' })}>Pagamento parcial {idx + 2}</td>
-                              <td style={tdBase()}></td>
+                              <td style={tdBase()}>{fmtCNPJ(r.cnpj_dest)}</td>
                               <td style={tdBase()}></td>
                               <td style={tdBase({ textAlign: 'right' })}><span style={{ color: '#4F8EF7', fontWeight: 600, ...mono, fontSize: '11px' }}>{fmtR(pg.valor_pago)}</span></td>
                               <td style={tdBase({ textAlign: 'right' })}>
