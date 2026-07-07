@@ -723,7 +723,7 @@ export default function Contabilidade() {
                                 <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#F87171' }} />Aguardando
                               </span>
  —</td>
-                            <td style={tdSm({ textAlign: 'right', color: '#4A5070', fontSize: '11px' })}>�</td>
+                            <td style={tdSm({ textAlign: 'right', color: '#4A5070', fontSize: '11px' })}></td>
                             <td style={tdSm({ textAlign: 'center' })}></td>
                             <td style={tdSm({ textAlign: 'center' })}>
                               <button onClick={() => { setEditando(isSaldoEdit ? null : r.numero_nf + '-saldo'); setEditVPg(''); setEditDtp('') }}
