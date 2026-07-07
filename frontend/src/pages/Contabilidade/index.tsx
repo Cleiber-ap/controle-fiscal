@@ -670,13 +670,13 @@ export default function Contabilidade() {
                                   return <span style={{ color: '#4A5070' }}>—</span>
                                 })()}
                               </td>
-                              <td style={tdSm()}>
+                              <td style={tdBase()}>
                                 <span style={{ padding: '3px 8px', borderRadius: '12px', fontSize: '11px', fontWeight: 600, background: 'rgba(79,142,247,0.12)', color: '#4F8EF7', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
                                   <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#4F8EF7' }} />Parcial
                                 </span>
                               </td>
-                              <td style={tdSm({ textAlign: 'center' })}>{isVenda && <button onClick={async (e) => { e.preventDefault(); e.stopPropagation(); const val = !(ajustadosPg[pg.id] || false); setAjustadosPg(prev => ({...prev, [pg.id]: val})); await api.put('/notas/ajustado/' + r.id, { ajustado: val }) }} style={{ width: 14, height: 14, borderRadius: 3, border: '1px solid #4A5070', background: ajustadosPg[pg.id] ? '#34D399' : '#2A2D3E', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{ajustadosPg[pg.id] && <span style={{ color: '#0D0F17', fontSize: 10, fontWeight: 700 }}>✓</span>}</button>}</td>
-                              <td style={tdSm({ textAlign: 'center' })}>
+                              <td style={tdBase({ textAlign: 'center' })}>{isVenda && <button onClick={async (e) => { e.preventDefault(); e.stopPropagation(); const val = !(ajustadosPg[pg.id] || false); setAjustadosPg(prev => ({...prev, [pg.id]: val})); await api.put('/notas/ajustado/' + r.id, { ajustado: val }) }} style={{ width: 14, height: 14, borderRadius: 3, border: '1px solid #4A5070', background: ajustadosPg[pg.id] ? '#34D399' : '#2A2D3E', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{ajustadosPg[pg.id] && <span style={{ color: '#0D0F17', fontSize: 10, fontWeight: 700 }}>✓</span>}</button>}</td>
+                              <td style={tdBase({ textAlign: 'center' })}>
                                 <button onClick={() => { setEditandoPgto(isEditPg ? null : pg.id); setEditPgtoVal(String(pg.valor_pago).replace('.', ',')); setEditPgtoDt(pg.dt_pagamento || ''); setEditMesLct(pg.mes_lancamento || (MESES[new Date().getMonth()].toLowerCase() + '/' + new Date().getFullYear())) }}
                                   style={{ padding: '2px 7px', background: '#1A1D2A', border: '1px solid #252836', borderRadius: '4px', color: '#7B82A0', fontSize: '11px', cursor: 'pointer', marginRight: '4px' }}>✏️</button>
                                 <button onClick={() => excluirPagamento(pg.id)}
