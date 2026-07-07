@@ -652,7 +652,7 @@ export default function Contabilidade() {
                               <td style={tdBase()}></td>
                               <td style={tdBase({ color: '#7B82A0', fontSize: '11px', fontStyle: 'italic', whiteSpace: 'nowrap' })}>Pagamento parcial {idx + 2}</td>
                               <td style={tdBase()}>{fmtCNPJ(r.cnpj_dest)}</td>
-                              <td style={tdBase()}>{r.valor_nf ? fmtR(parseFloat(r.valor_nf)) : "�"}</td>
+                              <td style={tdBase({ textAlign: 'right', fontWeight: 600, color: '#E8EAF0' })>{r.valor_nf ? fmtR(parseFloat(r.valor_nf)) : "�"}</td>
                               <td style={tdBase({ textAlign: 'right', color: '#7B82A0', ...mono, fontSize: '11px' })}>{r.data_emissao || '�'}</td>
                               <td style={tdBase({ textAlign: 'right' })}><span style={{ color: '#4F8EF7', fontWeight: 600, ...mono, fontSize: '11px' }}>{fmtR(pg.valor_pago)}</span></td>
                               <td style={tdBase({ textAlign: 'right' })}>
