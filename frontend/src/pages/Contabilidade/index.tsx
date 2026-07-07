@@ -719,6 +719,7 @@ export default function Contabilidade() {
                             <td style={tdSm({ textAlign: 'right', color: '#4A5070', fontSize: '11px' })}>—</td>
                             <td style={tdSm({ textAlign: 'right', color: '#4A5070', fontSize: '11px' })}>—</td>
                             <td style={tdSm({ textAlign: 'right', color: '#4A5070', fontSize: '11px' })}>—</td>
+                            <td style={tdSm({ textAlign: 'right', color: '#4A5070', fontSize: '11px' })}>�</td>
                             <td style={tdSm({ textAlign: 'center' })}></td>
                             <td style={tdSm()}>
                               <span style={{ padding: '3px 8px', borderRadius: '12px', fontSize: '11px', fontWeight: 600, background: 'rgba(248,113,113,0.12)', color: '#F87171', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
