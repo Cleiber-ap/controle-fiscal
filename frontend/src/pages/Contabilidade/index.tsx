@@ -767,9 +767,9 @@ export default function Contabilidade() {
               <tfoot>
                 <tr style={{ background: '#1A1D2A', borderTop: '2px solid #252836' }}>
                   <td colSpan={4} style={{ padding: '8px 12px', fontSize: '11px', fontWeight: 700, color: '#7B82A0' }}>TOTAIS</td>
-                  <td style={{ padding: '8px 12px', textAlign: 'right', fontWeight: 700, ...mono, color: corEmp }}>{fmtR(tNF)}</td>
+                  <td style={{ padding: '8px 12px', textAlign: 'right', fontWeight: 700, ...mono, color: corEmp }}>{fmtR((filtroMesEmissao || filtroMesPagto || filtroTipo) ? notasFiltradas3.filter((r:any) => isVendaOuParcial(r) && !nfsCanceladas.has(r.numero_nf)).reduce((s:number,r:any) => s + (parseFloat(r.valor_nf)||0), 0) : tNF)}</td>
                   <td></td>
-                  <td style={{ padding: '8px 12px', textAlign: 'right', fontWeight: 700, ...mono, color: '#34D399' }}>{fmtR(tPago)}</td>
+                  <td style={{ padding: '8px 12px', textAlign: 'right', fontWeight: 700, ...mono, color: '#34D399' }}>{fmtR((filtroMesEmissao || filtroMesPagto || filtroTipo) ? notasFiltradas3.filter((r:any) => isVendaOuParcial(r) && !nfsCanceladas.has(r.numero_nf) && r.valor_pago).reduce((s:number,r:any) => s + (parseFloat(r.valor_pago)||0), 0) : tPago)}</td>
                   <td></td><td></td><td></td><td></td><td></td><td></td>
                 </tr>
               </tfoot>
