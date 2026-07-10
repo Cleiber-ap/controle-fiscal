@@ -766,7 +766,7 @@ export default function Contabilidade() {
               </tbody>
               <tfoot>
                 <tr style={{ background: '#1A1D2A', borderTop: '2px solid #252836' }}>
-                  <td colSpan={3} style={{ padding: '8px 12px', fontSize: '11px', fontWeight: 700, color: '#7B82A0' }}>TOTAIS</td>
+                  <td colSpan={4} style={{ padding: '8px 12px', fontSize: '11px', fontWeight: 700, color: '#7B82A0' }}>TOTAIS</td>
                   <td style={{ padding: '8px 12px', textAlign: 'right', fontWeight: 700, ...mono, color: corEmp }}>{fmtR(tNF)}</td>
                   <td></td>
                   <td style={{ padding: '8px 12px', textAlign: 'right', fontWeight: 700, ...mono, color: '#34D399' }}>{fmtR(tPago)}</td>
