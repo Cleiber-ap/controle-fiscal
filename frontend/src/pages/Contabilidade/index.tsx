@@ -54,6 +54,7 @@ export default function Contabilidade() {
   const [filtroMesEmissao, setFiltroMesEmissao] = useState('')
   const [filtroTipo, setFiltroTipo] = useState('')
   const [creditos, setCreditos] = useState<any[]>([])
+  const [filtroStatus, setFiltroStatus] = useState('')
   const [ajustes, setAjustes] = useState<any[]>([])
   const [ignorados, setIgnorados] = useState<Set<number>>(new Set())
 
@@ -205,6 +206,7 @@ export default function Contabilidade() {
     : notasFiltradas
 
   const notasFiltradas3 = filtroTipo ? notasFiltradas2.filter((r: any) => (r.tipo || 'saida') === filtroTipo) : notasFiltradas2
+  const notasFiltradas4 = filtroStatus ? notasFiltradas3.filter((r: any) => (r.nat_operacao || r.status || '') === filtroStatus) : notasFiltradas3
   const dtNoMesFiltro = (dtStr: string | undefined) => {
     if (!filtroMesPagto || !dtStr) return !filtroMesPagto
     const parts = dtStr.includes('-') ? dtStr.split('-').reverse() : dtStr.split('/')
@@ -428,7 +430,7 @@ export default function Contabilidade() {
       <div style={{ background: '#13161F', border: '1px solid #252836', borderRadius: '14px', overflow: 'hidden' }}>
         <div style={{ padding: '10px 16px', background: '#1A1D2A', borderBottom: '1px solid #252836', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div style={{ display:'flex', alignItems:'center', gap:8 }}>
-              <span style={{ fontSize: '12px', fontWeight: 600, color: '#E8EAF0' }}>{notasFiltradas3.length} notas · {isSix ? 'SIX' : 'ENOVA'} · últimos 6 meses</span>
+              <span style={{ fontSize: '12px', fontWeight: 600, color: '#E8EAF0' }}>{notasFiltradas4.length} notas · {isSix ? 'SIX' : 'ENOVA'} · últimos 6 meses</span>
               <select value={filtroMesPagto} onChange={e=>setFiltroMesPagto(e.target.value)} style={{ background:'#1A1D2A', color:'#E8EAF0', border:'1px solid #353849', borderRadius:6, padding:'2px 8px', fontSize:'12px', cursor:'pointer' }}>
                 <option value="">Pagamento: todos</option>
                 {[...new Set(notas.flatMap((r:any)=>{
@@ -445,6 +447,17 @@ export default function Contabilidade() {
                 <option value=''>Tipo: todos</option>
                 <option value='saida'>Saída</option>
                 <option value='entrada'>Entrada</option>
+              </select>
+              <select value={filtroStatus} onChange={e=>setFiltroStatus(e.target.value)} style={{ background:'#1A1D2A', color:'#E8EAF0', border:'1px solid #353849', borderRadius:6, padding:'2px 8px', fontSize:'12px', cursor:'pointer' }}>
+                <option value=''>Status: todos</option>
+                <option value='Venda'>Venda</option>
+                <option value='Simples Remessa'>Simples Remessa</option>
+                <option value='Cancelamento'>Cancelamento</option>
+                <option value='Carta de Correcao'>Carta de Correção</option>
+                <option value='Complemento de Frete'>Complemento de Frete</option>
+                <option value='Devolucao de venda de mercadorias'>Devolução de Venda</option>
+                <option value='Devolucao de simples remessa'>Devolução de Remessa</option>
+                <option value='Inutilizacao'>Inutilização</option>
               </select>
             </div>
         </div>
@@ -493,7 +506,7 @@ export default function Contabilidade() {
                 </tr>
               </thead>
               <tbody>
-                {notasFiltradas3.map(r => {
+                {notasFiltradas4.map(r => {
                   const valorNF = parseFloat(r.valor_nf || '0')
                   const valorPagoDB = parseFloat(r.valor_pago || '0')
                   const lista = pagamentos[r.numero_nf] || []
