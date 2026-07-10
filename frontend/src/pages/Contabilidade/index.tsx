@@ -432,6 +432,15 @@ export default function Contabilidade() {
         <div style={{ padding: '10px 16px', background: '#1A1D2A', borderBottom: '1px solid #252836', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div style={{ display:'flex', alignItems:'center', gap:8 }}>
               <span style={{ fontSize: '12px', fontWeight: 600, color: '#E8EAF0' }}>{notasFiltradas4.length} notas · {isSix ? 'SIX' : 'ENOVA'} · últimos 6 meses</span>
+              <select value={filtroTipo} onChange={e=>setFiltroTipo(e.target.value)} style={{ background:'#1A1D2A', color:'#E8EAF0', border:'1px solid #353849', borderRadius:6, padding:'2px 8px', fontSize:'12px', cursor:'pointer' }}>
+                <option value=''>Tipo: todos</option>
+                <option value='saida'>Saída</option>
+                <option value='entrada'>Entrada</option>
+              </select>
+              <select value={filtroMesEmissao} onChange={e=>setFiltroMesEmissao(e.target.value)} style={{ background:'#1A1D2A', color:'#E8EAF0', border:'1px solid #353849', borderRadius:6, padding:'2px 8px', fontSize:'12px', cursor:'pointer' }}>
+                <option value="">Emissão: todos</option>
+                {[...new Set(notas.map((r:any)=>{ const dt=r.data_emissao||''; if(!dt) return null; const parts=dt.includes('-')?dt.split('-').reverse():dt.split('/'); const mm=parts[1]; const aa=parts[2]; return (mm&&aa&&!isNaN(+mm)&&!isNaN(+aa)) ? mm.padStart(2,'0')+'/'+aa : null }).filter(Boolean))].sort().map((m:any)=>(<option key={m} value={m}>{m}</option>))}
+              </select>
               <select value={filtroMesPagto} onChange={e=>setFiltroMesPagto(e.target.value)} style={{ background:'#1A1D2A', color:'#E8EAF0', border:'1px solid #353849', borderRadius:6, padding:'2px 8px', fontSize:'12px', cursor:'pointer' }}>
                 <option value="">Pagamento: todos</option>
                 {[...new Set(notas.flatMap((r:any)=>{
@@ -439,15 +448,6 @@ export default function Contabilidade() {
                   if(lista.length>0) return lista.map((p:any)=>{ const dt=p.dt_pagamento||''; if(!dt) return null; const parts=dt.includes('-')?dt.split('-').reverse():dt.split('/'); const mm=parts[1]; const aa=parts[2]; return (mm&&aa&&!isNaN(+mm)&&!isNaN(+aa)) ? mm.padStart(2,'0')+'/'+aa : null }).filter(Boolean)
                   const dtP=r.dt_pagamento||r.data_pagamento||''; if(!dtP) return []; const parts=dtP.includes('-')?dtP.split('-').reverse():dtP.split('/'); const mm=parts[1]; const aa=parts[2]; return (mm&&aa&&!isNaN(+mm)&&!isNaN(+aa)) ? [mm.padStart(2,'0')+'/'+aa] : []
                 }))].filter(Boolean).sort().map((m:any)=>(<option key={m} value={m}>{m}</option>))}
-              </select>
-              <select value={filtroMesEmissao} onChange={e=>setFiltroMesEmissao(e.target.value)} style={{ background:'#1A1D2A', color:'#E8EAF0', border:'1px solid #353849', borderRadius:6, padding:'2px 8px', fontSize:'12px', cursor:'pointer' }}>
-                <option value="">Emissão: todos</option>
-                {[...new Set(notas.map((r:any)=>{ const dt=r.data_emissao||''; if(!dt) return null; const parts=dt.includes('-')?dt.split('-').reverse():dt.split('/'); const mm=parts[1]; const aa=parts[2]; return (mm&&aa&&!isNaN(+mm)&&!isNaN(+aa)) ? mm.padStart(2,'0')+'/'+aa : null }).filter(Boolean))].sort().map((m:any)=>(<option key={m} value={m}>{m}</option>))}
-              </select>
-              <select value={filtroTipo} onChange={e=>setFiltroTipo(e.target.value)} style={{ background:'#1A1D2A', color:'#E8EAF0', border:'1px solid #353849', borderRadius:6, padding:'2px 8px', fontSize:'12px', cursor:'pointer' }}>
-                <option value=''>Tipo: todos</option>
-                <option value='saida'>Saída</option>
-                <option value='entrada'>Entrada</option>
               </select>
               <div style={{ position: 'relative' }}>
                 <button onClick={() => setShowStatusMenu(p => !p)} style={{ background:'#1A1D2A', color:'#E8EAF0', border:'1px solid #353849', borderRadius:6, padding:'2px 8px', fontSize:'12px', cursor:'pointer' }}>
