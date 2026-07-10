@@ -54,7 +54,8 @@ export default function Contabilidade() {
   const [filtroMesEmissao, setFiltroMesEmissao] = useState('')
   const [filtroTipo, setFiltroTipo] = useState('')
   const [creditos, setCreditos] = useState<any[]>([])
-  const [filtroStatus, setFiltroStatus] = useState('')
+  const [filtroStatus, setFiltroStatus] = useState<string[]>([])
+  const [showStatusMenu, setShowStatusMenu] = useState(false)
   const [ajustes, setAjustes] = useState<any[]>([])
   const [ignorados, setIgnorados] = useState<Set<number>>(new Set())
 
@@ -206,7 +207,7 @@ export default function Contabilidade() {
     : notasFiltradas
 
   const notasFiltradas3 = filtroTipo ? notasFiltradas2.filter((r: any) => (r.tipo || 'saida') === filtroTipo) : notasFiltradas2
-  const notasFiltradas4 = filtroStatus ? notasFiltradas3.filter((r: any) => (r.nat_operacao || r.status || '') === filtroStatus) : notasFiltradas3
+  const notasFiltradas4 = filtroStatus.length > 0 ? notasFiltradas3.filter((r: any) => filtroStatus.includes(r.nat_operacao || r.status || '')) : notasFiltradas3
   const dtNoMesFiltro = (dtStr: string | undefined) => {
     if (!filtroMesPagto || !dtStr) return !filtroMesPagto
     const parts = dtStr.includes('-') ? dtStr.split('-').reverse() : dtStr.split('/')
@@ -448,17 +449,22 @@ export default function Contabilidade() {
                 <option value='saida'>Saída</option>
                 <option value='entrada'>Entrada</option>
               </select>
-              <select value={filtroStatus} onChange={e=>setFiltroStatus(e.target.value)} style={{ background:'#1A1D2A', color:'#E8EAF0', border:'1px solid #353849', borderRadius:6, padding:'2px 8px', fontSize:'12px', cursor:'pointer' }}>
-                <option value=''>Status: todos</option>
-                <option value='Venda'>Venda</option>
-                <option value='Simples Remessa'>Simples Remessa</option>
-                <option value='Cancelamento'>Cancelamento</option>
-                <option value='Carta de Correcao'>Carta de Correção</option>
-                <option value='Complemento de Frete'>Complemento de Frete</option>
-                <option value='Devolucao de venda de mercadorias'>Devolução de Venda</option>
-                <option value='Devolucao de simples remessa'>Devolução de Remessa</option>
-                <option value='Inutilizacao'>Inutilização</option>
-              </select>
+              <div style={{ position: 'relative' }}>
+                <button onClick={() => setShowStatusMenu(p => !p)} style={{ background:'#1A1D2A', color:'#E8EAF0', border:'1px solid #353849', borderRadius:6, padding:'2px 8px', fontSize:'12px', cursor:'pointer' }}>
+                  {filtroStatus.length === 0 ? 'Status: todos' : `Status: ${filtroStatus.length} selecionado${filtroStatus.length>1?'s':''}`}
+                </button>
+                {showStatusMenu && (<div style={{ position:'absolute', top:'100%', left:0, zIndex:100, background:'#1A1D2A', border:'1px solid #353849', borderRadius:6, padding:'4px 0', minWidth:'200px' }}>
+                  {['Venda','Simples Remessa','Cancelamento','Carta de Correcao','Complemento de Frete','Devolucao de venda de mercadorias','Devolucao de simples remessa','Inutilizacao'].map(s => (
+                    <label key={s} style={{ display:'flex', alignItems:'center', gap:6, padding:'4px 12px', cursor:'pointer', color:'#E8EAF0', fontSize:'12px' }}>
+                      <input type='checkbox' checked={filtroStatus.includes(s)} onChange={e => setFiltroStatus(prev => e.target.checked ? [...prev, s] : prev.filter(x => x !== s))} />
+                      {s === 'Carta de Correcao' ? 'Carta de Correção' : s === 'Devolucao de venda de mercadorias' ? 'Devolução de Venda' : s === 'Devolucao de simples remessa' ? 'Devolução de Remessa' : s === 'Inutilizacao' ? 'Inutilização' : s}
+                    </label>
+                  ))}
+                  <div style={{ borderTop:'1px solid #353849', margin:'4px 0', padding:'4px 12px' }}>
+                    <button onClick={() => { setFiltroStatus([]); setShowStatusMenu(false) }} style={{ fontSize:'11px', color:'#7B82A0', background:'none', border:'none', cursor:'pointer' }}>Limpar</button>
+                  </div>
+                </div>)}
+              </div>
             </div>
         </div>
         {devElegiveis.length > 0 && (
