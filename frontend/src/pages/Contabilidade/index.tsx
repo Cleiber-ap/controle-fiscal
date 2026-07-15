@@ -207,7 +207,7 @@ export default function Contabilidade() {
     : notasFiltradas
 
   const notasFiltradas3 = filtroTipo ? notasFiltradas2.filter((r: any) => (r.tipo || 'saida') === filtroTipo) : notasFiltradas2
-  const notasFiltradas4 = filtroStatus.length > 0 ? notasFiltradas3.filter((r: any) => filtroStatus.includes(r.nat_operacao || r.status || '')) : notasFiltradas3
+  const notasFiltradas4 = filtroStatus.length > 0 ? notasFiltradas3.filter((r: any) => { const nat = r.nat_operacao || r.status || ''; const cancelada = nfsCanceladas.has(r.numero_nf); if (filtroStatus.includes('Venda') && cancelada) return false; return filtroStatus.includes(nat); }) : notasFiltradas3
   const dtNoMesFiltro = (dtStr: string | undefined) => {
     if (!filtroMesPagto || !dtStr) return !filtroMesPagto
     const parts = dtStr.includes('-') ? dtStr.split('-').reverse() : dtStr.split('/')
