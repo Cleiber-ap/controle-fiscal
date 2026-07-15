@@ -1,15 +1,20 @@
-﻿const fs = require('fs');
-const p = 'C:/projetos/controle-fiscal/frontend/src/components/Layout/index.tsx';
-let c = fs.readFileSync(p, 'utf8');
+const fs = require('fs');
+let c = fs.readFileSync('C:/projetos/controle-fiscal/frontend/src/components/Layout/index.tsx', 'utf8');
 
-// 1. Remover linha do Encargos do bloco Geral
-c = c.replace(/[ \t]*<NavItem path="\/encargos"[^\n]*\n/, '');
+// Remover bloco Colaboradores (antes de Configurações)
+const colaboradoresBloco = "\r\n        {/* Colaboradores */}\r\n        <div style={{ padding: '4px 10px' }}>\r\n          <div style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1.2px', color: '#4A5070', padding: '0 8px', marginBottom: '4px' }}>Colaboradores</div>\r\n          <NavItem path=\"/encargos\" icon=\"👷\" label=\"Encargos\" />\r\n        </div>\r\n\r\n        <div style={{ height: '1px', background: '#252836', margin: '6px 14px' }} />\r\n\r\n        {/* Configurações */}";
 
-// 2. Inserir bloco Colaboradores antes do separador do Fiscal
-c = c.replace(
-  /([ \t]*<\/div>\r?\n)([ \t]*<div style=\{\{ height: '1px'[^\n]*\n[ \t]*\{\/\* Fiscal \*\/\})/,
-  '$1\n        <div style={{ height: \'1px\', background: \'#252836\', margin: \'6px 14px\' }} />\n\n        {/* Colaboradores */}\n        <div style={{ padding: \'4px 10px\' }}>\n          <div style={{ fontSize: \'10px\', fontWeight: 600, textTransform: \'uppercase\', letterSpacing: \'1.2px\', color: \'#4A5070\', padding: \'0 8px\', marginBottom: \'4px\' }}>Colaboradores</div>\n          <NavItem path="/encargos" icon="\uD83D\uDC77" label="Encargos" />\n        </div>\n\n        $2'
-);
+const colaboradoresBlocoNew = "\r\n        {/* Configurações */}";
 
-fs.writeFileSync(p, c, 'utf8');
+if (!c.includes(colaboradoresBloco)) { console.log('NAO ENCONTRADO: colaboradores bloco'); process.exit(1); }
+c = c.replace(colaboradoresBloco, colaboradoresBlocoNew);
+
+// Adicionar Colaboradores após Configurações (antes do rodapé)
+const configEnd = "          <NavItem path=\"/empresas\" icon=\"🏢\" label=\"Empresas\" />\r\n        </div>";
+const configEndNew = `          <NavItem path="/empresas" icon="🏢" label="Empresas" />\r\n        </div>\r\n\r\n        <div style={{ height: '1px', background: '#252836', margin: '6px 14px' }} />\r\n\r\n        {/* Colaboradores */}\r\n        <div style={{ padding: '4px 10px' }}>\r\n          <div style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1.2px', color: '#4A5070', padding: '0 8px', marginBottom: '4px' }}>Colaboradores</div>\r\n          <NavItem path="/encargos" icon="👷" label="Encargos" />\r\n        </div>`;
+
+if (!c.includes(configEnd)) { console.log('NAO ENCONTRADO: config end'); process.exit(1); }
+c = c.replace(configEnd, configEndNew);
+
+fs.writeFileSync('C:/projetos/controle-fiscal/frontend/src/components/Layout/index.tsx', c, 'utf8');
 console.log('OK');

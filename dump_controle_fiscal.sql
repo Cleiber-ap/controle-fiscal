@@ -1,0 +1,1629 @@
+--
+-- PostgreSQL database dump
+--
+
+\restrict 0LrmHODRT8NrXLgorx51YnX7dUmefDPCfZ43haxje1oOibRo9LueNBZrfq9qb2T
+
+-- Dumped from database version 15.17
+-- Dumped by pg_dump version 15.17
+
+SET statement_timeout = 0;
+SET lock_timeout = 0;
+SET idle_in_transaction_session_timeout = 0;
+SET client_encoding = 'UTF8';
+SET standard_conforming_strings = on;
+SELECT pg_catalog.set_config('search_path', '', false);
+SET check_function_bodies = false;
+SET xmloption = content;
+SET client_min_messages = warning;
+SET row_security = off;
+
+SET default_tablespace = '';
+
+SET default_table_access_method = heap;
+
+--
+-- Name: ajustes_devolucao; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.ajustes_devolucao (
+    id integer NOT NULL,
+    empresa_id integer NOT NULL,
+    ano integer NOT NULL,
+    mes integer NOT NULL,
+    valor double precision NOT NULL,
+    nf_devolucao character varying(50),
+    nf_referenciada character varying(50),
+    chave_ref character varying(50),
+    created_at timestamp without time zone DEFAULT now()
+);
+
+
+--
+-- Name: ajustes_devolucao_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.ajustes_devolucao_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: ajustes_devolucao_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.ajustes_devolucao_id_seq OWNED BY public.ajustes_devolucao.id;
+
+
+--
+-- Name: creditos_fiscais; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.creditos_fiscais (
+    id integer NOT NULL,
+    empresa_id integer NOT NULL,
+    valor_nf_original double precision NOT NULL,
+    nf_devolucao character varying(50),
+    nf_referenciada character varying(50),
+    mes_orig integer NOT NULL,
+    ano_orig integer NOT NULL,
+    status character varying(20) DEFAULT 'pendente'::character varying,
+    created_at timestamp without time zone DEFAULT now()
+);
+
+
+--
+-- Name: creditos_fiscais_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.creditos_fiscais_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: creditos_fiscais_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.creditos_fiscais_id_seq OWNED BY public.creditos_fiscais.id;
+
+
+--
+-- Name: das_pagamentos; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.das_pagamentos (
+    id integer NOT NULL,
+    empresa_id integer,
+    ano smallint NOT NULL,
+    mes smallint NOT NULL,
+    valor numeric(15,2) NOT NULL,
+    dt_confirmacao timestamp without time zone DEFAULT now(),
+    usuario_id integer
+);
+
+
+--
+-- Name: das_pagamentos_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.das_pagamentos_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: das_pagamentos_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.das_pagamentos_id_seq OWNED BY public.das_pagamentos.id;
+
+
+--
+-- Name: empresas; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.empresas (
+    id integer NOT NULL,
+    nome character varying(50) NOT NULL,
+    razao_social character varying(200) NOT NULL,
+    aliquota_das numeric(8,6),
+    credito_icms numeric(8,6),
+    ativo boolean DEFAULT true,
+    created_at timestamp without time zone DEFAULT now()
+);
+
+
+--
+-- Name: empresas_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.empresas_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: empresas_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.empresas_id_seq OWNED BY public.empresas.id;
+
+
+--
+-- Name: encargos_horas_extras; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.encargos_horas_extras (
+    id integer NOT NULL,
+    funcionario_id integer NOT NULL,
+    ano integer NOT NULL,
+    mes integer NOT NULL,
+    horas double precision DEFAULT 0,
+    created_at timestamp without time zone DEFAULT now()
+);
+
+
+--
+-- Name: encargos_horas_extras_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.encargos_horas_extras_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: encargos_horas_extras_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.encargos_horas_extras_id_seq OWNED BY public.encargos_horas_extras.id;
+
+
+--
+-- Name: feriados; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.feriados (
+    id integer NOT NULL,
+    dia integer NOT NULL,
+    mes integer NOT NULL,
+    descricao character varying(100) NOT NULL,
+    tipo character varying(20),
+    ativo boolean
+);
+
+
+--
+-- Name: feriados_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.feriados_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: feriados_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.feriados_id_seq OWNED BY public.feriados.id;
+
+
+--
+-- Name: funcionarios; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.funcionarios (
+    id integer NOT NULL,
+    empresa_id integer DEFAULT 1 NOT NULL,
+    nome character varying(100) NOT NULL,
+    cargo character varying(100),
+    salario_base double precision DEFAULT 0 NOT NULL,
+    vale_alimentacao double precision DEFAULT 250,
+    vale_transporte boolean DEFAULT true,
+    salario_dinheiro double precision DEFAULT 0,
+    ativo boolean DEFAULT true,
+    created_at timestamp without time zone DEFAULT now(),
+    vale_transporte_valor double precision DEFAULT 0,
+    vale_alimentacao_desconto double precision DEFAULT 0
+);
+
+
+--
+-- Name: funcionarios_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.funcionarios_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: funcionarios_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.funcionarios_id_seq OWNED BY public.funcionarios.id;
+
+
+--
+-- Name: historico_faturamento; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.historico_faturamento (
+    id integer NOT NULL,
+    empresa_id integer,
+    ano smallint NOT NULL,
+    mes smallint NOT NULL,
+    valor numeric(15,2) NOT NULL,
+    origem character varying(50),
+    created_at timestamp without time zone DEFAULT now()
+);
+
+
+--
+-- Name: historico_faturamento_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.historico_faturamento_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: historico_faturamento_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.historico_faturamento_id_seq OWNED BY public.historico_faturamento.id;
+
+
+--
+-- Name: log_auditoria; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.log_auditoria (
+    id integer NOT NULL,
+    usuario_id integer NOT NULL,
+    usuario_nome character varying(200) NOT NULL,
+    acao character varying(50) NOT NULL,
+    modulo character varying(100) NOT NULL,
+    descricao text NOT NULL,
+    valor_antes text,
+    valor_depois text,
+    ip character varying(50),
+    created_at timestamp without time zone
+);
+
+
+--
+-- Name: log_auditoria_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.log_auditoria_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: log_auditoria_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.log_auditoria_id_seq OWNED BY public.log_auditoria.id;
+
+
+--
+-- Name: notas_fiscais; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.notas_fiscais (
+    id integer NOT NULL,
+    empresa_id integer NOT NULL,
+    numero_nf character varying(50) NOT NULL,
+    razao_dest character varying(300),
+    cnpj_dest character varying(50),
+    valor_nf double precision DEFAULT 0,
+    dt_emissao character varying(30),
+    valor_pago double precision,
+    dt_pagamento character varying(30),
+    nat_operacao character varying(200),
+    status character varying(200),
+    created_at timestamp without time zone DEFAULT now(),
+    mes_lancamento character varying(10)
+);
+
+
+--
+-- Name: notas_fiscais_new_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.notas_fiscais_new_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: notas_fiscais_new_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.notas_fiscais_new_id_seq OWNED BY public.notas_fiscais.id;
+
+
+--
+-- Name: pagamentos_nf; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.pagamentos_nf (
+    id integer NOT NULL,
+    nota_id integer NOT NULL,
+    empresa_id integer NOT NULL,
+    numero_nf character varying(50) NOT NULL,
+    valor_pago double precision NOT NULL,
+    dt_pagamento character varying(30),
+    created_at timestamp without time zone DEFAULT now(),
+    mes_lancamento character varying(10)
+);
+
+
+--
+-- Name: pagamentos_nf_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.pagamentos_nf_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: pagamentos_nf_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.pagamentos_nf_id_seq OWNED BY public.pagamentos_nf.id;
+
+
+--
+-- Name: permissoes; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.permissoes (
+    id integer NOT NULL,
+    usuario_id integer,
+    modulo character varying(50) NOT NULL,
+    visualizar boolean DEFAULT false,
+    editar boolean DEFAULT false,
+    incluir boolean DEFAULT false,
+    apagar boolean DEFAULT false
+);
+
+
+--
+-- Name: permissoes_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.permissoes_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: permissoes_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.permissoes_id_seq OWNED BY public.permissoes.id;
+
+
+--
+-- Name: usuarios; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.usuarios (
+    id integer NOT NULL,
+    nome character varying(150) NOT NULL,
+    email character varying(200) NOT NULL,
+    senha_hash character varying(255) NOT NULL,
+    perfil character varying(50),
+    ativo boolean DEFAULT true,
+    created_at timestamp without time zone DEFAULT now()
+);
+
+
+--
+-- Name: usuarios_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.usuarios_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: usuarios_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.usuarios_id_seq OWNED BY public.usuarios.id;
+
+
+--
+-- Name: ajustes_devolucao id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.ajustes_devolucao ALTER COLUMN id SET DEFAULT nextval('public.ajustes_devolucao_id_seq'::regclass);
+
+
+--
+-- Name: creditos_fiscais id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.creditos_fiscais ALTER COLUMN id SET DEFAULT nextval('public.creditos_fiscais_id_seq'::regclass);
+
+
+--
+-- Name: das_pagamentos id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.das_pagamentos ALTER COLUMN id SET DEFAULT nextval('public.das_pagamentos_id_seq'::regclass);
+
+
+--
+-- Name: empresas id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.empresas ALTER COLUMN id SET DEFAULT nextval('public.empresas_id_seq'::regclass);
+
+
+--
+-- Name: encargos_horas_extras id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.encargos_horas_extras ALTER COLUMN id SET DEFAULT nextval('public.encargos_horas_extras_id_seq'::regclass);
+
+
+--
+-- Name: feriados id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.feriados ALTER COLUMN id SET DEFAULT nextval('public.feriados_id_seq'::regclass);
+
+
+--
+-- Name: funcionarios id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.funcionarios ALTER COLUMN id SET DEFAULT nextval('public.funcionarios_id_seq'::regclass);
+
+
+--
+-- Name: historico_faturamento id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.historico_faturamento ALTER COLUMN id SET DEFAULT nextval('public.historico_faturamento_id_seq'::regclass);
+
+
+--
+-- Name: log_auditoria id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.log_auditoria ALTER COLUMN id SET DEFAULT nextval('public.log_auditoria_id_seq'::regclass);
+
+
+--
+-- Name: notas_fiscais id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.notas_fiscais ALTER COLUMN id SET DEFAULT nextval('public.notas_fiscais_new_id_seq'::regclass);
+
+
+--
+-- Name: pagamentos_nf id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.pagamentos_nf ALTER COLUMN id SET DEFAULT nextval('public.pagamentos_nf_id_seq'::regclass);
+
+
+--
+-- Name: permissoes id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.permissoes ALTER COLUMN id SET DEFAULT nextval('public.permissoes_id_seq'::regclass);
+
+
+--
+-- Name: usuarios id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.usuarios ALTER COLUMN id SET DEFAULT nextval('public.usuarios_id_seq'::regclass);
+
+
+--
+-- Data for Name: ajustes_devolucao; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+COPY public.ajustes_devolucao (id, empresa_id, ano, mes, valor, nf_devolucao, nf_referenciada, chave_ref, created_at) FROM stdin;
+\.
+
+
+--
+-- Data for Name: creditos_fiscais; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+COPY public.creditos_fiscais (id, empresa_id, valor_nf_original, nf_devolucao, nf_referenciada, mes_orig, ano_orig, status, created_at) FROM stdin;
+\.
+
+
+--
+-- Data for Name: das_pagamentos; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+COPY public.das_pagamentos (id, empresa_id, ano, mes, valor, dt_confirmacao, usuario_id) FROM stdin;
+1	1	2023	3	9573.40	2026-03-16 15:59:37.075967	\N
+2	1	2023	4	13048.86	2026-03-16 15:59:37.087893	\N
+3	1	2023	5	42626.53	2026-03-16 15:59:37.089006	\N
+4	1	2023	6	29457.25	2026-03-16 15:59:37.090767	\N
+5	1	2023	7	27385.05	2026-03-16 15:59:37.092003	\N
+6	1	2023	8	28063.84	2026-03-16 15:59:37.092863	\N
+7	1	2023	9	28377.84	2026-03-16 15:59:37.09384	\N
+8	1	2023	10	53197.38	2026-03-16 15:59:37.095089	\N
+9	1	2023	11	10891.03	2026-03-16 15:59:37.09602	\N
+10	1	2023	12	30656.32	2026-03-16 15:59:37.096914	\N
+11	1	2024	1	22290.25	2026-03-16 15:59:37.097794	\N
+12	1	2024	2	13341.04	2026-03-16 15:59:37.098704	\N
+13	1	2024	3	8710.39	2026-03-16 15:59:37.099588	\N
+14	1	2024	4	7918.57	2026-03-16 15:59:37.100596	\N
+15	1	2024	5	16731.48	2026-03-16 15:59:37.101504	\N
+16	1	2024	6	11879.15	2026-03-16 15:59:37.102534	\N
+17	1	2024	7	498.75	2026-03-16 15:59:37.103534	\N
+18	1	2024	8	8961.07	2026-03-16 15:59:37.104442	\N
+19	1	2024	9	6623.46	2026-03-16 15:59:37.105313	\N
+20	1	2024	10	7105.63	2026-03-16 15:59:37.106145	\N
+21	1	2024	11	12250.23	2026-03-16 15:59:37.107549	\N
+22	1	2024	12	3433.25	2026-03-16 15:59:37.108842	\N
+23	1	2025	1	2465.48	2026-03-16 15:59:37.109868	\N
+24	1	2025	2	5916.35	2026-03-16 15:59:37.111292	\N
+25	1	2025	3	1593.14	2026-03-16 15:59:37.112272	\N
+26	1	2025	4	10806.38	2026-03-16 15:59:37.113163	\N
+27	1	2025	5	13848.73	2026-03-16 15:59:37.114063	\N
+28	1	2025	6	6994.59	2026-03-16 15:59:37.114963	\N
+29	1	2025	7	3859.22	2026-03-16 15:59:37.116014	\N
+30	1	2025	8	6842.74	2026-03-16 15:59:37.117081	\N
+31	1	2025	9	34851.24	2026-03-16 15:59:37.118015	\N
+32	1	2025	10	5655.18	2026-03-16 15:59:37.120399	\N
+33	1	2025	11	8690.85	2026-03-16 15:59:37.12118	\N
+34	1	2025	12	5986.03	2026-03-16 15:59:37.121917	\N
+35	2	2024	9	6388.22	2026-03-16 15:59:37.122639	\N
+36	2	2024	10	12192.80	2026-03-16 15:59:37.123751	\N
+37	2	2024	11	20041.66	2026-03-16 15:59:37.126207	\N
+38	2	2024	12	17328.49	2026-03-16 15:59:37.12704	\N
+39	2	2025	1	3364.75	2026-03-16 15:59:37.127853	\N
+40	2	2025	2	16027.14	2026-03-16 15:59:37.128637	\N
+41	2	2025	3	3293.34	2026-03-16 15:59:37.12938	\N
+42	2	2025	4	10404.74	2026-03-16 15:59:37.130134	\N
+43	2	2025	5	14009.48	2026-03-16 15:59:37.130878	\N
+44	2	2025	6	16712.31	2026-03-16 15:59:37.131636	\N
+45	2	2025	7	12453.79	2026-03-16 15:59:37.132439	\N
+46	2	2025	8	19886.90	2026-03-16 15:59:37.133271	\N
+47	2	2025	9	21365.69	2026-03-16 15:59:37.134383	\N
+48	2	2025	10	16902.84	2026-03-16 15:59:37.135507	\N
+49	2	2025	11	14635.59	2026-03-16 15:59:37.136402	\N
+50	2	2025	12	9316.61	2026-03-16 15:59:37.137308	\N
+101	3	2016	10	4855.77	2026-03-17 11:10:03.469205	\N
+102	3	2016	11	9748.30	2026-03-17 11:10:03.583849	\N
+103	3	2016	12	1592.63	2026-03-17 11:10:03.630439	\N
+104	3	2017	4	1068.63	2026-03-17 11:10:03.677078	\N
+105	3	2017	5	267.87	2026-03-17 11:10:03.719707	\N
+106	3	2017	6	1301.13	2026-03-17 11:10:03.766285	\N
+107	3	2017	7	4117.13	2026-03-17 11:10:03.801626	\N
+108	3	2017	8	3259.58	2026-03-17 11:10:03.841028	\N
+109	3	2017	9	4978.67	2026-03-17 11:10:03.884295	\N
+110	3	2017	10	796.80	2026-03-17 11:10:03.921022	\N
+111	3	2017	11	469.71	2026-03-17 11:10:03.94662	\N
+112	3	2017	12	5386.04	2026-03-17 11:10:03.983161	\N
+113	3	2018	3	894.69	2026-03-17 11:10:04.020853	\N
+114	3	2018	4	2213.44	2026-03-17 11:10:04.061751	\N
+115	3	2018	5	5268.13	2026-03-17 11:10:04.090332	\N
+116	3	2018	6	6716.03	2026-03-17 11:10:04.119804	\N
+117	3	2018	7	9487.68	2026-03-17 11:10:04.149054	\N
+118	3	2018	8	4595.36	2026-03-17 11:10:04.179037	\N
+119	3	2018	9	10301.49	2026-03-17 11:10:04.207182	\N
+120	3	2018	10	1770.98	2026-03-17 11:10:04.232782	\N
+121	3	2018	11	9224.37	2026-03-17 11:10:04.259765	\N
+122	3	2018	12	7505.60	2026-03-17 11:10:04.293228	\N
+123	3	2019	1	1932.36	2026-03-17 11:10:04.323078	\N
+124	3	2019	2	227.91	2026-03-17 11:10:04.362629	\N
+125	3	2019	3	3599.71	2026-03-17 11:10:04.400245	\N
+126	3	2019	4	4395.39	2026-03-17 11:10:04.445591	\N
+127	3	2019	5	9963.46	2026-03-17 11:10:04.496175	\N
+128	3	2019	6	92.87	2026-03-17 11:10:04.54047	\N
+129	3	2019	7	28122.65	2026-03-17 11:10:04.584301	\N
+130	3	2019	8	8249.48	2026-03-17 11:10:04.63048	\N
+131	3	2019	9	1965.94	2026-03-17 11:10:04.677027	\N
+132	3	2019	10	2821.74	2026-03-17 11:10:04.716833	\N
+133	3	2019	11	14276.10	2026-03-17 11:10:04.757788	\N
+134	3	2019	12	24625.54	2026-03-17 11:10:04.798011	\N
+135	3	2020	1	3300.07	2026-03-17 11:10:04.83825	\N
+136	3	2020	2	4448.54	2026-03-17 11:10:04.874306	\N
+137	3	2020	3	11131.07	2026-03-17 11:10:04.914057	\N
+138	3	2020	4	5108.27	2026-03-17 11:10:04.952244	\N
+139	3	2020	5	1355.92	2026-03-17 11:10:04.993362	\N
+140	3	2020	6	2316.16	2026-03-17 11:10:05.026586	\N
+141	3	2020	8	1887.44	2026-03-17 11:10:05.061809	\N
+142	3	2020	9	5575.41	2026-03-17 11:10:05.09704	\N
+143	3	2020	10	8969.20	2026-03-17 11:10:05.136665	\N
+144	3	2020	11	11530.79	2026-03-17 11:10:05.175031	\N
+145	3	2020	12	6739.36	2026-03-17 11:10:05.212059	\N
+146	3	2021	1	678.55	2026-03-17 11:10:05.247835	\N
+147	3	2021	2	1035.75	2026-03-17 11:10:05.281193	\N
+148	3	2021	3	331.24	2026-03-17 11:10:05.320196	\N
+149	3	2021	4	5026.38	2026-03-17 11:10:05.358393	\N
+150	3	2021	6	4068.25	2026-03-17 11:10:05.395712	\N
+151	3	2021	7	9901.18	2026-03-17 11:10:05.431736	\N
+152	3	2021	8	4737.67	2026-03-17 11:10:05.469883	\N
+153	3	2021	9	6037.74	2026-03-17 11:10:05.508347	\N
+154	3	2021	10	11141.08	2026-03-17 11:10:05.544864	\N
+155	3	2021	11	13013.93	2026-03-17 11:10:05.574134	\N
+156	3	2021	12	34650.62	2026-03-17 11:10:05.607814	\N
+157	3	2022	1	1736.00	2026-03-17 11:10:05.64361	\N
+158	3	2022	2	1255.90	2026-03-17 11:10:05.678514	\N
+159	3	2022	3	2024.60	2026-03-17 11:10:05.714805	\N
+160	3	2022	6	1172.00	2026-03-17 11:10:05.75556	\N
+161	3	2022	8	1396.65	2026-03-17 11:10:05.793967	\N
+162	3	2022	9	7574.62	2026-03-17 11:10:05.838106	\N
+163	3	2022	10	3357.84	2026-03-17 11:10:05.875635	\N
+164	3	2023	10	5353.30	2026-03-17 11:10:05.913823	\N
+165	3	2023	11	4044.96	2026-03-17 11:10:05.956296	\N
+166	3	2023	12	4303.36	2026-03-17 11:10:05.993059	\N
+167	3	2024	2	3283.21	2026-03-17 11:10:06.030467	\N
+168	3	2024	3	3943.48	2026-03-17 11:10:06.067034	\N
+169	3	2024	4	10379.48	2026-03-17 11:10:06.104755	\N
+170	3	2024	5	12874.53	2026-03-17 11:10:06.138854	\N
+171	3	2024	6	5002.17	2026-03-17 11:10:06.175495	\N
+172	3	2024	7	9036.65	2026-03-17 11:10:06.208153	\N
+173	3	2024	8	1339.55	2026-03-17 11:10:06.237967	\N
+174	3	2024	9	3925.77	2026-03-17 11:10:06.27037	\N
+175	3	2024	10	5256.76	2026-03-17 11:10:06.309281	\N
+176	3	2024	11	4375.39	2026-03-17 11:10:06.346673	\N
+177	3	2024	12	2628.43	2026-03-17 11:10:06.386837	\N
+178	3	2025	1	1608.77	2026-03-17 11:10:06.426082	\N
+179	1	2026	1	5725.70	2026-05-04 15:51:39.612147	\N
+180	1	2026	2	1066.86	2026-05-04 15:51:39.612147	\N
+181	1	2026	3	614.51	2026-05-04 15:51:39.612147	\N
+182	1	2026	4	1946.71	2026-05-04 15:51:39.612147	\N
+183	2	2026	1	9221.83	2026-05-04 15:51:39.630055	\N
+184	2	2026	2	4187.16	2026-05-04 15:51:39.630055	\N
+185	2	2026	3	6067.98	2026-05-04 15:51:39.630055	\N
+186	2	2026	4	5990.24	2026-05-04 15:51:39.630055	\N
+187	1	2021	1	1883.47	2026-05-15 13:41:41.262173	\N
+188	1	2022	3	1336.33	2026-05-15 13:41:41.262173	\N
+189	1	2022	4	1144.90	2026-05-15 13:41:41.262173	\N
+190	1	2022	5	2284.70	2026-05-15 13:41:41.262173	\N
+191	1	2022	6	6490.94	2026-05-15 13:41:41.262173	\N
+192	1	2022	7	14015.05	2026-05-15 13:41:41.262173	\N
+193	1	2022	8	8424.60	2026-05-15 13:41:41.262173	\N
+194	1	2022	9	11554.60	2026-05-15 13:41:41.262173	\N
+195	1	2022	10	15957.62	2026-05-15 13:41:41.262173	\N
+196	1	2022	11	23947.00	2026-05-15 13:41:41.262173	\N
+197	1	2022	12	19870.00	2026-05-15 13:41:41.262173	\N
+198	1	2023	1	31767.85	2026-05-15 13:41:41.262173	\N
+199	1	2023	2	12285.85	2026-05-15 13:41:41.262173	\N
+200	2	2024	8	2447.92	2026-05-15 13:47:03.038915	\N
+203	1	2026	5	86.28	2026-05-25 15:01:13.499513	\N
+205	2	2026	5	11343.48	2026-05-28 14:39:28.262482	\N
+\.
+
+
+--
+-- Data for Name: empresas; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+COPY public.empresas (id, nome, razao_social, aliquota_das, credito_icms, ativo, created_at) FROM stdin;
+3	CM	CM Comercial Artigos Promocionais Ltda	0.000000	0.000000	t	2026-03-15 14:20:08.63862
+1	SIX	SIX Comercial Artigos Promocionais Ltda	0.088324	0.029614	t	2026-03-15 14:20:08.63862
+2	ENOVA	ENOVA Comercial Artigos Promocionais Ltda	0.093254	0.031256	t	2026-03-15 14:20:08.63862
+\.
+
+
+--
+-- Data for Name: encargos_horas_extras; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+COPY public.encargos_horas_extras (id, funcionario_id, ano, mes, horas, created_at) FROM stdin;
+1	1	2026	4	0	2026-05-18 17:06:49.836768
+\.
+
+
+--
+-- Data for Name: feriados; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+COPY public.feriados (id, dia, mes, descricao, tipo, ativo) FROM stdin;
+1	1	1	Ano Novo	nacional	t
+6	25	1	Aniversário de São Paulo	estadual	t
+7	19	2	Aniversário de Osasco	municipal	t
+8	18	4	Sexta feira Santa	nacional	t
+10	13	6	Padroeiro de Osasco	municipal	t
+12	9	7	Data Magna de São Paulo	nacional	t
+13	7	9	Independência	nacional	t
+14	12	10	Nossa Senhora Aparecida	nacional	t
+15	2	11	Finados	nacional	t
+16	15	11	Proclamação da República	nacional	t
+17	20	11	Consciência Negra	nacional	t
+18	25	12	Natal	nacional	t
+11	19	6	Corpus Christi	nacional	f
+19	4	6	Corpus Christi	nacional	t
+20	3	4	Paixão de Cristo	nacional	t
+21	21	4	Tiradentes	nacional	t
+9	1	5	Dia do Trabalhador	nacional	f
+\.
+
+
+--
+-- Data for Name: funcionarios; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+COPY public.funcionarios (id, empresa_id, nome, cargo, salario_base, vale_alimentacao, vale_transporte, salario_dinheiro, ativo, created_at, vale_transporte_valor, vale_alimentacao_desconto) FROM stdin;
+1	2	Gabriel Schiochet Lima	Enc. de Exp.	3500	250	f	562	t	2026-05-18 16:33:56.571351	0	0
+2	2	Henrique Fernandes Lima	Ajud. Geral I	2500	250	t	0	t	2026-05-18 16:33:56.571351	12.2	0
+\.
+
+
+--
+-- Data for Name: historico_faturamento; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+COPY public.historico_faturamento (id, empresa_id, ano, mes, valor, origem, created_at) FROM stdin;
+1	1	2020	12	41855.00	\N	2026-03-16 15:59:36.693127
+48	1	2025	12	61383.71	\N	2026-03-16 15:59:36.809072
+85	2	2025	9	217130.95	\N	2026-03-16 15:59:37.070515
+78	2	2025	2	36900.00	\N	2026-03-16 15:59:37.06365
+260	2	2026	3	110536.47	\N	2026-04-07 15:30:41.882694
+262	2	2026	4	91855.40	\N	2026-05-04 10:51:39.021588
+282	3	2016	8	0.00	\N	2026-05-20 16:25:13.55095
+283	3	2016	9	0.00	\N	2026-05-20 16:25:13.55095
+181	3	2016	10	107906.00	\N	2026-03-16 18:48:24.851951
+182	3	2016	11	171625.00	\N	2026-03-16 18:48:24.930524
+183	3	2016	12	27178.00	\N	2026-03-16 18:48:24.963933
+263	1	2021	1	0.00	\N	2026-05-20 16:25:13.55095
+264	1	2021	2	0.00	\N	2026-05-20 16:25:13.55095
+265	1	2021	3	0.00	\N	2026-05-20 16:25:13.55095
+266	1	2021	4	0.00	\N	2026-05-20 16:25:13.55095
+267	1	2021	5	0.00	\N	2026-05-20 16:25:13.55095
+268	1	2021	6	0.00	\N	2026-05-20 16:25:13.55095
+269	1	2021	7	0.00	\N	2026-05-20 16:25:13.55095
+270	1	2021	8	0.00	\N	2026-05-20 16:25:13.55095
+271	1	2021	9	0.00	\N	2026-05-20 16:25:13.55095
+272	1	2021	10	0.00	\N	2026-05-20 16:25:13.55095
+273	1	2021	11	0.00	\N	2026-05-20 16:25:13.55095
+274	1	2021	12	0.00	\N	2026-05-20 16:25:13.55095
+275	1	2022	1	0.00	\N	2026-05-20 16:25:13.55095
+2	1	2022	2	29696.20	\N	2026-03-16 15:59:36.759004
+3	1	2022	3	25442.20	\N	2026-03-16 15:59:36.760455
+4	1	2022	4	50771.00	\N	2026-03-16 15:59:36.761521
+5	1	2022	5	124347.55	\N	2026-03-16 15:59:36.762651
+6	1	2022	6	205499.20	\N	2026-03-16 15:59:36.763761
+7	1	2022	7	112057.79	\N	2026-03-16 15:59:36.764846
+8	1	2022	8	144432.50	\N	2026-03-16 15:59:36.76599
+9	1	2022	9	184908.70	\N	2026-03-16 15:59:36.767102
+10	1	2022	10	259728.85	\N	2026-03-16 15:59:36.768029
+11	1	2022	11	208499.86	\N	2026-03-16 15:59:36.769481
+12	1	2022	12	322516.28	\N	2026-03-16 15:59:36.770865
+13	1	2023	1	123600.16	\N	2026-03-16 15:59:36.772296
+14	1	2023	2	96272.40	\N	2026-03-16 15:59:36.773889
+15	1	2023	3	129338.60	\N	2026-03-16 15:59:36.774936
+16	1	2023	4	412163.50	\N	2026-03-16 15:59:36.776025
+17	1	2023	5	267307.25	\N	2026-03-16 15:59:36.777102
+18	1	2023	6	243784.30	\N	2026-03-16 15:59:36.777927
+19	1	2023	7	248654.10	\N	2026-03-16 15:59:36.778757
+20	1	2023	8	247563.80	\N	2026-03-16 15:59:36.77984
+21	1	2023	9	459263.10	\N	2026-03-16 15:59:36.78087
+22	1	2023	10	91819.30	\N	2026-03-16 15:59:36.781901
+23	1	2023	11	262035.50	\N	2026-03-16 15:59:36.782969
+24	1	2023	12	189605.65	\N	2026-03-16 15:59:36.783914
+25	1	2024	1	114904.20	\N	2026-03-16 15:59:36.78477
+26	1	2024	2	75093.47	\N	2026-03-16 15:59:36.785747
+27	1	2024	3	68394.80	\N	2026-03-16 15:59:36.786785
+28	1	2024	4	145417.59	\N	2026-03-16 15:59:36.787615
+29	1	2024	5	106506.21	\N	2026-03-16 15:59:36.788464
+30	1	2024	6	4592.73	\N	2026-03-16 15:59:36.789491
+31	1	2024	7	85715.78	\N	2026-03-16 15:59:36.791508
+32	1	2024	8	65704.82	\N	2026-03-16 15:59:36.792825
+33	1	2024	9	72124.20	\N	2026-03-16 15:59:36.793824
+34	1	2024	10	129703.30	\N	2026-03-16 15:59:36.795377
+35	1	2024	11	36157.90	\N	2026-03-16 15:59:36.796459
+36	1	2024	12	31257.28	\N	2026-03-16 15:59:36.797507
+37	1	2025	1	67353.80	\N	2026-03-16 15:59:36.79856
+38	1	2025	2	18409.29	\N	2026-03-16 15:59:36.799648
+39	1	2025	3	128725.10	\N	2026-03-16 15:59:36.800675
+40	1	2025	4	160273.10	\N	2026-03-16 15:59:36.801542
+41	1	2025	5	75561.90	\N	2026-03-16 15:59:36.802324
+42	1	2025	6	44105.40	\N	2026-03-16 15:59:36.803121
+43	1	2025	7	78381.90	\N	2026-03-16 15:59:36.80395
+44	1	2025	8	81396.00	\N	2026-03-16 15:59:36.804756
+45	1	2025	9	371944.90	\N	2026-03-16 15:59:36.805582
+46	1	2025	10	61071.06	\N	2026-03-16 15:59:36.806782
+47	1	2025	11	92950.22	\N	2026-03-16 15:59:36.808149
+49	1	2026	1	30984.30	\N	2026-03-16 15:59:36.810074
+50	1	2026	2	15691.00	\N	2026-03-16 15:59:36.811142
+259	1	2026	3	17367.00	\N	2026-04-06 10:34:24.444747
+261	1	2026	4	109280.30	\N	2026-05-04 10:51:10.157212
+276	2	2024	1	0.00	\N	2026-05-20 16:25:13.55095
+277	2	2024	2	0.00	\N	2026-05-20 16:25:13.55095
+278	2	2024	3	0.00	\N	2026-05-20 16:25:13.55095
+279	2	2024	4	0.00	\N	2026-05-20 16:25:13.55095
+280	2	2024	5	0.00	\N	2026-05-20 16:25:13.55095
+281	2	2024	6	0.00	\N	2026-05-20 16:25:13.55095
+71	2	2024	7	54398.20	\N	2026-03-16 15:59:37.054214
+72	2	2024	8	145992.00	\N	2026-03-16 15:59:37.056835
+73	2	2024	9	271008.70	\N	2026-03-16 15:59:37.059622
+74	2	2024	10	107831.50	\N	2026-03-16 15:59:37.060544
+75	2	2024	11	236133.74	\N	2026-03-16 15:59:37.061319
+76	2	2024	12	88945.04	\N	2026-03-16 15:59:37.062134
+77	2	2025	1	131772.55	\N	2026-03-16 15:59:37.062933
+79	2	2025	3	117489.80	\N	2026-03-16 15:59:37.064884
+80	2	2025	4	153541.50	\N	2026-03-16 15:59:37.065823
+81	2	2025	5	171937.30	\N	2026-03-16 15:59:37.06663
+82	2	2025	6	126562.90	\N	2026-03-16 15:59:37.068261
+83	2	2025	7	199868.36	\N	2026-03-16 15:59:37.06905
+84	2	2025	8	59340.20	\N	2026-03-16 15:59:37.069779
+86	2	2025	10	170908.44	\N	2026-03-16 15:59:37.07123
+87	2	2025	11	149038.55	\N	2026-03-16 15:59:37.072245
+88	2	2025	12	94873.80	\N	2026-03-16 15:59:37.073026
+89	2	2026	1	128151.80	\N	2026-03-16 15:59:37.073836
+90	2	2026	2	48021.25	\N	2026-03-16 15:59:37.074927
+284	3	2017	1	0.00	\N	2026-05-20 16:25:13.55095
+285	3	2017	2	0.00	\N	2026-05-20 16:25:13.55095
+286	3	2017	3	0.00	\N	2026-05-20 16:25:13.55095
+184	3	2017	4	17900.00	\N	2026-03-16 18:48:24.999557
+185	3	2017	5	4472.00	\N	2026-03-16 18:48:25.036018
+186	3	2017	6	21330.00	\N	2026-03-16 18:48:25.07762
+187	3	2017	7	62005.00	\N	2026-03-16 18:48:25.111988
+188	3	2017	8	49090.00	\N	2026-03-16 18:48:25.146924
+189	3	2017	9	74980.00	\N	2026-03-16 18:48:25.182837
+190	3	2017	10	12000.00	\N	2026-03-16 18:48:25.218523
+191	3	2017	11	7074.00	\N	2026-03-16 18:48:25.261263
+192	3	2017	12	81115.00	\N	2026-03-16 18:48:25.297242
+287	3	2018	1	0.00	\N	2026-05-20 16:25:13.55095
+288	3	2018	2	0.00	\N	2026-05-20 16:25:13.55095
+193	3	2018	3	16630.00	\N	2026-03-16 18:48:25.332918
+194	3	2018	4	38764.20	\N	2026-03-16 18:48:25.3642
+195	3	2018	5	84425.19	\N	2026-03-16 18:48:25.396597
+196	3	2018	6	95670.00	\N	2026-03-16 18:48:25.429775
+197	3	2018	7	124022.00	\N	2026-03-16 18:48:25.462636
+198	3	2018	8	60070.00	\N	2026-03-16 18:48:25.496709
+199	3	2018	9	134660.00	\N	2026-03-16 18:48:25.529181
+200	3	2018	10	23150.00	\N	2026-03-16 18:48:25.562357
+201	3	2018	11	120580.00	\N	2026-03-16 18:48:25.5961
+202	3	2018	12	98498.73	\N	2026-03-16 18:48:25.629218
+203	3	2019	1	27526.54	\N	2026-03-16 18:48:25.666
+204	3	2019	2	3237.36	\N	2026-03-16 18:48:25.700104
+205	3	2019	3	49176.35	\N	2026-03-16 18:48:25.732825
+206	3	2019	4	57910.26	\N	2026-03-16 18:48:25.766255
+207	3	2019	5	124232.66	\N	2026-03-16 18:48:25.798404
+208	3	2019	6	1157.92	\N	2026-03-16 18:48:25.835956
+209	3	2019	7	313169.83	\N	2026-03-16 18:48:25.871655
+210	3	2019	8	91865.03	\N	2026-03-16 18:48:25.909194
+211	3	2019	9	21892.41	\N	2026-03-16 18:48:25.94765
+212	3	2019	10	31422.48	\N	2026-03-16 18:48:25.9796
+213	3	2019	11	158976.61	\N	2026-03-16 18:48:26.013918
+214	3	2019	12	274226.55	\N	2026-03-16 18:48:26.048193
+215	3	2020	1	42471.90	\N	2026-03-16 18:48:26.080418
+216	3	2020	2	55956.42	\N	2026-03-16 18:48:26.114185
+217	3	2020	3	132197.97	\N	2026-03-16 18:48:26.148419
+218	3	2020	4	59329.51	\N	2026-03-16 18:48:26.182738
+219	3	2020	5	15675.42	\N	2026-03-16 18:48:26.215055
+220	3	2020	6	26531.00	\N	2026-03-16 18:48:26.251886
+289	3	2020	7	0.00	\N	2026-05-20 16:25:13.55095
+221	3	2020	8	21620.11	\N	2026-03-16 18:48:26.295878
+222	3	2020	9	63864.90	\N	2026-03-16 18:48:26.329735
+223	3	2020	10	102740.00	\N	2026-03-16 18:48:26.360647
+224	3	2020	11	132082.40	\N	2026-03-16 18:48:26.396106
+225	3	2020	12	77197.70	\N	2026-03-16 18:48:26.430882
+226	3	2021	1	10281.00	\N	2026-03-16 18:48:26.465418
+227	3	2021	2	15413.00	\N	2026-03-16 18:48:26.498854
+228	3	2021	3	4900.00	\N	2026-03-16 18:48:26.539439
+229	3	2021	4	69617.50	\N	2026-03-16 18:48:26.578712
+290	3	2021	5	0.00	\N	2026-05-20 16:25:13.55095
+230	3	2021	6	54315.70	\N	2026-03-16 18:48:26.61293
+231	3	2021	7	124543.20	\N	2026-03-16 18:48:26.64766
+232	3	2021	8	59593.30	\N	2026-03-16 18:48:26.686901
+233	3	2021	9	75946.40	\N	2026-03-16 18:48:26.722277
+234	3	2021	10	140139.35	\N	2026-03-16 18:48:26.760491
+235	3	2021	11	163697.20	\N	2026-03-16 18:48:26.787119
+236	3	2021	12	435856.88	\N	2026-03-16 18:48:26.824747
+237	3	2022	1	19976.95	\N	2026-03-16 18:48:26.859578
+238	3	2022	2	14386.00	\N	2026-03-16 18:48:26.897684
+239	3	2022	3	23033.00	\N	2026-03-16 18:48:26.932994
+291	3	2022	4	0.00	\N	2026-05-20 16:25:13.55095
+292	3	2022	5	0.00	\N	2026-05-20 16:25:13.55095
+240	3	2022	6	13288.00	\N	2026-03-16 18:48:26.970432
+293	3	2022	7	0.00	\N	2026-05-20 16:25:13.55095
+241	3	2022	8	15835.00	\N	2026-03-16 18:48:27.010859
+242	3	2022	9	85880.00	\N	2026-03-16 18:48:27.044595
+243	3	2022	10	38070.80	\N	2026-03-16 18:48:27.081058
+294	3	2022	11	0.00	\N	2026-05-20 16:25:13.55095
+295	3	2022	12	0.00	\N	2026-05-20 16:25:13.55095
+296	3	2023	1	0.00	\N	2026-05-20 16:25:13.55095
+297	3	2023	2	0.00	\N	2026-05-20 16:25:13.55095
+298	3	2023	3	0.00	\N	2026-05-20 16:25:13.55095
+299	3	2023	4	0.00	\N	2026-05-20 16:25:13.55095
+300	3	2023	5	0.00	\N	2026-05-20 16:25:13.55095
+301	3	2023	6	0.00	\N	2026-05-20 16:25:13.55095
+302	3	2023	7	0.00	\N	2026-05-20 16:25:13.55095
+303	3	2023	8	0.00	\N	2026-05-20 16:25:13.55095
+304	3	2023	9	0.00	\N	2026-05-20 16:25:13.55095
+244	3	2023	10	118962.20	\N	2026-03-16 18:48:27.11373
+245	3	2023	11	89888.00	\N	2026-03-16 18:48:27.148885
+246	3	2023	12	95630.18	\N	2026-03-16 18:48:27.18915
+305	3	2024	1	0.00	\N	2026-05-20 16:25:13.55095
+247	3	2024	2	53472.50	\N	2026-03-16 18:48:27.227576
+248	3	2024	3	59034.20	\N	2026-03-16 18:48:27.26518
+249	3	2024	4	138393.09	\N	2026-03-16 18:48:27.303816
+250	3	2024	5	159733.60	\N	2026-03-16 18:48:27.344416
+251	3	2024	6	60267.10	\N	2026-03-16 18:48:27.380938
+252	3	2024	7	104590.80	\N	2026-03-16 18:48:27.415059
+253	3	2024	8	15504.01	\N	2026-03-16 18:48:27.447566
+254	3	2024	9	45437.11	\N	2026-03-16 18:48:27.483543
+255	3	2024	10	60842.11	\N	2026-03-16 18:48:27.523401
+256	3	2024	11	50641.10	\N	2026-03-16 18:48:27.561443
+257	3	2024	12	30421.63	\N	2026-03-16 18:48:27.595595
+258	3	2025	1	30585.00	\N	2026-03-16 18:48:27.631051
+306	3	2025	2	0.00	\N	2026-05-20 16:25:13.55095
+307	3	2025	3	0.00	\N	2026-05-20 16:25:13.55095
+308	3	2025	4	0.00	\N	2026-05-20 16:25:13.55095
+309	3	2025	5	0.00	\N	2026-05-20 16:25:13.55095
+310	3	2025	6	0.00	\N	2026-05-20 16:25:13.55095
+311	3	2025	7	0.00	\N	2026-05-20 16:25:13.55095
+312	3	2025	8	0.00	\N	2026-05-20 16:25:13.55095
+313	3	2025	9	0.00	\N	2026-05-20 16:25:13.55095
+314	3	2025	10	0.00	\N	2026-05-20 16:25:13.55095
+315	3	2025	11	0.00	\N	2026-05-20 16:25:13.55095
+316	3	2025	12	0.00	\N	2026-05-20 16:25:13.55095
+\.
+
+
+--
+-- Data for Name: log_auditoria; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+COPY public.log_auditoria (id, usuario_id, usuario_nome, acao, modulo, descricao, valor_antes, valor_depois, ip, created_at) FROM stdin;
+1	1	Administrador	CRIAR	usuarios	Usuário criado: Usuário Teste (teste@empresa.com) · Perfil: Fiscal	\N	{"nome":"Usuário Teste","email":"teste@empresa.com","perfil":"Fiscal"}	\N	2026-03-16 21:14:32.579548
+2	1	Administrador	IMPORTAR	notas	7 notas importadas via XML · Empresa: SIX · 5 Venda	\N	{"empresa":"six","total":7,"vendas":5,"notas":["1035","1036","1037","1038","1039","1040","1041"]}	\N	2026-04-06 13:30:57.41652
+3	1	Administrador	IMPORTAR	notas	15 notas importadas via XML · Empresa: SIX · 10 Venda	\N	{"empresa":"six","total":15,"vendas":10,"notas":["1020","1021","1022","1023","1024","1025","1026","1027","1028","1029","1030","1031","1032","1033","1034"]}	\N	2026-04-06 13:32:24.484274
+4	1	Administrador	IMPORTAR	notas	7 notas importadas via XML · Empresa: SIX · 6 Venda	\N	{"empresa":"six","total":7,"vendas":6,"notas":["1042","1043","1044","1045","1046","1047","1048"]}	\N	2026-04-06 13:34:24.495355
+5	1	Administrador	IMPORTAR	notas	15 notas importadas via XML · Empresa: SIX · 10 Venda	\N	{"empresa":"six","total":15,"vendas":10,"notas":["1020","1021","1022","1023","1024","1025","1026","1027","1028","1029","1030","1031","1032","1033","1034"]}	\N	2026-04-06 17:50:22.501545
+6	1	Administrador	IMPORTAR	notas	7 notas importadas via XML · Empresa: SIX · 5 Venda	\N	{"empresa":"six","total":7,"vendas":5,"notas":["1035","1036","1037","1038","1039","1040","1041"]}	\N	2026-04-06 18:00:00.26934
+7	1	Administrador	IMPORTAR	notas	7 notas importadas via XML · Empresa: SIX · 5 Venda	\N	{"empresa":"six","total":7,"vendas":5,"notas":["1035","1036","1037","1038","1039","1040","1041"]}	\N	2026-04-06 18:01:12.696997
+8	1	Administrador	IMPORTAR	notas	15 notas importadas via XML · Empresa: SIX · 10 Venda	\N	{"empresa":"six","total":15,"vendas":10,"notas":["1020","1021","1022","1023","1024","1025","1026","1027","1028","1029","1030","1031","1032","1033","1034"]}	\N	2026-04-07 13:19:14.885282
+9	1	Administrador	IMPORTAR	notas	7 notas importadas via XML · Empresa: SIX · 5 Venda	\N	{"empresa":"six","total":7,"vendas":5,"notas":["1035","1036","1037","1038","1039","1040","1041"]}	\N	2026-04-07 13:20:09.393596
+10	1	Administrador	IMPORTAR	notas	7 notas importadas via XML · Empresa: SIX · 6 Venda	\N	{"empresa":"six","total":7,"vendas":6,"notas":["1042","1043","1044","1045","1046","1047","1048"]}	\N	2026-04-07 13:20:34.195499
+11	1	Administrador	IMPORTAR	notas	15 notas importadas via XML · Empresa: SIX · 10 Venda	\N	{"empresa":"six","total":15,"vendas":10,"notas":["1020","1021","1022","1023","1024","1025","1026","1027","1028","1029","1030","1031","1032","1033","1034"]}	\N	2026-04-07 13:31:10.344042
+12	1	Administrador	IMPORTAR	notas	23 notas importadas via XML · Empresa: SIX · 14 Venda	\N	{"empresa":"six","total":23,"vendas":14,"notas":["372","373","374","375","376","377","378","379","380","381","381-CAN","382","382-CAN","383","383-CAN","384","385","386","386-CAN","387","388","389","390"]}	\N	2026-04-07 17:28:49.936369
+13	1	Administrador	IMPORTAR	notas	23 notas importadas via XML · Empresa: ENOVA · 14 Venda	\N	{"empresa":"enova","total":23,"vendas":14,"notas":["372","373","374","375","376","377","378","379","380","381","381-CAN","382","382-CAN","383","383-CAN","384","385","386","386-CAN","387","388","389","390"]}	\N	2026-04-07 17:29:27.221155
+14	1	Administrador	IMPORTAR	notas	23 notas importadas via XML · Empresa: SIX · 14 Venda	\N	{"empresa":"six","total":23,"vendas":14,"notas":["372","373","374","375","376","377","378","379","380","381","381-CAN","382","382-CAN","383","383-CAN","384","385","386","386-CAN","387","388","389","390"]}	\N	2026-04-07 17:34:34.44991
+15	1	Administrador	IMPORTAR	notas	23 notas importadas via XML · Empresa: ENOVA · 14 Venda	\N	{"empresa":"enova","total":23,"vendas":14,"notas":["372","373","374","375","376","377","378","379","380","381","381-CAN","382","382-CAN","383","383-CAN","384","385","386","386-CAN","387","388","389","390"]}	\N	2026-04-07 17:41:35.884328
+16	1	Administrador	IMPORTAR	notas	1 nota importada via XML · Empresa: ENOVA · 0 Venda	\N	{"empresa":"enova","total":1,"vendas":0,"notas":["386-CCE"]}	\N	2026-04-07 18:13:40.863325
+17	1	Administrador	IMPORTAR	notas	23 notas importadas via XML · Empresa: SIX · 14 Venda	\N	{"empresa":"six","total":23,"vendas":14,"notas":["372","373","374","375","376","377","378","379","380","381","381-CAN","382","382-CAN","383","383-CAN","384","385","386","386-CCE","387","388","389","390"]}	\N	2026-04-07 18:27:51.064827
+18	1	Administrador	IMPORTAR	notas	23 notas importadas via XML · Empresa: ENOVA · 14 Venda	\N	{"empresa":"enova","total":23,"vendas":14,"notas":["372","373","374","375","376","377","378","379","380","381","381-CAN","382","382-CAN","383","383-CAN","384","385","386","386-CCE","387","388","389","390"]}	\N	2026-04-07 18:28:37.148809
+19	1	Administrador	IMPORTAR	notas	9 notas importadas via XML · Empresa: ENOVA · 7 Venda	\N	{"empresa":"enova","total":9,"vendas":7,"notas":["391","392","393","393-CAN","394","395","396","397","398"]}	\N	2026-04-07 18:30:21.859468
+20	1	Administrador	IMPORTAR	notas	18 notas importadas via XML · Empresa: ENOVA · 10 Venda	\N	{"empresa":"enova","total":18,"vendas":10,"notas":["399","400","401","402","403","404","405","406","408","409","410","411","411-CCE","412","413","414","415","416"]}	\N	2026-04-07 18:30:41.934103
+21	1	Administrador	IMPORTAR	notas	1 nota importada via XML · Empresa: ENOVA · 0 Venda	\N	{"empresa":"enova","total":1,"vendas":0,"notas":["407-INUT"]}	\N	2026-04-07 18:37:41.841181
+22	1	Administrador	IMPORTAR	notas	15 notas importadas via XML · Empresa: SIX · 10 Venda	\N	{"empresa":"six","total":15,"vendas":10,"notas":["1020","1021","1022","1023","1024","1025","1026","1027","1028","1029","1030","1031","1032","1033","1034"]}	\N	2026-04-08 13:01:35.233332
+23	1	Administrador	IMPORTAR	notas	7 notas importadas via XML · Empresa: SIX · 5 Venda	\N	{"empresa":"six","total":7,"vendas":5,"notas":["1035","1036","1037","1038","1039","1040","1041"]}	\N	2026-04-08 13:01:49.436859
+24	1	Administrador	IMPORTAR	notas	7 notas importadas via XML · Empresa: SIX · 6 Venda	\N	{"empresa":"six","total":7,"vendas":6,"notas":["1042","1043","1044","1045","1046","1047","1048"]}	\N	2026-04-08 13:02:01.492013
+25	1	Administrador	IMPORTAR	notas	3 notas importadas via XML · Empresa: SIX · 2 Venda	\N	{"empresa":"six","total":3,"vendas":2,"notas":["1048","1048-CAN","1049"]}	\N	2026-04-22 15:49:53.030829
+26	1	Administrador	IMPORTAR	notas	15 notas importadas via XML · Empresa: SIX · 12 Venda	\N	{"empresa":"six","total":15,"vendas":12,"notas":["1050","1050-CCE","1051","1052","1053","1054","1055","1056","1057","1058","1059","1060","1061","1062","1063"]}	\N	2026-05-04 13:51:10.234338
+27	1	Administrador	IMPORTAR	notas	22 notas importadas via XML · Empresa: ENOVA · 9 Venda	\N	{"empresa":"enova","total":22,"vendas":9,"notas":["417","418","419","420","420-CAN","421","422","423","424","425","426","427","427-CCE","428","429","429-CAN","430","431","432","433","434","435"]}	\N	2026-05-04 13:51:39.072438
+28	1	Administrador	IMPORTAR	notas	15 notas importadas via XML · Empresa: SIX · 10 Venda	\N	{"empresa":"six","total":15,"vendas":10,"notas":["1020","1021","1022","1023","1024","1025","1026","1027","1028","1029","1030","1031","1032","1033","1034"]}	\N	2026-05-04 17:40:30.414797
+92	1	Administrador	EDITAR	encargos	Funcionário atualizado: Henrique Fernandes Lima	\N	\N	\N	2026-05-19 15:09:55.523489
+93	1	Administrador	EDITAR	encargos	Funcionário atualizado: Henrique Fernandes Lima	\N	\N	\N	2026-05-19 15:23:17.274125
+29	1	Administrador	IMPORTAR	notas	23 notas importadas via XML · Empresa: ENOVA · 14 Venda	\N	{"empresa":"enova","total":23,"vendas":14,"notas":["372","373","374","375","376","377","378","379","380","381","381-CAN","382","382-CAN","383","383-CAN","384","385","386","386-CCE","387","388","389","390"]}	\N	2026-05-04 17:41:05.621203
+30	1	Administrador	EXPORTAR	excel	Relatório completo Abr/2026 exportado	\N	\N	\N	2026-05-05 13:34:14.029065
+31	1	Administrador	EXPORTAR	excel	Faturamento mensal histórico exportado · 74 registros	\N	\N	\N	2026-05-05 13:34:22.349734
+32	1	Administrador	EXPORTAR	excel	DAS histórico exportado · SIX (38) + ENOVA (20) meses	\N	\N	\N	2026-05-05 13:34:31.049779
+33	1	Administrador	EXPORTAR	excel	Relatório completo Abr/2026 exportado	\N	\N	\N	2026-05-05 13:35:30.123407
+34	1	Administrador	EXPORTAR	excel	Faturamento mensal histórico exportado · 74 registros	\N	\N	\N	2026-05-05 13:37:54.795479
+35	1	Administrador	EXPORTAR	excel	Relatorio completo exportado	\N	\N	\N	2026-05-05 14:00:31.339938
+36	1	Administrador	EXPORTAR	excel	Relatorio completo exportado	\N	\N	\N	2026-05-05 14:08:08.925366
+37	1	Administrador	EXPORTAR	excel	Relatorio completo exportado	\N	\N	\N	2026-05-05 14:20:31.116888
+38	1	Administrador	EXPORTAR	excel	Relatorio completo exportado	\N	\N	\N	2026-05-05 14:23:08.236361
+39	1	Administrador	EXPORTAR	excel	Relatorio completo exportado	\N	\N	\N	2026-05-05 14:31:02.667568
+40	1	Administrador	EXPORTAR	excel	Relatorio completo exportado	\N	\N	\N	2026-05-05 14:34:07.510638
+41	1	Administrador	EXPORTAR	excel	Relatorio completo exportado	\N	\N	\N	2026-05-05 14:50:13.995025
+42	1	Administrador	EXPORTAR	excel	Relatorio completo exportado	\N	\N	\N	2026-05-14 17:28:47.635534
+43	1	Administrador	EXPORTAR	excel	Relatorio completo exportado	\N	\N	\N	2026-05-14 17:44:24.363285
+44	1	Administrador	EXPORTAR	excel	Relatorio completo exportado	\N	\N	\N	2026-05-14 17:44:53.257394
+45	1	Administrador	EXPORTAR	excel	Relatorio completo exportado	\N	\N	\N	2026-05-14 17:53:51.921678
+46	1	Administrador	EXPORTAR	excel	Relatorio completo exportado	\N	\N	\N	2026-05-14 17:54:51.269517
+47	1	Administrador	EXPORTAR	excel	Relatorio completo exportado	\N	\N	\N	2026-05-14 21:37:09.564203
+48	1	Administrador	EXPORTAR	excel	Relatorio completo exportado	\N	\N	\N	2026-05-14 21:47:04.804505
+49	1	Administrador	EXPORTAR	excel	Relatorio completo exportado	\N	\N	\N	2026-05-14 21:57:03.865238
+50	1	Administrador	EXPORTAR	excel	Relatorio completo exportado	\N	\N	\N	2026-05-14 21:57:20.034752
+51	1	Administrador	EXPORTAR	excel	Relatorio completo exportado	\N	\N	\N	2026-05-14 22:00:04.180479
+52	1	Administrador	EXPORTAR	excel	Relatorio completo exportado	\N	\N	\N	2026-05-14 22:04:04.272513
+53	1	Administrador	EXPORTAR	excel	Relatorio completo exportado	\N	\N	\N	2026-05-14 22:10:38.34388
+54	1	Administrador	EXPORTAR	excel	Relatorio completo exportado	\N	\N	\N	2026-05-14 22:13:46.320603
+55	1	Administrador	EXPORTAR	excel	Relatorio completo exportado	\N	\N	\N	2026-05-14 22:17:32.346005
+56	1	Administrador	EXPORTAR	excel	Relatorio completo exportado	\N	\N	\N	2026-05-14 22:19:57.401608
+57	1	Administrador	EXPORTAR	excel	Relatorio completo exportado	\N	\N	\N	2026-05-14 22:21:43.837478
+58	1	Administrador	EXPORTAR	excel	Relatorio completo exportado	\N	\N	\N	2026-05-14 23:00:37.312221
+59	1	Administrador	EXPORTAR	excel	Relatorio completo exportado	\N	\N	\N	2026-05-14 23:01:59.668302
+60	1	Administrador	EXPORTAR	excel	Relatorio completo exportado	\N	\N	\N	2026-05-14 23:02:15.318039
+61	1	Administrador	EXPORTAR	excel	Relatorio completo exportado	\N	\N	\N	2026-05-14 23:02:55.587241
+62	1	Administrador	EXPORTAR	excel	Relatorio completo exportado	\N	\N	\N	2026-05-14 23:05:49.738437
+63	1	Administrador	EXPORTAR	excel	Relatorio completo exportado	\N	\N	\N	2026-05-14 23:14:04.573433
+64	1	Administrador	EXPORTAR	excel	Relatorio completo exportado	\N	\N	\N	2026-05-14 23:16:37.26612
+65	1	Administrador	EXPORTAR	excel	Relatorio completo exportado	\N	\N	\N	2026-05-14 23:17:35.01617
+66	1	Administrador	EXPORTAR	excel	Relatorio completo exportado	\N	\N	\N	2026-05-14 23:18:04.469971
+67	1	Administrador	EXPORTAR	excel	Relatorio completo exportado	\N	\N	\N	2026-05-14 23:20:46.833782
+68	1	Administrador	EXPORTAR	excel	Relatorio completo exportado	\N	\N	\N	2026-05-14 23:22:38.269327
+69	1	Administrador	EXPORTAR	excel	Relatorio completo exportado	\N	\N	\N	2026-05-14 23:24:00.566971
+70	1	Administrador	EXPORTAR	excel	Relatorio completo exportado	\N	\N	\N	2026-05-15 13:48:36.059607
+71	1	Administrador	EXPORTAR	excel	Relatorio completo exportado	\N	\N	\N	2026-05-15 13:51:45.201117
+72	1	Administrador	EXPORTAR	excel	Relatorio completo exportado	\N	\N	\N	2026-05-15 13:57:08.946817
+73	1	Administrador	EXPORTAR	excel	Relatorio completo exportado	\N	\N	\N	2026-05-15 14:06:55.748902
+74	1	Administrador	EXPORTAR	excel	Relatorio completo exportado	\N	\N	\N	2026-05-15 14:10:29.92124
+75	1	Administrador	EXPORTAR	excel	Relatorio completo exportado	\N	\N	\N	2026-05-15 14:17:37.297671
+76	1	Administrador	EXPORTAR	excel	Relatorio completo exportado	\N	\N	\N	2026-05-15 14:23:46.110592
+77	1	Administrador	EXPORTAR	excel	Relatorio completo exportado	\N	\N	\N	2026-05-15 14:33:15.61357
+78	1	Administrador	EDITAR	usuarios	Usuário editado: Miriam (miriam@enovaonline.com.br)	{"nome":"Usuário Teste","email":"teste@empresa.com","perfil":"Fiscal"}	{"nome":"Miriam","email":"miriam@enovaonline.com.br","perfil":"Leitura"}	\N	2026-05-15 17:04:20.041995
+79	1	Administrador	CRIAR	usuarios	Usuário criado: Rafael (rafael@enovaonline.com.br) · Perfil: Fiscal	\N	{"nome":"Rafael","email":"rafael@enovaonline.com.br","perfil":"Fiscal"}	\N	2026-05-15 18:16:06.895544
+80	1	Administrador	EXPORTAR	excel	Faturamento mensal histórico exportado · 74 registros	\N	\N	\N	2026-05-15 18:17:55.537422
+81	1	Administrador	EXPORTAR	excel	DAS histórico exportado · SIX (51) + ENOVA (21) meses	\N	\N	\N	2026-05-15 18:18:44.300728
+82	1	Administrador	EDITAR	configuracoes	Empresa SIX atualizada	\N	\N	\N	2026-05-15 18:28:08.163151
+83	1	Administrador	EDITAR	configuracoes	Empresa CM atualizada	\N	\N	\N	2026-05-15 18:28:17.016749
+84	1	Administrador	EDITAR	configuracoes	Empresa ENOVA atualizada	\N	\N	\N	2026-05-15 18:28:20.748295
+85	1	Administrador	EDITAR	encargos	Funcionário atualizado: Henrique Fernandes Lima	\N	\N	\N	2026-05-18 20:35:17.4373
+86	1	Administrador	EDITAR	encargos	Funcionário atualizado: Henrique Fernandes Lima	\N	\N	\N	2026-05-18 20:36:42.127527
+87	1	Administrador	EDITAR	encargos	Funcionário atualizado: Henrique Fernandes Lima	\N	\N	\N	2026-05-18 20:41:13.849697
+88	1	Administrador	EDITAR	encargos	Funcionário atualizado: Gabriel Schiochet Lima	\N	\N	\N	2026-05-19 14:30:36.621194
+89	1	Administrador	EDITAR	encargos	Funcionário atualizado: Henrique Fernandes Lima	\N	\N	\N	2026-05-19 14:31:11.766531
+90	1	Administrador	EDITAR	encargos	Funcionário atualizado: Henrique Fernandes Lima	\N	\N	\N	2026-05-19 14:35:17.528224
+91	1	Administrador	EDITAR	encargos	Funcionário atualizado: Henrique Fernandes Lima	\N	\N	\N	2026-05-19 15:07:03.196299
+94	1	Administrador	EDITAR	encargos	Funcionário atualizado: Henrique Fernandes Lima	\N	\N	\N	2026-05-19 15:23:50.703639
+96	1	Administrador	EDITAR	encargos	Funcionário atualizado: Henrique Fernandes Lima	\N	\N	\N	2026-05-19 16:37:24.903365
+95	1	Administrador	EDITAR	encargos	Funcionário atualizado: Henrique Fernandes Lima	\N	\N	\N	2026-05-19 16:37:03.618461
+97	1	Administrador	EXPORTAR	excel	Relatorio completo exportado	\N	\N	\N	2026-05-19 17:56:16.176629
+98	1	Administrador	EDITAR	encargos	Funcionário atualizado: Henrique Fernandes Lima	\N	\N	\N	2026-05-19 18:14:57.92769
+99	1	Administrador	CONFIRMAR	das	DAS confirmado: SIX · Abr/2026 · R$ 88,32	\N	{"empresa":"SIX","ano":2026,"mes":5,"valor":88.32}	\N	2026-05-20 18:36:37.93071
+100	1	Administrador	CONFIRMAR	das	DAS confirmado: ENOVA · Abr/2026 · R$ 11351,12	\N	{"empresa":"ENOVA","ano":2026,"mes":5,"valor":11351.12}	\N	2026-05-20 18:36:42.973537
+101	1	Administrador	EXPORTAR	excel	Faturamento mensal histórico exportado · 93 registros	\N	\N	\N	2026-05-21 12:27:51.472095
+102	1	Administrador	CONFIRMAR	das	DAS confirmado: SIX · Abr/2026 · R$ 86,28	\N	{"empresa":"SIX","ano":2026,"mes":5,"valor":86.28}	\N	2026-05-25 18:01:13.569654
+103	1	Administrador	CONFIRMAR	das	DAS confirmado: ENOVA · Abr/2026 · R$ 11343,48	\N	{"empresa":"ENOVA","ano":2026,"mes":5,"valor":11343.48}	\N	2026-05-25 18:01:41.356936
+104	1	Administrador	CONFIRMAR	das	DAS confirmado: ENOVA · Abr/2026 · R$ 9729,50	\N	{"empresa":"ENOVA","ano":2026,"mes":5,"valor":9729.5}	\N	2026-05-28 17:39:28.307382
+\.
+
+
+--
+-- Data for Name: notas_fiscais; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+COPY public.notas_fiscais (id, empresa_id, numero_nf, razao_dest, cnpj_dest, valor_nf, dt_emissao, valor_pago, dt_pagamento, nat_operacao, status, created_at, mes_lancamento) FROM stdin;
+182	2	403	SONY PICTURES RELEASING OF BRASIL INC	33040767000101	384.5	13/03/2026	\N	\N	Simples Remessa	Simples Remessa	2026-04-07 15:30:41.351062	\N
+187	2	409	Starnet Logistica Ltda	23713161000128	3948	23/03/2026	\N	\N	Simples Remessa	Simples Remessa	2026-04-07 15:30:41.586039	\N
+208	1	1031	Aline Teixeira	09420515729	7095	15/01/2026	\N	\N	Simples Remessa	Simples Remessa	2026-04-08 10:01:35.025863	\N
+233	1	1054	ESCOLA DE NATACAO E GINASTICA BIOMORUM LTDA	58410341000204	2787	10/04/2026	2787	01/05/2026	Venda	Venda	2026-05-04 10:51:09.829101	mai/2026
+159	2	383	BRASIF S A ADMINISTRACAO E PARTICIPACOES	21109731000140	760	19/01/2026	\N	\N	Venda	Venda	2026-04-07 15:28:36.676607	\N
+164	2	386-CCE	MAXUM MAQUINAS E EQUIPAMENTOS LTDA	02227267000141	0	04/02/2026	\N	\N	Carta de Correcao	Carta de Correcao	2026-04-07 15:28:36.8834	\N
+149	2	375	Credito Real Imoveis e Condominios S.A.	92691336000166	3053.93	06/01/2026	3053.93	21/01/2026	Venda	Venda	2026-04-07 15:28:36.356414	fev/2026
+154	2	380	Criarte - Producoes E Eventos Ltda	07444899000180	11620	19/01/2026	11620	30/01/2026	Venda	Venda	2026-04-07 15:28:36.524203	fev/2026
+169	2	391	Rockwell Automation do Brasil Ltda	46323754000183	3721.05	02/02/2026	3721.05	19/02/2026	Venda	Venda	2026-04-07 15:30:21.513707	mar/2026
+216	1	1039	SMARTFIT ESCOLA DE GINASTICA E DANCA S.A.	07594978020012	650	10/02/2026	650	03/03/2026	Venda	Venda	2026-04-08 10:01:49.29833	abr/2026
+219	1	1042	SMARTFIT ESCOLA DE GINASTICA E DANCA S.A.	07594978020012	1229	02/03/2026	1229	23/03/2026	Venda	Venda	2026-04-08 10:02:01.189928	abr/2026
+224	1	1047	ESCOLA DE NATACAO E GINASTICA BIOSWIM LTDA	00318069001806	1000	09/03/2026	1000	30/03/2026	Venda	Venda	2026-04-08 10:02:01.383095	abr/2026
+192	2	413	ACONTECE PRODUCAO GRAFICA E EVENTOS LTDA	03105840000107	4059	26/03/2026	4059	09/04/2026	Venda	Venda	2026-04-07 15:30:41.770825	mai/2026
+203	1	1026	ESCOLA DE NATACAO E GINASTICA BIOMORUM LTDA	58410341000115	2096	12/01/2026	2096	02/02/2026	Venda	Venda	2026-04-08 10:01:34.873261	mar/2026
+228	1	1050	CLARIANT BRASIL LTDA.	31452113000151	4163	01/04/2026	\N	\N	Venda	Venda	2026-05-04 10:51:09.635579	\N
+238	1	1059	PERFIG DISTRIBUICAO E MALA DIRETA LTDA.	58925926000178	40590	16/04/2026	\N	\N	Simples Remessa	Simples Remessa	2026-05-04 10:51:09.985717	\N
+246	2	420	SONY PICTURES RELEASING OF BRASIL INC	33040767000101	7657	13/04/2026	\N	\N	Simples Remessa	Simples Remessa	2026-05-04 10:51:38.46153	\N
+251	2	424	PEARSON EDUCATION DO BRASIL LTDA	01404158001838	11915	15/04/2026	\N	\N	Venda	Venda	2026-05-04 10:51:38.61533	\N
+256	2	428	Biomm S A	04752991000624	17480	20/04/2026	\N	\N	Venda	Venda	2026-05-04 10:51:38.771634	\N
+261	2	432	Biomm S A	04752991000624	17480	27/04/2026	\N	\N	Simples Remessa	Simples Remessa	2026-05-04 10:51:38.912232	\N
+174	2	395	COLEGIO SANTA RITA LTDA	06964348000185	20250	10/02/2026	20250	16/04/2026	Venda	Venda	2026-04-07 15:30:21.695149	\N
+227	1	1049	CLARIANT BRASIL LTDA.	31452113000151	11716	31/03/2026	0		Venda	Venda	2026-04-22 12:49:52.882061	\N
+198	1	1021	SMARTFIT ESCOLA DE GINASTICA E DANCA S.A.	07594978021094	1500	07/01/2026	1500	28/01/2026	Venda	Venda	2026-04-08 10:01:34.685903	fev/2026
+183	2	404	Starnet Logistica Ltda	23713161000128	27581	16/03/2026	\N	\N	Simples Remessa	Simples Remessa	2026-04-07 15:30:41.399217	\N
+196	2	407-INUT	INUTILIZADA		0	24/03/2026	\N	\N	Inutilizacao	Inutilizacao	2026-04-07 15:37:41.799763	\N
+204	1	1027	Marcelo Rezende	08896549728	5160	13/01/2026	\N	\N	Simples Remessa	Simples Remessa	2026-04-08 10:01:34.905289	\N
+209	1	1032	Editora Sextante	02310771000100	166.63	15/01/2026	\N	\N	Remessa em bonificacao, doacao ou brinde	Remessa em bonificacao, doacao ou brinde	2026-04-08 10:01:35.063229	\N
+212	1	1035	AGILE RP EXPRESS LOGISTICA E DISTRIBUICAO LTDA	15251232000190	10965	02/02/2026	\N	\N	Simples Remessa	Simples Remessa	2026-04-08 10:01:49.148876	\N
+146	2	372	STEPAN QUIMICA LTDA	01898598000493	5078	05/01/2026	\N	\N	Simples Remessa	Simples Remessa	2026-04-07 15:28:36.234526	\N
+156	2	381-CAN	BRASIF S A EXPORTACAO IMPORTACAO	52226073002577	0	19/01/2026	\N	\N	Cancelamento	Cancelamento	2026-04-07 15:28:36.589244	\N
+229	1	1050-CCE	CLARIANT BRASIL LTDA.	31452113000151	0	13/04/2026	\N	\N	Carta de Correcao	Carta de Correcao	2026-05-04 10:51:09.688373	\N
+166	2	388	Newage Eventos Ltda	40126442000101	7200	20/01/2026	7200	20/01/2026	Venda	Venda	2026-04-07 15:28:36.975013	fev/2026
+170	2	392	Instituto Da Oportunidade Social	02449283000502	4690	02/02/2026	4690	17/02/2026	Venda	Venda	2026-04-07 15:30:21.553449	mar/2026
+262	2	433	SONY PICTURES RELEASING OF BRASIL INC	33040767000101	5698	27/04/2026	\N	\N	Venda	Venda	2026-05-04 10:51:38.943024	mai/2026
+193	2	414	SONY PICTURES RELEASING OF BRASIL INC	33040767000101	37286	27/03/2026	37286	24/04/2026	Venda	Venda	2026-04-07 15:30:41.800076	mai/2026
+225	1	1048	CLARIANT BRASIL LTDA.	31452113000151	4187	31/03/2026	\N	\N	Venda	Venda	2026-04-08 10:02:01.417725	\N
+239	1	1060	CLARIANT BRASIL LTDA.	31452113000151	2947.6	20/04/2026	\N	\N	Venda	Venda	2026-05-04 10:51:10.014134	\N
+247	2	420-CAN	SONY PICTURES RELEASING OF BRASIL INC	33040767000101	0	13/04/2026	\N	\N	Cancelamento	Cancelamento	2026-05-04 10:51:38.490783	\N
+252	2	425	COLEGIO SANTA RITA LTDA	06964348000185	20250	17/04/2026	\N	\N	Simples Remessa	Simples Remessa	2026-05-04 10:51:38.649542	\N
+257	2	429	Flora	08195519000184	10785	22/04/2026	\N	\N	Venda	Venda	2026-05-04 10:51:38.800273	\N
+178	2	399	STEPAN QUIMICA LTDA	01898598000140	2031.9	06/03/2026	2031.9	20/03/2026	Venda	Venda	2026-04-07 15:30:41.158703	abr/2026
+217	1	1040	ESCOLA DE NATACAO E GINASTICA BIOSWIM LTDA	00318069002535	2187	10/02/2026	2187	03/03/2026	Venda	Venda	2026-04-08 10:01:49.335564	abr/2026
+234	1	1055	SMARTFIT ESCOLA DE GINASTICA E DANCA S.A.	07594978020012	1000	13/04/2026	1000	04/05/2026	Venda	Venda	2026-05-04 10:51:09.858186	mai/2026
+220	1	1043	SMARTFIT ESCOLA DE GINASTICA E DANCA S.A.	07594978021094	1193	02/03/2026	1193	23/03/2026	Venda	Venda	2026-04-08 10:02:01.240252	abr/2026
+175	2	396	PEARSON EDUCATION DO BRASIL LTDA	01404158001838	9540	20/02/2026	9540	13/04/2026	Venda	Venda	2026-04-07 15:30:21.73036	mai/2026
+161	2	384	BRASIF S A EXPORTACAO IMPORTACAO	52226073002577	12880	20/01/2026	12880	03/02/2026	Venda	Venda	2026-04-07 15:28:36.752416	mar/2026
+188	2	410	Banco BTG Pactual S A	30306294000226	2844.36	25/03/2026	2844.36	09/04/2026	Venda	Venda	2026-04-07 15:30:41.62686	mai/2026
+199	1	1022	ESCOLA DE APLICACAO SAO JOSE DOS CAMPOS LTDA	23973137000128	9874	07/01/2026	9874	28/01/2026	Venda	Venda	2026-04-08 10:01:34.722892	fev/2026
+151	2	377	Editora Sextante	02310771000100	3522.45	06/01/2026	3522.45	21/01/2026	Venda	Venda	2026-04-07 15:28:36.428675	fev/2026
+171	2	393	PEARSON EDUCATION DO BRASIL LTDA	01404158001838	7950	06/02/2026	\N	\N	Venda	Venda	2026-04-07 15:30:21.593419	\N
+179	2	400	STEPAN QUIMICA LTDA	01898598000221	2031.9	06/03/2026	\N	\N	Simples Remessa	Simples Remessa	2026-04-07 15:30:41.208902	\N
+184	2	405	SONY PICTURES RELEASING OF BRASIL INC	33040767000101	3948	16/03/2026	\N	\N	Simples Remessa	Simples Remessa	2026-04-07 15:30:41.448292	\N
+210	1	1033	Jose Catelani	36884838809	2580	15/01/2026	\N	\N	Simples Remessa	Simples Remessa	2026-04-08 10:01:35.095294	\N
+218	1	1041	SMARTFIT ESCOLA DE GINASTICA E DANCA S.A.	07594978020012	2650	23/02/2026	\N	\N	Simples Remessa	Simples Remessa	2026-04-08 10:01:49.3667	\N
+253	2	426	Associacao Brasileira A Hebraica De Sao Paulo	61139911000199	4445	17/04/2026	4445	24/04/2026	Venda	Venda	2026-05-04 10:51:38.68705	mai/2026
+230	1	1051	GERDAU ACOS LONGOS S.A.	07358761004075	40590	01/04/2026	40590	01/05/2026	Venda	Venda	2026-05-04 10:51:09.727196	mai/2026
+147	2	373	STEPAN QUIMICA LTDA	01898598000221	5334	05/01/2026	\N	\N	Simples Remessa	Simples Remessa	2026-04-07 15:28:36.275356	\N
+152	2	378	Credito Real Imoveis e Condominios S.A.	92691336000166	3053.93	07/01/2026	\N	\N	Simples Remessa	Simples Remessa	2026-04-07 15:28:36.462724	\N
+157	2	382	MAXUM MAQUINAS E EQUIPAMENTOS LTDA	02227267000141	2280	19/01/2026	\N	\N	Venda	Venda	2026-04-07 15:28:36.620471	\N
+235	1	1056	SMARTFIT ESCOLA DE GINASTICA E DANCA S.A.	07594978021094	1000	13/04/2026	1000	04/05/2026	Venda	Venda	2026-05-04 10:51:09.890878	mai/2026
+240	1	1061	ROHTO-MENTHOLATUM DO BRASIL COMERCIO DE PRODUTOS PARA SAUDE	14739675000161	12120	28/04/2026	\N	\N	Venda	Venda	2026-05-04 10:51:10.045119	\N
+243	2	417	Biomm S A	04752991000624	4100	01/04/2026	\N	\N	Venda	Venda	2026-05-04 10:51:38.361046	\N
+248	2	421	SONY PICTURES RELEASING OF BRASIL INC	33040767000101	7657	13/04/2026	\N	\N	Simples Remessa	Simples Remessa	2026-05-04 10:51:38.522213	\N
+258	2	429-CAN	Flora	08195519000184	0	22/04/2026	\N	\N	Cancelamento	Cancelamento	2026-05-04 10:51:38.827947	\N
+263	2	434	SONY PICTURES RELEASING OF BRASIL INC	33040767000101	518	29/04/2026	\N	\N	Simples Remessa	Simples Remessa	2026-05-04 10:51:38.967422	\N
+167	2	389	PEARSON EDUCATION DO BRASIL LTDA	01404158001161	32784.5	21/01/2026	32784.5	20/02/2026	Venda	Venda	2026-04-07 15:28:37.020607	mar/2026
+176	2	397	Karcher Industria E Comercio Limitada	47110960000178	1870.2	24/02/2026	1870.2	24/03/2026	Venda	Venda	2026-04-07 15:30:21.762276	abr/2026
+213	1	1036	SMARTFIT ESCOLA DE GINASTICA E DANCA S.A.	07594978020012	4500	09/02/2026	4500	02/03/2026	Venda	Venda	2026-04-08 10:01:49.191972	abr/2026
+221	1	1044	ESCOLA DE NATACAO E GINASTICA BIOSWIM LTDA	00318069005631	1229	02/03/2026	1229	23/03/2026	Venda	Venda	2026-04-08 10:02:01.279041	abr/2026
+189	2	411	ACONTECE PRODUCAO GRAFICA E EVENTOS LTDA	03105840000107	2100	26/03/2026	2100	09/04/2026	Venda	Venda	2026-04-07 15:30:41.67171	mai/2026
+194	2	415	Skintec Comercial Importadora e Exportadora Ltda	01915618000144	6200	26/03/2026	6200	09/04/2026	Venda	Venda	2026-04-07 15:30:41.827906	mai/2026
+162	2	385	BRASIF S A ADMINISTRACAO E PARTICIPACOES	21109731000140	910	20/01/2026	910	05/02/2026	Venda	Venda	2026-04-07 15:28:36.794987	mar/2026
+200	1	1023	ESCOLA DE NATACAO E GINASTICA BIOSWIM LTDA	00318069001482	2031.3	12/01/2026	2031.3	02/02/2026	Venda	Venda	2026-04-08 10:01:34.758737	mar/2026
+205	1	1028	ESCOLA DE NATACAO E GINASTICA BIOSWIM LTDA	00318069002454	1733	13/01/2026	1733	03/02/2026	Venda	Venda	2026-04-08 10:01:34.938015	mar/2026
+172	2	393-CAN	PEARSON EDUCATION DO BRASIL LTDA	01404158001838	0	09/02/2026	\N	\N	Cancelamento	Cancelamento	2026-04-07 15:30:21.628313	\N
+177	2	398	PEARSON EDUCATION DO BRASIL LTDA	01404158001838	7950	26/02/2026	\N	\N	Simples Remessa	Simples Remessa	2026-04-07 15:30:21.793076	\N
+190	2	411-CCE	ACONTECE PRODUCAO GRAFICA E EVENTOS LTDA	03105840000107	0	27/03/2026	\N	\N	Carta de Correcao	Carta de Correcao	2026-04-07 15:30:41.708333	\N
+195	2	416	Skintec Comercial Importadora e Exportadora Ltda	01915618000144	6200	27/03/2026	\N	\N	Simples Remessa	Simples Remessa	2026-04-07 15:30:41.854277	\N
+211	1	1034	SMARTFIT ESCOLA DE GINASTICA E DANCA S.A.	07594978021094	4500	26/01/2026	\N	\N	Simples Remessa	Simples Remessa	2026-04-08 10:01:35.130343	\N
+222	1	1045	SMARTFIT ESCOLA DE GINASTICA E DANCA S.A.	07594978020012	16505	02/03/2026	\N	\N	Simples Remessa	Simples Remessa	2026-04-08 10:02:01.311634	\N
+206	1	1029	ESCOLA DE NATACAO E GINASTICA BIOSWIM LTDA	00318069002020	2160	13/01/2026	2160	03/02/2026	Venda	Venda	2026-04-08 10:01:34.968678	mar/2026
+148	2	374	STEPAN QUIMICA LTDA	01898598000140	4062	05/01/2026	\N	\N	Simples Remessa	Simples Remessa	2026-04-07 15:28:36.313483	\N
+158	2	382-CAN	MAXUM MAQUINAS E EQUIPAMENTOS LTDA	02227267000141	0	19/01/2026	\N	\N	Cancelamento	Cancelamento	2026-04-07 15:28:36.649147	\N
+168	2	390	PEARSON EDUCATION DO BRASIL LTDA	01404158001161	18734	27/01/2026	\N	\N	Simples Remessa	Simples Remessa	2026-04-07 15:28:37.067582	\N
+244	2	418	SONY PICTURES RELEASING OF BRASIL INC	33040767000101	20894	01/04/2026	20894	07/05/2026	Venda	Venda	2026-05-04 10:51:38.395398	mai/2026
+259	2	430	ASPAS COMUNICACAO LTDA	08195519000184	10785	22/04/2026	10785	07/05/2026	Venda	Venda	2026-05-04 10:51:38.857281	mai/2026
+231	1	1052	ESCOLA DE NATACAO E GINASTICA BIOSWIM LTDA	00318069001806	1000	06/04/2026	1000	27/04/2026	Venda	Venda	2026-05-04 10:51:09.763243	mai/2026
+236	1	1057	ESCOLA DE NATACAO E GINASTICA BIOSWIM LTDA	00318069005631	1000	13/04/2026	1000	04/05/2026	Venda	Venda	2026-05-04 10:51:09.925424	mai/2026
+241	1	1062	TVH BRASIL PECAS LTDA	03747886000120	2462.2	29/04/2026	\N	\N	Venda	Venda	2026-05-04 10:51:10.078624	\N
+249	2	422	PEARSON EDUCATION DO BRASIL LTDA	01404158001838	9540	13/04/2026	\N	\N	Simples Remessa	Simples Remessa	2026-05-04 10:51:38.559839	\N
+254	2	427	PEARSON EDUCATION DO BRASIL LTDA	01404158001838	11915	17/04/2026	\N	\N	Simples Remessa	Simples Remessa	2026-05-04 10:51:38.714546	\N
+264	2	435	SONY PICTURES RELEASING OF BRASIL INC	33040767000101	5180	29/04/2026	\N	\N	Simples Remessa	Simples Remessa	2026-05-04 10:51:38.992399	\N
+185	2	406	EMNIFY BRASIL LTDA	45953596000182	14417	23/03/2026	14417	20/03/2026	Venda	Venda	2026-04-07 15:30:41.499634	\N
+153	2	379	SP. SUMARE PRODUTOS DE HIGIENE LTDA	40595809000390	15773.85	12/01/2026	15773.85	06/01/2026	Venda	Venda	2026-04-07 15:28:36.490514	fev/2026
+214	1	1037	SMARTFIT ESCOLA DE GINASTICA E DANCA S.A.	07594978021094	5000	09/02/2026	5000	02/03/2026	Venda	Venda	2026-04-08 10:01:49.223781	abr/2026
+180	2	401	SONY PICTURES RELEASING OF BRASIL INC	33040767000101	31913.5	11/03/2026	31913.5	13/04/2026	Venda	Venda	2026-04-07 15:30:41.258052	mai/2026
+163	2	386	MAXUM MAQUINAS E EQUIPAMENTOS LTDA	02227267000141	2430	20/01/2026	2430	10/02/2026	Venda	Venda	2026-04-07 15:28:36.841702	mar/2026
+201	1	1024	ESCOLA DE NATACAO E GINASTICA BIOSWIM LTDA	00318069002101	2000	12/01/2026	2000	02/02/2026	Venda	Venda	2026-04-08 10:01:34.796181	mar/2026
+186	2	408	SONY PICTURES RELEASING OF BRASIL INC	33040767000101	3948	23/03/2026	\N	\N	Devolucao de simples remessa	Devolucao de simples remessa	2026-04-07 15:30:41.544392	\N
+260	2	431	POUPE SUPERMERCADOS LTDA	08378878000339	16538.4	23/04/2026	16538.4	13/05/2026	Venda	Venda	2026-05-04 10:51:38.886968	mai/2026
+232	1	1053	EUROFARMA LABORATORIOS S.A.	61190096002217	39210.5	08/04/2026	39210.5	08/05/2026	Venda	Venda	2026-05-04 10:51:09.798095	mai/2026
+237	1	1058	ESCOLA DE NATACAO E GINASTICA BIOSWIM LTDA	00318069006107	1000	13/04/2026	1000	04/05/2026	Venda	Venda	2026-05-04 10:51:09.955095	mai/2026
+242	1	1063	CLARIANT BRASIL LTDA.	31452113000151	2947.6	30/04/2026	\N	\N	Simples Remessa	Simples Remessa	2026-05-04 10:51:10.112237	\N
+245	2	419	Cli Central Logistica Integrada Ltda	13528071000103	4100	10/04/2026	\N	\N	Simples Remessa	Simples Remessa	2026-05-04 10:51:38.434154	\N
+250	2	423	I.F.C. INDUSTRIA E COMERCIO DE CONDUTORES ELETRICOS LTDA	02544042000119	0	15/04/2026	\N	\N	Remessa de amostra gratis	Remessa de amostra gratis	2026-05-04 10:51:38.584453	\N
+255	2	427-CCE	PEARSON EDUCATION DO BRASIL LTDA	01404158001838	0	20/04/2026	\N	\N	Carta de Correcao	Carta de Correcao	2026-05-04 10:51:38.743724	\N
+181	2	402	SONY PICTURES RELEASING OF BRASIL INC	33040767000101	7657	11/03/2026	7657	13/04/2026	Venda	Venda	2026-04-07 15:30:41.30428	\N
+173	2	394	PEARSON EDUCATION DO BRASIL LTDA	01404158001838	7950	06/02/2026	7950	20/03/2026	Venda	Venda	2026-04-07 15:30:21.66284	abr/2026
+191	2	412	ACONTECE PRODUCAO GRAFICA E EVENTOS LTDA	03105840000107	2027.71	26/03/2026	2027.71	09/04/2026	Venda	Venda	2026-04-07 15:30:41.739226	mai/2026
+207	1	1030	SMARTFIT ESCOLA DE GINASTICA E DANCA S.A.	07594978020012	2000	13/01/2026	2000	03/02/2026	Venda	Venda	2026-04-08 10:01:34.99641	mar/2026
+197	1	1020	INTERNATIONAL GLOBAL SOL. G. E DES. DE SOFTWARES LTDA	08832132000191	6590	06/01/2026	6590	19/02/2026	Venda	Venda	2026-04-08 10:01:34.646398	mar/2026
+155	2	381	BRASIF S A EXPORTACAO IMPORTACAO	52226073002577	12920	19/01/2026	\N	\N	Venda	Venda	2026-04-07 15:28:36.557647	\N
+160	2	383-CAN	BRASIF S A ADMINISTRACAO E PARTICIPACOES	21109731000140	0	19/01/2026	\N	\N	Cancelamento	Cancelamento	2026-04-07 15:28:36.715077	\N
+165	2	387	Newage Eventos Ltda	40126442000101	1940	20/01/2026	1940	20/01/2026	Venda	Venda	2026-04-07 15:28:36.930761	fev/2026
+226	1	1048-CAN	CLARIANT BRASIL LTDA.	31452113000151	0	01/04/2026	\N	\N	Cancelamento	Cancelamento	2026-04-22 12:49:52.754424	\N
+215	1	1038	ESCOLA DE NATACAO E GINASTICA BIOSWIM LTDA	00318069005631	3354	09/02/2026	3354	02/03/2026	Venda	Venda	2026-04-08 10:01:49.260768	abr/2026
+223	1	1046	ESCOLA DE NATACAO E GINASTICA BIOSWIM LTDA	00318069000915	1000	05/03/2026	1000	26/03/2026	Venda	Venda	2026-04-08 10:02:01.35104	abr/2026
+150	2	376	Karcher Industria E Comercio Limitada	47110960000178	36037.05	06/01/2026	36037.05	05/03/2026	Venda	Venda	2026-04-07 15:28:36.39255	abr/2026
+202	1	1025	ESCOLA DE NATACAO E GINASTICA BIOSWIM LTDA	00318069000915	1000	12/01/2026	1000	02/02/2026	Venda	Venda	2026-04-08 10:01:34.835731	mar/2026
+\.
+
+
+--
+-- Data for Name: pagamentos_nf; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+COPY public.pagamentos_nf (id, nota_id, empresa_id, numero_nf, valor_pago, dt_pagamento, created_at, mes_lancamento) FROM stdin;
+70	227	1	1049	0		2026-04-23 21:14:54.779355	\N
+75	174	2	395	6600	24/02/2026	2026-04-23 21:21:10.922213	mar/2026
+100	185	2	406	14417	20/03/2026	2026-05-04 11:54:37.738088	abr/2026
+101	181	2	402	7657	13/04/2026	2026-05-04 11:56:02.847662	mai/2026
+99	174	2	395	7050	16/04/2026	2026-05-04 10:53:28.767729	mai/2026
+98	174	2	395	6600	01/04/2026	2026-05-04 10:52:54.574995	abr/2026
+\.
+
+
+--
+-- Data for Name: permissoes; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+COPY public.permissoes (id, usuario_id, modulo, visualizar, editar, incluir, apagar) FROM stdin;
+1	1	dashboard	t	t	t	t
+2	1	inicio	t	t	t	t
+3	1	notas	t	t	t	t
+4	1	impostos	t	t	t	t
+5	1	contab	t	t	t	t
+6	1	rel	t	t	t	t
+7	1	empresas	t	t	t	t
+8	1	usuarios	t	t	t	t
+9	1	xml	t	t	t	t
+10	1	exp	t	t	t	t
+11	2	dashboard	t	f	f	f
+12	2	inicio	t	f	f	f
+13	2	notas	t	f	f	f
+14	2	impostos	t	f	f	f
+15	2	contab	t	f	f	f
+16	2	rel	t	f	f	f
+17	2	empresas	t	f	f	f
+18	2	usuarios	t	f	f	f
+19	2	xml	t	f	f	f
+20	2	exp	t	f	f	f
+21	3	dashboard	t	f	f	f
+22	3	inicio	t	f	f	f
+23	3	notas	t	f	f	f
+24	3	impostos	t	f	f	f
+25	3	contab	t	f	f	f
+26	3	rel	t	f	f	f
+27	3	empresas	t	f	f	f
+28	3	usuarios	t	f	f	f
+29	3	xml	t	f	f	f
+30	3	exp	t	f	f	f
+\.
+
+
+--
+-- Data for Name: usuarios; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+COPY public.usuarios (id, nome, email, senha_hash, perfil, ativo, created_at) FROM stdin;
+2	Miriam	miriam@enovaonline.com.br	$2b$12$b.bXQji.ugJNq/fmfnQye.Ozwh34UZslHqj7s8T81UVmSWv/HDgIu	Leitura	t	2026-03-16 21:14:32.494988
+1	Administrador	cleiber@enovaonline.com.br	$2b$12$lbFs0NICI6wnNW5ZcbRgUuP5w7cvQf7MXPh1UtjND/8cTTB93NI7G	Admin	t	2026-03-15 14:20:08.63862
+3	Rafael	rafael@enovaonline.com.br	$2b$12$9Z8ZJ3BB/mNcEmG9L84AtepSYKFs7mWGAVhDgsaLxKcBJsMcHNqXu	Fiscal	t	2026-05-15 18:16:06.834851
+\.
+
+
+--
+-- Name: ajustes_devolucao_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
+--
+
+SELECT pg_catalog.setval('public.ajustes_devolucao_id_seq', 3, true);
+
+
+--
+-- Name: creditos_fiscais_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
+--
+
+SELECT pg_catalog.setval('public.creditos_fiscais_id_seq', 3, true);
+
+
+--
+-- Name: das_pagamentos_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
+--
+
+SELECT pg_catalog.setval('public.das_pagamentos_id_seq', 205, true);
+
+
+--
+-- Name: empresas_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
+--
+
+SELECT pg_catalog.setval('public.empresas_id_seq', 3, true);
+
+
+--
+-- Name: encargos_horas_extras_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
+--
+
+SELECT pg_catalog.setval('public.encargos_horas_extras_id_seq', 1, true);
+
+
+--
+-- Name: feriados_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
+--
+
+SELECT pg_catalog.setval('public.feriados_id_seq', 21, true);
+
+
+--
+-- Name: funcionarios_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
+--
+
+SELECT pg_catalog.setval('public.funcionarios_id_seq', 2, true);
+
+
+--
+-- Name: historico_faturamento_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
+--
+
+SELECT pg_catalog.setval('public.historico_faturamento_id_seq', 316, true);
+
+
+--
+-- Name: log_auditoria_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
+--
+
+SELECT pg_catalog.setval('public.log_auditoria_id_seq', 104, true);
+
+
+--
+-- Name: notas_fiscais_new_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
+--
+
+SELECT pg_catalog.setval('public.notas_fiscais_new_id_seq', 267, true);
+
+
+--
+-- Name: pagamentos_nf_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
+--
+
+SELECT pg_catalog.setval('public.pagamentos_nf_id_seq', 102, true);
+
+
+--
+-- Name: permissoes_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
+--
+
+SELECT pg_catalog.setval('public.permissoes_id_seq', 30, true);
+
+
+--
+-- Name: usuarios_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
+--
+
+SELECT pg_catalog.setval('public.usuarios_id_seq', 3, true);
+
+
+--
+-- Name: ajustes_devolucao ajustes_devolucao_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.ajustes_devolucao
+    ADD CONSTRAINT ajustes_devolucao_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: creditos_fiscais creditos_fiscais_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.creditos_fiscais
+    ADD CONSTRAINT creditos_fiscais_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: das_pagamentos das_pagamentos_empresa_id_ano_mes_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.das_pagamentos
+    ADD CONSTRAINT das_pagamentos_empresa_id_ano_mes_key UNIQUE (empresa_id, ano, mes);
+
+
+--
+-- Name: das_pagamentos das_pagamentos_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.das_pagamentos
+    ADD CONSTRAINT das_pagamentos_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: empresas empresas_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.empresas
+    ADD CONSTRAINT empresas_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: encargos_horas_extras encargos_horas_extras_funcionario_id_ano_mes_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.encargos_horas_extras
+    ADD CONSTRAINT encargos_horas_extras_funcionario_id_ano_mes_key UNIQUE (funcionario_id, ano, mes);
+
+
+--
+-- Name: encargos_horas_extras encargos_horas_extras_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.encargos_horas_extras
+    ADD CONSTRAINT encargos_horas_extras_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: feriados feriados_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.feriados
+    ADD CONSTRAINT feriados_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: funcionarios funcionarios_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.funcionarios
+    ADD CONSTRAINT funcionarios_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: historico_faturamento historico_faturamento_empresa_id_ano_mes_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.historico_faturamento
+    ADD CONSTRAINT historico_faturamento_empresa_id_ano_mes_key UNIQUE (empresa_id, ano, mes);
+
+
+--
+-- Name: historico_faturamento historico_faturamento_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.historico_faturamento
+    ADD CONSTRAINT historico_faturamento_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: log_auditoria log_auditoria_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.log_auditoria
+    ADD CONSTRAINT log_auditoria_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: notas_fiscais notas_fiscais_new_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.notas_fiscais
+    ADD CONSTRAINT notas_fiscais_new_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: pagamentos_nf pagamentos_nf_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.pagamentos_nf
+    ADD CONSTRAINT pagamentos_nf_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: permissoes permissoes_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.permissoes
+    ADD CONSTRAINT permissoes_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: permissoes permissoes_usuario_id_modulo_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.permissoes
+    ADD CONSTRAINT permissoes_usuario_id_modulo_key UNIQUE (usuario_id, modulo);
+
+
+--
+-- Name: usuarios usuarios_email_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.usuarios
+    ADD CONSTRAINT usuarios_email_key UNIQUE (email);
+
+
+--
+-- Name: usuarios usuarios_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.usuarios
+    ADD CONSTRAINT usuarios_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: ix_feriados_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX ix_feriados_id ON public.feriados USING btree (id);
+
+
+--
+-- Name: ix_log_auditoria_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX ix_log_auditoria_id ON public.log_auditoria USING btree (id);
+
+
+--
+-- Name: das_pagamentos das_pagamentos_empresa_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.das_pagamentos
+    ADD CONSTRAINT das_pagamentos_empresa_id_fkey FOREIGN KEY (empresa_id) REFERENCES public.empresas(id);
+
+
+--
+-- Name: das_pagamentos das_pagamentos_usuario_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.das_pagamentos
+    ADD CONSTRAINT das_pagamentos_usuario_id_fkey FOREIGN KEY (usuario_id) REFERENCES public.usuarios(id);
+
+
+--
+-- Name: historico_faturamento historico_faturamento_empresa_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.historico_faturamento
+    ADD CONSTRAINT historico_faturamento_empresa_id_fkey FOREIGN KEY (empresa_id) REFERENCES public.empresas(id);
+
+
+--
+-- Name: notas_fiscais notas_fiscais_new_empresa_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.notas_fiscais
+    ADD CONSTRAINT notas_fiscais_new_empresa_id_fkey FOREIGN KEY (empresa_id) REFERENCES public.empresas(id);
+
+
+--
+-- Name: permissoes permissoes_usuario_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.permissoes
+    ADD CONSTRAINT permissoes_usuario_id_fkey FOREIGN KEY (usuario_id) REFERENCES public.usuarios(id) ON DELETE CASCADE;
+
+
+--
+-- PostgreSQL database dump complete
+--
+
+\unrestrict 0LrmHODRT8NrXLgorx51YnX7dUmefDPCfZ43haxje1oOibRo9LueNBZrfq9qb2T
+

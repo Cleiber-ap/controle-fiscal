@@ -22,6 +22,7 @@ class NotaFiscal(Base):
     status = Column(String(50), default='Venda')
     mes_lancamento = Column(String(10), nullable=True)
     ajustado = Column(Boolean, default=False, nullable=True)
+    data_contabilizacao = Column(String(20), nullable=True)
     tipo = Column(String(10), default='saida', nullable=True)
 
 router = APIRouter()
@@ -59,6 +60,7 @@ def listar_notas(empresa_id: int, db: Session = Depends(get_db), usuario=Depends
         "mes_lancamento": n.mes_lancamento,
         "nat_operacao": n.nat_operacao,
         "ajustado": n.ajustado or False,
+        "data_contabilizacao": n.data_contabilizacao,
         "tipo": n.tipo or "saida",
     } for n in notas]
 
@@ -364,3 +366,12 @@ def atualizar_ajustado(nota_id: int, dados: dict, db: Session = Depends(get_db),
     nota.ajustado = dados.get("ajustado", False)
     db.commit()
     return {"message": "OK", "ajustado": nota.ajustado}
+
+@router.put("/contabilizacao/{nota_id}")
+def atualizar_contabilizacao(nota_id: int, dados: dict, db: Session = Depends(get_db), usuario=Depends(get_current_user)):
+    nota = db.query(NotaFiscal).filter(NotaFiscal.id == nota_id).first()
+    if not nota:
+        return {"error": "Nota nao encontrada"}
+    nota.data_contabilizacao = dados.get("data_contabilizacao", "")
+    db.commit()
+    return {"message": "OK", "data_contabilizacao": nota.data_contabilizacao}

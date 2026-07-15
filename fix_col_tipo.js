@@ -1,0 +1,10 @@
+const fs = require('fs');
+const f = 'C:/projetos/controle-fiscal/frontend/src/pages/Contabilidade/index.tsx';
+const buf = fs.readFileSync(f);
+let c = buf.toString('utf8');
+const idx = c.indexOf("Destinat\u00e1rio','CNPJ Dest.");
+console.log('idx:', idx);
+if (idx === -1) process.exit(1);
+c = c.replace("Destinat\u00e1rio','CNPJ Dest.", "Destinat\u00e1rio','Tipo','CNPJ Dest.");
+fs.writeFileSync(f, c, 'utf8');
+console.log('OK');

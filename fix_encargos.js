@@ -1,0 +1,117 @@
+const fs = require('fs');
+const path = 'C:/projetos/controle-fiscal/frontend/src/pages/Encargos/index.tsx';
+
+let c = fs.readFileSync(path, 'utf8');
+
+const replacements = [
+  ['Mar\\u00e7o', 'Março'],
+  ['Confraterniza\\u00e7\\u00e3o Universal', 'Confraternização Universal'],
+  ['Anivers\\u00e1rio de S\\u00e3o Paulo', 'Aniversário de São Paulo'],
+  ['Revolu\\u00e7\\u00e3o Constitucionalista', 'Revolução Constitucionalista'],
+  ['Independ\\u00eancia do Brasil', 'Independência do Brasil'],
+  ['Proclama\\u00e7\\u00e3o da Rep\\u00fablica', 'Proclamação da República'],
+  ['Carnaval \\(2\\u00aa\\)', 'Carnaval (2ª)'],
+  ['Carnaval \\(3\\u00aa\\)', 'Carnaval (3ª)'],
+  // Strings visíveis no arquivo
+  ['Mar\uFFFDo', 'Março'],
+  ['Confraterniza\uFFFD\uFFFDo Universal', 'Confraternização Universal'],
+  ['Anivers\uFFFDrio de S\uFFFDo Paulo', 'Aniversário de São Paulo'],
+  ['Revolu\uFFFD\uFFFDo Constitucionalista', 'Revolução Constitucionalista'],
+  ['Independ\uFFFDncia do Brasil', 'Independência do Brasil'],
+  ['Proclama\uFFFD\uFFFDo da Rep\uFFFDblica', 'Proclamação da República'],
+  ['Carnaval \\(2\uFFFD\\)', 'Carnaval (2ª)'],
+  ['Carnaval \\(3\uFFFD\\)', 'Carnaval (3ª)'],
+  ['Corpus Christi', 'Corpus Christi'],
+  ['Sexta-Feira Santa', 'Sexta-Feira Santa'],
+  ['Tiradentes', 'Tiradentes'],
+  ['Dia do Trabalho', 'Dia do Trabalho'],
+  ['Nossa Sra\\. Aparecida', 'Nossa Sra. Aparecida'],
+  ['Finados', 'Finados'],
+  ['Natal', 'Natal'],
+  // Labels e textos UI
+  ['Total Sal\uFFFDrios', 'Total Salários'],
+  ['Dep\uFFFDsito \\(F\uFFFDr\\+13\uFFFD\\+FGTS\\+Multa\\)', 'Depósito (Fér+13ª+FGTS+Multa)'],
+  ['Funcion\uFFFDrios', 'Funcionários'],
+  ['Funcion\uFFFDrio', 'Funcionário'],
+  ['Sal\uFFFDrio', 'Salário'],
+  ['Sal\uFFFDrios', 'Salários'],
+  ['F\uFFFDr\\+13\uFFFD', 'Fér+13ª'],
+  ['Encargos Trabalhistas', 'Encargos Trabalhistas'],
+  ['Dias \uFFFDteis', 'Dias Úteis'],
+  ['Resumo Mensal', 'Resumo Mensal'],
+  ['Feriados', 'Feriados'],
+  ['N\uFFFDo', 'Não'],
+  ['A\uFFFD\uFFFDes', 'Ações'],
+  ['Cargo', 'Cargo'],
+  ['Vale Alimenta\uFFFD\uFFFDo \\(R\\$\\)', 'Vale Alimentação (R$)'],
+  ['Valor Unit\uFFFDrio VT \\(R\\$/dia\\)', 'Valor Unitário VT (R$/dia)'],
+  ['M\uFFFDs', 'Mês'],
+  ['Descri\uFFFD\uFFFDo', 'Descrição'],
+  ['Anivers\uFFFDrio de S\uFFFDo Paulo', 'Aniversário de São Paulo'],
+  ['S\uFFFDo Paulo', 'São Paulo'],
+  ['Municipal \\(S\uFFFDo Paulo\\)', 'Municipal (São Paulo)'],
+  ['Somados aos feriados fixos j\uFFFD inclu\uFFFDdos automaticamente', 'Somados aos feriados fixos já incluídos automaticamente'],
+  ['fixo autom\uFFFDtico', 'fixo automático'],
+  ['no m\uFFFDs', 'no mês'],
+  ['personalizados', 'personalizados'],
+  ['Editando Feriado', 'Editando Feriado'],
+  ['Adicionar Feriado', 'Adicionar Feriado'],
+  ['Salvar Altera\uFFFD\uFFFDes', 'Salvar Alterações'],
+  ['Salvar Feriado', 'Salvar Feriado'],
+  ['atualizado:', 'atualizado:'],
+  ['criado:', 'criado:'],
+  ['salvo!', 'salvo!'],
+];
+
+// Substituições diretas por string (não regex)
+const direct = [
+  ['Mar\uFFFDo', 'Março'],
+  ['Confraterniza\uFFFD\uFFFDo', 'Confraternização'],
+  ['Anivers\uFFFDrio', 'Aniversário'],
+  ['S\uFFFDo Paulo', 'São Paulo'],
+  ['Revolu\uFFFD\uFFFDo', 'Revolução'],
+  ['Independ\uFFFDncia', 'Independência'],
+  ['Proclama\uFFFD\uFFFDo', 'Proclamação'],
+  ['Rep\uFFFDblica', 'República'],
+  ['Carnaval (2\uFFFD)', 'Carnaval (2ª)'],
+  ['Carnaval (3\uFFFD)', 'Carnaval (3ª)'],
+  ['Total Sal\uFFFDrios', 'Total Salários'],
+  ['Dep\uFFFDsito', 'Depósito'],
+  ['F\uFFFDr+13\uFFFD', 'Fér+13ª'],
+  ['Funcion\uFFFDrio', 'Funcionário'],
+  ['Funcion\uFFFDrios', 'Funcionários'],
+  ['Sal\uFFFDrio', 'Salário'],
+  ['Sal\uFFFDrios', 'Salários'],
+  ['Dias \uFFFDteis', 'Dias Úteis'],
+  ['\uFFFDteis', 'úteis'],
+  ['\uFFFDtil', 'útil'],
+  ['N\uFFFDo', 'Não'],
+  ['A\uFFFD\uFFFDes', 'Ações'],
+  ['Vale Alimenta\uFFFD\uFFFDo', 'Vale Alimentação'],
+  ['Valor Unit\uFFFDrio', 'Valor Unitário'],
+  ['M\uFFFDs', 'Mês'],
+  ['Descri\uFFFD\uFFFDo', 'Descrição'],
+  ['Municipal (S\uFFFDo Paulo)', 'Municipal (São Paulo)'],
+  ['j\uFFFD inclu\uFFFDdos', 'já incluídos'],
+  ['autom\uFFFDtico', 'automático'],
+  ['no m\uFFFDs', 'no mês'],
+  ['Salvar Altera\uFFFD\uFFFDes', 'Salvar Alterações'],
+  ['funcion\uFFFDrio(s)', 'funcionário(s)'],
+  ['Funcion\uFFFDrio atualizado', 'Funcionário atualizado'],
+  ['Funcion\uFFFDrio criado', 'Funcionário criado'],
+  ['Funcion\uFFFDrio salvo', 'Funcionário salvo'],
+  ['Novo Funcion\uFFFDrio', 'Novo Funcionário'],
+  ['Editar Funcion\uFFFDrio', 'Editar Funcionário'],
+  ['Novo Funcion\uFFFDrio', 'Novo Funcionário'],
+  ['+ Novo Funcion\uFFFDrio', '+ Novo Funcionário'],
+  ['Editando Feriado', 'Editando Feriado'],
+];
+
+for (const [from, to] of direct) {
+  while (c.includes(from)) {
+    c = c.split(from).join(to);
+  }
+}
+
+fs.writeFileSync(path, c, 'utf8');
+console.log('Arquivo corrigido com sucesso!');

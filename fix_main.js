@@ -1,9 +1,8 @@
-﻿const fs = require("fs");
-const f = "C:/projetos/controle-fiscal/backend/app/main.py";
-let c = fs.readFileSync(f, "utf8");
-c = c.replace(
-  'app.include_router(auditoria_router',
-  'app.include_router(funcionarios.router, prefix="/funcionarios", tags=["Funcionarios"])\napp.include_router(auditoria_router'
-);
-fs.writeFileSync(f, c, "utf8");
-console.log(c.includes('prefix="/funcionarios"') ? "OK" : "FALHOU");
+const fs = require('fs');
+const f = 'C:/projetos/controle-fiscal/frontend/src/main.tsx';
+let c = fs.readFileSync(f, 'utf8');
+c = c.replace(/\0/g, '');
+const lastClose = c.lastIndexOf('\n)');
+c = c.substring(0, lastClose + 2) + '\n';
+fs.writeFileSync(f, c, 'utf8');
+console.log('OK');

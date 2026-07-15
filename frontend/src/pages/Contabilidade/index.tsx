@@ -43,6 +43,8 @@ export default function Contabilidade() {
   const [editando, setEditando] = useState<string | null>(null)
   const [editVPg, setEditVPg] = useState('')
   const [editDtp, setEditDtp] = useState('')
+  const [editandoContb, setEditandoContb] = useState<string | null>(null)
+  const [editContbVal, setEditContbVal] = useState("")
   const [salvando, setSalvando] = useState(false)
   const [ajustadosPg, setAjustadosPg] = useState<Record<number,boolean>>({})
   const [scrollParaAguardando, setScrollParaAguardando] = useState(false)
@@ -505,6 +507,7 @@ export default function Contabilidade() {
                   <th style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase' as const, letterSpacing: '1px', color: '#7B82A0', borderBottom: '1px solid #252836', whiteSpace: 'nowrap' as const, padding: '8px 12px', textAlign: 'right' as const }}>Valor Pago</th>
                   <th style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase' as const, letterSpacing: '1px', color: '#7B82A0', borderBottom: '1px solid #252836', whiteSpace: 'nowrap' as const, padding: '8px 12px', textAlign: 'right' as const }}>Restante</th>
                   <th style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase' as const, letterSpacing: '1px', color: '#7B82A0', borderBottom: '1px solid #252836', whiteSpace: 'nowrap' as const, padding: '8px 12px', textAlign: 'right' as const }}>Dt. Pagto</th>
+                    <th style={{ fontSize: "10px", fontWeight: 600, textTransform: "uppercase" as const, letterSpacing: "1px", color: "#7B82A0", borderBottom: "1px solid #252836", whiteSpace: "nowrap" as const, padding: "8px 12px", textAlign: "right" as const }}>DT.CONTB</th>
                   <th style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase' as const, letterSpacing: '1px', color: '#7B82A0', borderBottom: '1px solid #252836', whiteSpace: 'nowrap' as const, padding: '8px 12px', textAlign: 'right' as const }}>Imposto</th>
                   <th style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase' as const, letterSpacing: '1px', color: '#7B82A0', borderBottom: '1px solid #252836', whiteSpace: 'nowrap' as const, padding: '8px 12px', textAlign: 'center' as const, width: '40px' }}>Ajuste</th>
                   <th style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase' as const, letterSpacing: '1px', color: '#7B82A0', borderBottom: '1px solid #252836', whiteSpace: 'nowrap' as const, padding: '8px 12px' }}>Status</th>
@@ -565,6 +568,25 @@ export default function Contabilidade() {
                           {isPaga && restante > 0.01 ? <span style={{ color: '#F87171', fontWeight: 600 }}>{fmtR(restante)}</span> : null}
                         </td>
                         <td style={tdBase({ textAlign: 'right', color: '#7B82A0', ...mono, fontSize: '11px' })}>{temHistorico ? (lista[0]?.dt_pagamento || '—') : (r.dt_pagamento || r.data_pagamento || '—')}</td>
+                          <td style={tdBase({ textAlign: "right", ...mono, fontSize: "11px" })}>
+                            {editandoContb === r.numero_nf ? (
+                              <input type="text" autoFocus value={editContbVal}
+                                onChange={e => setEditContbVal(e.target.value)}
+                                onBlur={async () => {
+                                  setNotas(prev => prev.map(n => n.numero_nf === r.numero_nf ? {...n, data_contabilizacao: editContbVal} : n))
+                                  await api.put("/notas/contabilizacao/" + r.id, { data_contabilizacao: editContbVal })
+                                  setEditandoContb(null)
+                                }}
+                                onKeyDown={e => { if (e.key === "Enter") (e.target as HTMLInputElement).blur() }}
+                                placeholder="dd/mm/aaaa"
+                                style={{ width: "72px", background: "#1A1D2A", border: "1px solid #4A5070", borderRadius: "3px", color: "#E4E7F0", fontSize: "11px", padding: "2px 4px", textAlign: "right" }} />
+                            ) : (
+                              <span onClick={() => { setEditandoContb(r.numero_nf); setEditContbVal(r.data_contabilizacao || "") }}
+                                style={{ cursor: "pointer", color: r.data_contabilizacao ? "#7B82A0" : "#4A5070" }}>
+                                {r.data_contabilizacao || "—"}
+                              </span>
+                            )}
+                          </td>
                         <td style={tdBase({ textAlign: 'right', ...mono, fontSize: '11px' })}>
                           {(() => {
                             const dtPg = temHistorico ? (lista[0]?.dt_pagamento || '') : (r.dt_pagamento || r.data_pagamento || '')
