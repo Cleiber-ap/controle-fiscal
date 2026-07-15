@@ -247,7 +247,7 @@ export default function ImportarXML() {
       for (const nfNum of nfsLinha) {
         const nota = todasNotas.find((n: any) => {
           const numMatch = n.numero_nf === nfNum
-          const isVenda = (n.nat_operacao || n.status || '').toLowerCase().includes('venda')
+          const nat = (n.nat_operacao || n.status || '').toLowerCase(); const isVenda = nat.includes('venda') || nat.includes('complemento de frete')
           // Filtrar por unidade se disponível
           if (unidade && unidade.includes('six') && n.empresa_id !== 1) return false
           if (unidade && unidade.includes('enova') && n.empresa_id !== 2) return false
