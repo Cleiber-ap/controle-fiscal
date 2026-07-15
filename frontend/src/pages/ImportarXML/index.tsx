@@ -292,6 +292,7 @@ export default function ImportarXML() {
     try {
       let ok = 0
       for (const n of planilhaNotas) {
+        if (n.ja_pago) { ok++; continue }
         await api.post('/notas/pagamento', {
           empresa_id: n.empresa_id,
           numero_nf: n.numero_nf,
