@@ -571,7 +571,7 @@ export default function Contabilidade() {
                             const parts = dtPg.includes('-') ? dtPg.split('-').reverse() : dtPg.split('/')
                             const mm = parseInt(parts[1])
                             const aa = parseInt(parts[2])
-                            if (mm === mesAntIdx + 1 && aa === anoAnt && primeiroPagamento > 0) {
+                            const now2 = new Date(); const mesCont = now2.getMonth() + 1; const anoCont = now2.getFullYear(); if (((mm === mesAntIdx + 1 && aa === anoAnt) || (mm === mesCont && aa === anoCont)) && primeiroPagamento > 0) {
                               return <span style={{ color: '#FBBF24', fontWeight: 600 }}>{fmtR(primeiroPagamento * aliqEfetivaCont)}</span>
                             }
                             return <span style={{ color: '#4A5070' }}>—</span>
