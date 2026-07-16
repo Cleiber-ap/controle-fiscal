@@ -36,6 +36,7 @@ class PagamentoNF(Base):
     valor_pago = Column(Float, nullable=False)
     dt_pagamento = Column(String(30), nullable=True)
     mes_lancamento = Column(String(10), nullable=True)
+    data_contabilizacao = Column(String(20), nullable=True)
 
 
 class PagamentoInput(BaseModel):
@@ -188,13 +189,13 @@ def listar_todos_pagamentos(empresa_id: int, db: Session = Depends(get_db), usua
     for p in pgtos:
         if p.numero_nf not in resultado:
             resultado[p.numero_nf] = []
-        resultado[p.numero_nf].append({"id": p.id, "valor_pago": p.valor_pago, "dt_pagamento": p.dt_pagamento, "mes_lancamento": p.mes_lancamento})
+        resultado[p.numero_nf].append({"id": p.id, "valor_pago": p.valor_pago, "dt_pagamento": p.dt_pagamento, "mes_lancamento": p.mes_lancamento, "data_contabilizacao": p.data_contabilizacao})
     return resultado
 
 @router.get("/pagamentos/{empresa_id}/{numero_nf}")
 def listar_pagamentos(empresa_id: int, numero_nf: str, db: Session = Depends(get_db), usuario=Depends(get_current_user)):
     pgtos = db.query(PagamentoNF).filter(PagamentoNF.numero_nf == numero_nf, PagamentoNF.empresa_id == empresa_id).order_by(PagamentoNF.id.asc()).all()
-    return [{"id": p.id, "valor_pago": p.valor_pago, "dt_pagamento": p.dt_pagamento, "mes_lancamento": p.mes_lancamento} for p in pgtos]
+    return [{"id": p.id, "valor_pago": p.valor_pago, "dt_pagamento": p.dt_pagamento, "mes_lancamento": p.mes_lancamento, "data_contabilizacao": p.data_contabilizacao} for p in pgtos]
 
 @router.put("/pagamento/{pgto_id}")
 def editar_pagamento(pgto_id: int, dados: PgtoInput, db: Session = Depends(get_db), usuario=Depends(get_current_user)):
@@ -375,3 +376,12 @@ def atualizar_contabilizacao(nota_id: int, dados: dict, db: Session = Depends(ge
     nota.data_contabilizacao = dados.get("data_contabilizacao", "")
     db.commit()
     return {"message": "OK", "data_contabilizacao": nota.data_contabilizacao}
+
+@router.put("/pagamento/contabilizacao/{pgto_id}")
+def atualizar_contabilizacao_pagamento(pgto_id: int, dados: dict, db: Session = Depends(get_db), usuario=Depends(get_current_user)):
+    pgto = db.query(PagamentoNF).filter(PagamentoNF.id == pgto_id).first()
+    if not pgto:
+        return {"error": "Pagamento nao encontrado"}
+    pgto.data_contabilizacao = dados.get("data_contabilizacao", "")
+    db.commit()
+    return {"message": "OK", "data_contabilizacao": pgto.data_contabilizacao}
