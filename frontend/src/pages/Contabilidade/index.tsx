@@ -573,8 +573,14 @@ export default function Contabilidade() {
                               <input type="text" autoFocus value={editContbVal}
                                 onChange={e => setEditContbVal(e.target.value)}
                                 onBlur={async () => {
-                                  setNotas(prev => prev.map(n => n.numero_nf === r.numero_nf ? {...n, data_contabilizacao: editContbVal} : n))
-                                  await api.put("/notas/contabilizacao/" + r.id, { data_contabilizacao: editContbVal })
+                                  let val = editContbVal.trim()
+                                  if (/^\d{1,2}\/\d{1,2}$/.test(val)) {
+                                    const [d, m] = val.split("/")
+                                    val = d.padStart(2,"0") + "/" + m.padStart(2,"0") + "/" + new Date().getFullYear()
+                                  }
+                                  setEditContbVal(val)
+                                  setNotas(prev => prev.map(n => n.numero_nf === r.numero_nf ? {...n, data_contabilizacao: val} : n))
+                                  await api.put("/notas/contabilizacao/" + r.id, { data_contabilizacao: val })
                                   setEditandoContb(null)
                                 }}
                                 onKeyDown={e => { if (e.key === "Enter") (e.target as HTMLInputElement).blur() }}
