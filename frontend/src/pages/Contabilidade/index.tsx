@@ -254,8 +254,8 @@ export default function Contabilidade() {
     if (r.valor_pago && dtNoMesAnt(dtPgto)) return s + (parseFloat(r.valor_pago) || 0)
     return s
   }, 0)
-  // tPago por Mes Lancamento
-  const tPagoMLcto = notas.filter(r => isVendaOuParcial(r) && !nfsCanceladas.has(r.numero_nf)).reduce((s, r) => {
+  // tPago por Data de Pagamento (Regime de Caixa)
+  const tPagoPorDtPagamento = notas.filter(r => isVendaOuParcial(r) && !nfsCanceladas.has(r.numero_nf)).reduce((s, r) => {
     const lista = pagamentos[r.numero_nf] || []
     if (lista.length > 0) {
       const soma = lista.filter((p: any) => { const dt = p.dt_pagamento||''; const parts = dt.includes('-')?dt.split('-').reverse():dt.split('/'); return parseInt(parts[1])===mesAntIdx+1&&parseInt(parts[2])===anoAnt }).reduce((a: number, p: any) => a + (parseFloat(p.valor_pago) || 0), 0)
@@ -416,7 +416,7 @@ export default function Contabilidade() {
           { label: 'Crédito ICMS', valor: (icmsAproveitavelCont * 100).toFixed(2).replace('.', ',') + '%', cor: '#22D3EE' },
           { label: 'Base Cálculo ' + mesAntNome + '/' + anoAnt, valor: fmtR(base), cor: '#7B82A0' },
           { label: '💰 Imposto a Pagar (Regime de Competência)', valor: fmtR(base * aliqEfetivaCont), cor: '#7B82A0' },
-          { label: '💰 Imposto a Pagar (Regime de Caixa)', valor: fmtR(tPagoMLcto * aliqEfetivaCont), cor: '#34D399' },
+          { label: '💰 Imposto a Pagar (Regime de Caixa)', valor: fmtR(tPagoPorDtPagamento * aliqEfetivaCont), cor: '#34D399' },
           ...(totalCredito > 0 ? [{ label: '🟢 Crédito Fiscal NF de entrada', valor: '− ' + fmtR(totalCredito), cor: '#A78BFA' }] : []),
         ].map((x, i) => (
           <div key={i} style={{ display: 'flex', alignItems: 'center' }}>
