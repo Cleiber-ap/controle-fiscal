@@ -215,6 +215,12 @@ export default function Contabilidade() {
   const notasFiltradas4 = filtroStatus.length > 0 ? notasFiltradas3.filter((r: any) => { const nat = r.nat_operacao || r.status || ''; const cancelada = nfsCanceladas.has(r.numero_nf); if (filtroStatus.includes('Venda') && cancelada) return false; return filtroStatus.includes(nat); }) : notasFiltradas3
   const notasFiltradas5 = filtroMesContb ? notasFiltradas4.filter((r: any) => {
     const lista = pagamentos[r.numero_nf] || []
+    if (filtroMesContb === '__VAZIO__') {
+      if (lista.length > 0) {
+        return lista.some((p: any) => !p.data_contabilizacao)
+      }
+      return !r.data_contabilizacao
+    }
     if (lista.length > 0) {
       return lista.some((p: any) => {
         const dt = p.data_contabilizacao || ''
@@ -470,6 +476,7 @@ export default function Contabilidade() {
               </select>
               <select value={filtroMesContb} onChange={e=>setFiltroMesContb(e.target.value)} style={{ background:'#1A1D2A', color:'#E8EAF0', border:'1px solid #353849', borderRadius:6, padding:'2px 8px', fontSize:'12px', cursor:'pointer' }}>
                 <option value="">Contabilização: todos</option>
+                <option value="__VAZIO__">Sem contabilização</option>
                 {[...new Set(notas.flatMap((r:any)=>{
                   const lista=pagamentos[r.numero_nf]||[]
                   if(lista.length>0) return lista.map((p:any)=>{ const dt=p.data_contabilizacao||''; if(!dt) return null; const parts=dt.includes('-')?dt.split('-').reverse():dt.split('/'); const mm=parts[1]; const aa=parts[2]; return (mm&&aa&&!isNaN(+mm)&&!isNaN(+aa)) ? mm.padStart(2,'0')+'/'+aa : null }).filter(Boolean)
