@@ -242,16 +242,12 @@ export default function Contabilidade() {
   // tPago final: pagamentos_nf do mes OU nota.valor_pago se sem historico
   const tPago = notas.filter(r => isVendaOuParcial(r) && !nfsCanceladas.has(r.numero_nf)).reduce((s, r) => {
     const lista = pagamentos[r.numero_nf] || []
-    const dtPgto = r.dt_pagamento || r.data_pagamento
+    const dtContbNota = r.data_contabilizacao || ''
     if (lista.length > 0) {
-      const somaParciais = lista.filter((p) => dtNoMesAnt(p.dt_pagamento)).reduce((a, p) => a + (parseFloat(p.valor_pago) || 0), 0)
-      const originalPago = (dtNoMesAnt(dtPgto) && !dtNoMesAnt(lista[0].dt_pagamento)) ? (parseFloat(lista[0].valor_pago) || 0) : 0
-      const totalParciais = lista.reduce((a, p) => a + (parseFloat(p.valor_pago) || 0), 0)
-      const notaPago = parseFloat(r.valor_pago) || 0
-      const extra = (notaPago > totalParciais && dtNoMesAnt(dtPgto)) ? (notaPago - totalParciais) : 0
+      const somaParciais = lista.filter((p) => dtNoMesAnt(p.data_contabilizacao || '')).reduce((a, p) => a + (parseFloat(p.valor_pago) || 0), 0)
       return s + somaParciais
     }
-    if (r.valor_pago && dtNoMesAnt(dtPgto)) return s + (parseFloat(r.valor_pago) || 0)
+    if (r.valor_pago && dtNoMesAnt(dtContbNota)) return s + (parseFloat(r.valor_pago) || 0)
     return s
   }, 0)
   // tPago por Data de Pagamento (Regime de Caixa)
