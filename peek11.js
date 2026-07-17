@@ -1,0 +1,10 @@
+﻿const fs = require("fs");
+const c = fs.readFileSync("C:/projetos/controle-fiscal/frontend/src/pages/Contabilidade/index.tsx", "utf8");
+const i1 = c.indexOf("const now2 = new Date(); const mesCont");
+const chunk1 = c.substring(i1-360, i1+420);
+console.log("=== BLOCO ORIGINAL (linha a linha com contagem de espacos) ===");
+chunk1.split("\r\n").forEach(l => console.log(JSON.stringify(l)));
+const i2 = c.indexOf("if (mm === mesAntIdx + 1 && aa === anoAnt && pg.valor_pago > 0)");
+const chunk2 = c.substring(i2-360, i2+320);
+console.log("=== BLOCO PARCIAL (linha a linha com contagem de espacos) ===");
+chunk2.split("\r\n").forEach(l => console.log(JSON.stringify(l)));
