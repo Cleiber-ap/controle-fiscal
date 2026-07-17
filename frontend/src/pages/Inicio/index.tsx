@@ -200,6 +200,13 @@ export default function Inicio() {
                       }} style={{padding:'4px 10px',background:'rgba(167,139,250,0.2)',border:'1px solid #A78BFA',borderRadius:6,color:'#A78BFA',fontSize:11,fontWeight:600,cursor:'pointer'}}>
                         Autorizar
                       </button>}
+                      {temPermissao('inicio', 'editar') && <button onClick={async()=>{
+                        if (!window.confirm('Recusar este credito fiscal? Ele deixara de contar nos calculos.')) return
+                        await fetch('https://diligent-integrity-production-3f98.up.railway.app/notas/creditos/'+cr.id,{method:'PUT',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('access_token')},body:JSON.stringify({status:'recusado'})})
+                        window.location.reload()
+                      }} style={{marginLeft:6,padding:'4px 10px',background:'transparent',border:'1px solid #2A2D3E',borderRadius:6,color:'#7B82A0',fontSize:11,cursor:'pointer'}}>
+                        Recusar
+                      </button>}
                     </div>
                   ))}
               {e.conf ? (
