@@ -184,6 +184,9 @@ export default function Contabilidade() {
     ? ultimos4.filter(r => {
         const lista = pagamentos[r.numero_nf] || []
         const dtPgto = r.dt_pagamento || r.data_pagamento
+        if (filtroMesPagto === '__VAZIO__') {
+          return lista.length === 0 && !dtPgto
+        }
         if (lista.length > 0) {
           return lista.some((p: any) => {
             const dt = p.dt_pagamento || ''
@@ -238,7 +241,9 @@ export default function Contabilidade() {
     return (mm + '/' + aa) === filtroMesContb
   }) : notasFiltradas4
   const dtNoMesFiltro = (dtStr: string | undefined) => {
-    if (!filtroMesPagto || !dtStr) return !filtroMesPagto
+    if (!filtroMesPagto) return true
+    if (filtroMesPagto === '__VAZIO__') return !dtStr
+    if (!dtStr) return false
     const parts = dtStr.includes('-') ? dtStr.split('-').reverse() : dtStr.split('/')
     const mm = parts[1]?.padStart(2, '0')
     const aa = parts[2]
@@ -468,6 +473,7 @@ export default function Contabilidade() {
               </select>
               <select value={filtroMesPagto} onChange={e=>setFiltroMesPagto(e.target.value)} style={{ background:'#1A1D2A', color:'#E8EAF0', border:'1px solid #353849', borderRadius:6, padding:'2px 8px', fontSize:'12px', cursor:'pointer' }}>
                 <option value="">Pagamento: todos</option>
+                <option value="__VAZIO__">Sem pagamento</option>
                 {[...new Set(notas.flatMap((r:any)=>{
                   const lista=pagamentos[r.numero_nf]||[]
                   if(lista.length>0) return lista.map((p:any)=>{ const dt=p.dt_pagamento||''; if(!dt) return null; const parts=dt.includes('-')?dt.split('-').reverse():dt.split('/'); const mm=parts[1]; const aa=parts[2]; return (mm&&aa&&!isNaN(+mm)&&!isNaN(+aa)) ? mm.padStart(2,'0')+'/'+aa : null }).filter(Boolean)
