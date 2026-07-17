@@ -139,10 +139,12 @@ export default function Contabilidade() {
   const empDados = empresas.find(e => e.nome === (empresa === 'six' ? 'SIX' : 'ENOVA')) || { aliquota_das: empresa === 'six' ? 0.088324 : 0.093254, credito_icms: empresa === 'six' ? 0.029614 : 0.031256 }
   const rbt12Cont = (() => {
     let sum = 0
-    for (let i = 0; i < 12; i++) {
+    for (let i = 1; i < 13; i++) {
       const d = new Date(now.getFullYear(), now.getMonth() - i - 1, 1)
       const m = d.getMonth() + 1; const a = d.getFullYear()
-      sum += (hist.find((r:any) => r.ano === a && r.mes === m)?.valor || 0)
+      const fat = (hist.find((r:any) => r.ano === a && r.mes === m)?.valor || 0)
+      const dev = ajustes.filter((aj:any) => aj.ano === a && aj.mes === m).reduce((s:number, aj:any) => s + aj.valor, 0)
+      sum += fat - dev
     }
     return sum
   })()
