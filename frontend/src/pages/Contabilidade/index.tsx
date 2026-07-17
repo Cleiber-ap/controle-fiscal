@@ -283,7 +283,7 @@ export default function Contabilidade() {
   }, 0)
 
   // valAberto: notas Venda sem pagamento + parcialmente pagas (restante)
-  const nfsAberto = notas.filter(r => (r.nat_operacao || r.status || '').toLowerCase().includes('venda') && !nfsCanceladas.has(r.numero_nf))
+  const nfsAberto = notas.filter(r => isVendaOuParcial(r) && !nfsCanceladas.has(r.numero_nf))
   const valAberto = nfsAberto.reduce((s, r) => {
     const rest = (parseFloat(r.valor_nf) || 0) - (parseFloat(r.valor_pago) || 0)
     return s + (rest > 0.01 ? rest : 0)
