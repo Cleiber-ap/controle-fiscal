@@ -595,10 +595,28 @@ export default function Contabilidade() {
                                   placeholder="dd/mm/aaaa"
                                   style={{ width: "72px", background: "#1A1D2A", border: "1px solid #4A5070", borderRadius: "3px", color: "#E4E7F0", fontSize: "11px", padding: "2px 4px", textAlign: "right" }} />
                               ) : (
+                                <>
                                 <span onClick={() => { setEditandoContb(contbId); setEditContbVal(contbAtual) }}
                                   style={{ cursor: "pointer", color: contbAtual ? "#7B82A0" : "#4A5070" }}>
                                   {contbAtual || "—"}
                                 </span>
+                                {!contbAtual && (() => {
+                                  const dtCopy = temHistorico ? (lista[0]?.dt_pagamento || "") : (r.dt_pagamento || r.data_pagamento || "")
+                                  return dtCopy ? <button
+                                    title={"Copiar data de pagamento: " + dtCopy}
+                                    onClick={async (e) => {
+                                      e.stopPropagation()
+                                      if (temHistorico) {
+                                        setPagamentos(prev => ({...prev, [r.numero_nf]: (prev[r.numero_nf]||[]).map((p) => p.id === lista[0].id ? {...p, data_contabilizacao: dtCopy} : p)}))
+                                        await api.put("/notas/pagamento/contabilizacao/" + lista[0].id, { data_contabilizacao: dtCopy })
+                                      } else {
+                                        setNotas(prev => prev.map(n => n.numero_nf === r.numero_nf ? {...n, data_contabilizacao: dtCopy} : n))
+                                        await api.put("/notas/contabilizacao/" + r.id, { data_contabilizacao: dtCopy })
+                                      }
+                                    }}
+                                    style={{ marginLeft: "4px", padding: "1px 4px", background: "#1A1D2A", border: "1px solid #4A5070", borderRadius: "3px", color: "#7B82A0", fontSize: "10px", cursor: "pointer" }}>↳</button> : null
+                                })()}
+                              </>
                               )
                             })()}
                           </td>
@@ -741,10 +759,20 @@ export default function Contabilidade() {
                                     placeholder="dd/mm/aaaa"
                                     style={{ width: "72px", background: "#1A1D2A", border: "1px solid #4A5070", borderRadius: "3px", color: "#E4E7F0", fontSize: "11px", padding: "2px 4px", textAlign: "right" }} />
                                 ) : (
+                                  <>
                                   <span onClick={() => { setEditandoContb("pgto-" + pg.id); setEditContbVal(pg.data_contabilizacao || "") }}
                                     style={{ cursor: "pointer", color: pg.data_contabilizacao ? "#7B82A0" : "#4A5070" }}>
                                     {pg.data_contabilizacao || "—"}
                                   </span>
+                                  {!pg.data_contabilizacao && pg.dt_pagamento ? <button
+                                    title={"Copiar data de pagamento: " + pg.dt_pagamento}
+                                    onClick={async (e) => {
+                                      e.stopPropagation()
+                                      setPagamentos(prev => ({...prev, [r.numero_nf]: (prev[r.numero_nf]||[]).map((p) => p.id === pg.id ? {...p, data_contabilizacao: pg.dt_pagamento} : p)}))
+                                      await api.put("/notas/pagamento/contabilizacao/" + pg.id, { data_contabilizacao: pg.dt_pagamento })
+                                    }}
+                                    style={{ marginLeft: "4px", padding: "1px 4px", background: "#1A1D2A", border: "1px solid #4A5070", borderRadius: "3px", color: "#7B82A0", fontSize: "10px", cursor: "pointer" }}>↳</button> : null}
+                                </>
                                 )}
                               </td>
                               <td style={tdBase({ textAlign: 'right', ...mono, fontSize: '11px' })}>
