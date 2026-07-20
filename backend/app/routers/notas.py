@@ -299,14 +299,23 @@ def listar_ajustes(empresa_id: int, db: Session = Depends(get_db), usuario=Depen
 
 @router.post("/ajustes")
 def criar_ajuste(dados: dict, db: Session = Depends(get_db), usuario=Depends(get_current_user)):
+    chave_ref = dados.get("chave_ref")
+    empresa_id = dados["empresa_id"]
+    if chave_ref:
+        existente = db.query(AjusteDevolucao).filter(
+            AjusteDevolucao.empresa_id == empresa_id,
+            AjusteDevolucao.chave_ref == chave_ref
+        ).first()
+        if existente:
+            return existente
     aj = AjusteDevolucao(
-        empresa_id=dados["empresa_id"],
+        empresa_id=empresa_id,
         ano=dados["ano"],
         mes=dados["mes"],
         valor=dados["valor"],
         nf_devolucao=dados.get("nf_devolucao"),
         nf_referenciada=dados.get("nf_referenciada"),
-        chave_ref=dados.get("chave_ref"),
+        chave_ref=chave_ref,
     )
     db.add(aj); db.commit(); db.refresh(aj)
     return aj
