@@ -165,7 +165,7 @@ export default function ExportarExcel() {
     const border = { top:{style:"thin",color:{rgb:"000000"}}, bottom:{style:"thin",color:{rgb:"000000"}}, left:{style:"thin",color:{rgb:"000000"}}, right:{style:"thin",color:{rgb:"000000"}} }
     const hStyle = { font:{bold:true,name:"Calibri",sz:11}, fill:{patternType:"solid",fgColor:{rgb:"FFC000"}}, alignment:{horizontal:"center",vertical:"center"}, border }
     const aligns = ["center","center","center","left","left","center","center","center","center"]
-    const cab = ["Nº NF","RzEmit","CnpjDest","RzDest","Valor NF","DtEmissao","Valor Pago","Data do Pagto","Status Nota Fiscal"]
+    const cab = ["Nº NF","RzEmit","CnpjDest","RzDest","Valor NF","DtEmissao","Valor Pago","Data Contabilização","Status Nota Fiscal"]
     const colWidths = [11,43,17,52,18,13,17,17,17]
     const buildSheet = (lista: any[], emp: string) => {
       const nfsCan = new Set(lista.filter((n:any)=>n.numero_nf?.endsWith("-CAN")).map((n:any)=>n.numero_nf.replace("-CAN","")))
@@ -189,22 +189,22 @@ export default function ExportarExcel() {
         const isPagoRef = (mes: number, ano: number) =>
           (mes===mesAntIdx+1&&ano===anoAnt) || (mes===mesAtualIdx2+1&&ano===anoAtual2)
         if(pgtos.length===0){
-          const dtP=n.dt_pagamento||n.data_pagamento; if(!dtP) return false
+          const dtP=n.data_contabilizacao; if(!dtP) return false
           const parts=dtP.includes("-")?dtP.split("-"):dtP.split("/").reverse()
           return isPagoRef(parseInt(parts[1]), parseInt(parts[0]))
         }
-        return pgtos.some((p:any)=>{ const dt=p.dt_pagamento; if(!dt) return false; const parts=dt.includes("-")?dt.split("-"):dt.split("/").reverse(); return isPagoRef(parseInt(parts[1]), parseInt(parts[0])) })
+        return pgtos.some((p:any)=>{ const dt=p.data_contabilizacao; if(!dt) return false; const parts=dt.includes("-")?dt.split("-"):dt.split("/").reverse(); return isPagoRef(parseInt(parts[1]), parseInt(parts[0])) })
       })
       const todasNotas = [...new Map([...notasMes,...notasAguardando,...notasPagas].map((n:any)=>[n.numero_nf,n])).values()].sort((a:any,b:any)=>(parseFloat(a.numero_nf)||0)-(parseFloat(b.numero_nf)||0))
       const rows: any[][] = []
       for(const n of todasNotas){
         const pgtos=pagamentos[n.numero_nf]||[]
         const dtEm=parseDate(n.data_emissao)
-        const pgtosMes = pgtos.filter((p:any)=>{ const dt=p.dt_pagamento; if(!dt) return false; const parts=dt.includes("-")?dt.split("-"):dt.split("/").reverse(); const m=parseInt(parts[1]); const a=parseInt(parts[0]); return (m===mesAntIdx+1&&a===anoAnt)||(m===mesAtualIdx2+1&&a===anoAtual2) })
+        const pgtosMes = pgtos.filter((p:any)=>{ const dt=p.data_contabilizacao; if(!dt) return false; const parts=dt.includes("-")?dt.split("-"):dt.split("/").reverse(); const m=parseInt(parts[1]); const a=parseInt(parts[0]); return (m===mesAntIdx+1&&a===anoAnt)||(m===mesAtualIdx2+1&&a===anoAtual2) })
         if(pgtosMes.length>0){
-          pgtosMes.forEach((p:any)=>rows.push([n.numero_nf||"",emp,n.cnpj_dest||"",n.destinatario||"",parseFloat(n.valor_nf)||0,dtEm,parseFloat(p.valor_pago)||0,parseDate(p.dt_pagamento),n.nat_operacao||n.status||""]))
+          pgtosMes.forEach((p:any)=>rows.push([n.numero_nf||"",emp,n.cnpj_dest||"",n.destinatario||"",parseFloat(n.valor_nf)||0,dtEm,parseFloat(p.valor_pago)||0,parseDate(p.data_contabilizacao),n.nat_operacao||n.status||""]))
         } else {
-          rows.push([n.numero_nf||"",emp,n.cnpj_dest||"",n.destinatario||"",parseFloat(n.valor_nf)||0,dtEm,n.valor_pago?parseFloat(n.valor_pago):null,parseDate(n.dt_pagamento||n.data_pagamento),n.nat_operacao||n.status||""])
+          rows.push([n.numero_nf||"",emp,n.cnpj_dest||"",n.destinatario||"",parseFloat(n.valor_nf)||0,dtEm,n.valor_pago?parseFloat(n.valor_pago):null,parseDate(n.data_contabilizacao),n.nat_operacao||n.status||""])
         }
       }
       const nRows = rows.length
