@@ -101,20 +101,20 @@ export default function Inicio() {
 
   const calcBaseMLcto = (pgtos: Record<string, any[]>, notas: any[]) => {
     let base = 0
-    // Pagamentos parciais: filtrar por dt_pagamento no mes anterior
+    // Pagamentos parciais: filtrar por data_contabilizacao no mes anterior
     Object.values(pgtos).forEach((lista: any[]) => {
       lista.forEach((p: any) => {
-        if (dtNoMesAntCalc(p.dt_pagamento)) {
+        if (dtNoMesAntCalc(p.data_contabilizacao)) {
           base += parseFloat(p.valor_pago) || 0
         }
       })
     })
-    // Pagamentos integrais (sem historico em pagamentos_nf): filtrar por dt_pagamento
+    // Pagamentos integrais (sem historico em pagamentos_nf): filtrar por data_contabilizacao
     notas.forEach((n: any) => {
       const temHistorico = pgtos[n.numero_nf] && pgtos[n.numero_nf].length > 0
       if (!temHistorico) {
-        const dtPag = n.dt_pagamento || n.data_pagamento
-        if (dtNoMesAntCalc(dtPag)) base += parseFloat(n.valor_pago) || 0
+        const dtContb = n.data_contabilizacao
+        if (dtNoMesAntCalc(dtContb)) base += parseFloat(n.valor_pago) || 0
       }
     })
     return base
