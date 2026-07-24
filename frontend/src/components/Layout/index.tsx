@@ -117,7 +117,7 @@ export default function Layout({ children, showNovaNF, onNovaNF }: LayoutProps) 
         {/* Dashboard */}
         <div style={{ padding: '12px 10px 4px' }}>
           <div style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1.2px', color: '#4A5070', padding: '0 8px', marginBottom: '4px' }}>Dashboard</div>
-          <NavItem path="/dashboard" icon="📊" label="Painel" />
+          {NavItem({ path: "/dashboard", icon: "📊", label: "Painel" })}
         </div>
 
         <div style={{ height: '1px', background: '#252836', margin: '6px 14px' }} />
@@ -125,9 +125,9 @@ export default function Layout({ children, showNovaNF, onNovaNF }: LayoutProps) 
         {/* Geral */}
         <div style={{ padding: '4px 10px' }}>
           <div style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1.2px', color: '#4A5070', padding: '0 8px', marginBottom: '4px' }}>Geral</div>
-          <NavItem path="/inicio" icon="🏠" label="Início" />
-          <NavItem path="/faturamentos" icon="📋" label="Faturamentos" badge={15} />
-          <NavItem path="/impostos" icon="💳" label="Impostos Pagos" />
+          {NavItem({ path: "/inicio", icon: "🏠", label: "Início" })}
+          {NavItem({ path: "/faturamentos", icon: "📋", label: "Faturamentos", badge: 15 })}
+          {NavItem({ path: "/impostos", icon: "💳", label: "Impostos Pagos" })}
         </div>
 
         <div style={{ height: '1px', background: '#252836', margin: '6px 14px' }} />
@@ -135,17 +135,17 @@ export default function Layout({ children, showNovaNF, onNovaNF }: LayoutProps) 
 {/* Fiscal */}
         <div style={{ padding: '4px 10px' }}>
           <div style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1.2px', color: '#4A5070', padding: '0 8px', marginBottom: '4px' }}>Fiscal</div>
-          <NavItem path="/contabilidade" icon="🧾" label="Contabilidade" cor="purple" />
+          {NavItem({ path: "/contabilidade", icon: "🧾", label: "Contabilidade", cor: "purple" })}
         </div>
         <div style={{ height: '1px', background: '#252836', margin: '6px 14px' }} />
 
         {/* Configurações */}
         <div style={{ padding: '4px 10px' }}>
           <div style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1.2px', color: '#4A5070', padding: '0 8px', marginBottom: '4px' }}>Configurações</div>
-          <NavItem path="/xml" icon="📥" label="Importar XML" />
-          <NavItem path="/relatorios" icon="📈" label="Relatórios" cor="purple" />
-          <NavItem path="/usuarios" icon="👤" label="Usuários" />
-          <NavItem path="/empresas" icon="🏢" label="Empresas" />
+          {NavItem({ path: "/xml", icon: "📥", label: "Importar XML" })}
+          {NavItem({ path: "/relatorios", icon: "📈", label: "Relatórios", cor: "purple" })}
+          {NavItem({ path: "/usuarios", icon: "👤", label: "Usuários" })}
+          {NavItem({ path: "/empresas", icon: "🏢", label: "Empresas" })}
         </div>
 
         <div style={{ height: '1px', background: '#252836', margin: '6px 14px' }} />
@@ -153,13 +153,13 @@ export default function Layout({ children, showNovaNF, onNovaNF }: LayoutProps) 
         {/* Colaboradores */}
         <div style={{ padding: '4px 10px' }}>
           <div style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1.2px', color: '#4A5070', padding: '0 8px', marginBottom: '4px' }}>Colaboradores</div>
-          <NavItem path="/encargos" icon="👷" label="Encargos" />
+          {NavItem({ path: "/encargos", icon: "👷", label: "Encargos" })}
         </div>
 
         {/* RodapÃ©: Auditoria + Configurações */}
         <div style={{ marginTop: 'auto', padding: '10px', borderTop: '1px solid #252836' }}>
-          <NavItem path="/auditoria" icon="📝" label="Log de Auditoria" />
-          <NavItem path="/configuracoes" icon="⚙️" label="Configurações" />
+          {NavItem({ path: "/auditoria", icon: "📝", label: "Log de Auditoria" })}
+          {NavItem({ path: "/configuracoes", icon: "⚙️", label: "Configurações" })}
         </div>
       </aside>
 
