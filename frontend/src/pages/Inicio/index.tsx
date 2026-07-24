@@ -189,8 +189,9 @@ export default function Inicio() {
                 <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: e.cor, display: 'inline-block' }} />
                 {e.label} — {fmtR(e.imp)}
               </div>
+                  <style>{`@keyframes pulsoCredito { 0%,100% { box-shadow: 0 0 0 0 rgba(167,139,250,0.35) } 50% { box-shadow: 0 0 0 5px rgba(167,139,250,0) } }`}</style>
                   {(e.key==='six'?creditosSix:creditosEnova).filter((cr:any)=>cr.status==='pendente').map((cr:any)=>(
-                    <div key={cr.id} style={{display:'flex',alignItems:'center',justifyContent:'space-between',background:'rgba(167,139,250,0.08)',border:'1px solid rgba(167,139,250,0.3)',borderRadius:8,padding:'8px 12px',marginBottom:8}}>
+                    <div key={cr.id} style={{display:'flex',alignItems:'center',justifyContent:'space-between',background:'rgba(167,139,250,0.08)',border:'1px solid rgba(167,139,250,0.3)',borderRadius:8,padding:'8px 12px',marginBottom:8,animation:'pulsoCredito 2s ease-in-out infinite'}}>
                       <div style={{fontSize:11,color:'#A78BFA'}}>
                         🟢 Crédito Fiscal — NF {cr.nf_referenciada} · R$ {(cr.valor_nf_original*(e.key==='six'?aliqEfetivaSix:aliqEfetivaEnova)).toLocaleString('pt-BR',{minimumFractionDigits:2})}
                       </div>
