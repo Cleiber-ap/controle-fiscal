@@ -206,7 +206,7 @@ export default function Relatorios() {
     const PAD = { top: 30, right: 20, bottom: 32, left: 60 }
     const cW = W - PAD.left - PAD.right, cH = H - PAD.top - PAD.bottom
 
-    let prog = 0; const start = performance.now(); const dur = 900
+    let prog = 0; const start = performance.now(); const dur = 2200
     const draw = (ts: number) => {
       prog = Math.min(1, (ts - start) / dur)
       const ease = 1 - Math.pow(1 - prog, 3)
