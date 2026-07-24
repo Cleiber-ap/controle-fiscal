@@ -554,7 +554,21 @@ export default function Contabilidade() {
           ))}
         </div>
       )}
-      {loading ? <div style={{ padding: 24, textAlign: 'center', color: '#7B82A0' }}>Carregando...</div> : (
+      {loading ? (
+          <div style={{ padding: '20px 4px' }}>
+            <style>{`@keyframes skeletonPulse { 0%, 100% { opacity: 0.35 } 50% { opacity: 0.8 } }`}</style>
+            {[...Array(8)].map((_, i) => (
+              <div key={i} style={{ display: 'flex', gap: 12, marginBottom: 10, animation: 'skeletonPulse 1.4s ease-in-out infinite', animationDelay: (i * 0.06) + 's' }}>
+                <div style={{ height: 14, borderRadius: 4, background: '#252836', width: 60 }} />
+                <div style={{ height: 14, borderRadius: 4, background: '#252836', flex: 1 }} />
+                <div style={{ height: 14, borderRadius: 4, background: '#252836', width: 90 }} />
+                <div style={{ height: 14, borderRadius: 4, background: '#252836', width: 70 }} />
+                <div style={{ height: 14, borderRadius: 4, background: '#252836', width: 70 }} />
+                <div style={{ height: 14, borderRadius: 4, background: '#252836', width: 60 }} />
+              </div>
+            ))}
+          </div>
+        ) : (
           <div style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', tableLayout: 'fixed' }}>
               <thead>
