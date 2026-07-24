@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { registrarLog } from '../../api/auditoria'
 import { temPermissao } from '../../utils/permissoes'
 
@@ -92,6 +92,28 @@ function calcCalendario(mes: number, ano: number, feriadosExtra: Array<{dia: num
     else { diasSegSab++; if (dow >= 1 && dow <= 5) { diasUteis++; diasVT++ } }
   }
   return { diasUteis, diasSegSab, domingosFeriados, diasVT }
+}
+
+function ContadorAnimado({ valor, cor, formatador }: { valor: number, cor: string, formatador: (n: number) => string }) {
+  const [exibido, setExibido] = useState(0)
+  const anterior = useRef(0)
+  useEffect(() => {
+    const inicio = anterior.current
+    const fim = valor
+    const duracao = 600
+    const t0 = performance.now()
+    let frameId: number
+    const passo = (t: number) => {
+      const p = Math.min(1, (t - t0) / duracao)
+      const ease = 1 - Math.pow(1 - p, 3)
+      setExibido(inicio + (fim - inicio) * ease)
+      if (p < 1) frameId = requestAnimationFrame(passo)
+      else anterior.current = fim
+    }
+    frameId = requestAnimationFrame(passo)
+    return () => cancelAnimationFrame(frameId)
+  }, [valor])
+  return <span style={{ color: cor }}>{formatador(exibido)}</span>
 }
 
 export default function Encargos() {
@@ -226,7 +248,7 @@ export default function Encargos() {
         {[{ label: 'Total Salários', valor: totalSalarios, cor: '#4F8EF7' }, { label: 'Total Encargos', valor: totalEncargosGeral, cor: '#FBBF24' }, { label: 'Custo Total Empresa', valor: totalGeral, cor: '#34D399' }, { label: 'Depósito (Fér+13ª+FGTS+Multa)', valor: totalDeposito, cor: '#A78BFA' }].map(c => (
           <div key={c.label} style={{ ...st.card, borderColor: c.cor + '44' }}>
             <div style={st.label}>{c.label}</div>
-            <div style={{ fontSize: 22, fontWeight: 700, color: c.cor, fontFamily: 'monospace' }}>{fmtR(c.valor)}</div>
+            <div style={{ fontSize: 22, fontWeight: 700, fontFamily: 'monospace' }}><ContadorAnimado valor={c.valor} cor={c.cor} formatador={fmtR} /></div>
             <div style={{ fontSize: 11, color: '#7B82A0', marginTop: 4 }}>{MESES[mesRef.mes - 1]}/{mesRef.ano} — {funcionarios.length} funcionário(s)</div>
           </div>
         ))}
