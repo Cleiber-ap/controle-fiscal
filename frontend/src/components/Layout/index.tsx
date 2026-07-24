@@ -63,7 +63,7 @@ export default function Layout({ children, showNovaNF, onNovaNF }: LayoutProps) 
       <div
         onClick={() => navigate(path)}
         style={{
-          display: 'flex', alignItems: 'center', gap: '9px',
+          display: 'flex', alignItems: 'center', gap: '9px', position: 'relative',
           padding: '8px 10px', borderRadius: '6px', cursor: 'pointer',
           color: ativo ? corAtivo : '#7B82A0',
           background: ativo ? bgAtivo : 'transparent',
@@ -73,6 +73,7 @@ export default function Layout({ children, showNovaNF, onNovaNF }: LayoutProps) 
         onMouseEnter={e => { if (!ativo) { const el = e.currentTarget as HTMLDivElement; el.style.background = '#1A1D2A'; el.style.color = '#E8EAF0' } }}
         onMouseLeave={e => { if (!ativo) { const el = e.currentTarget as HTMLDivElement; el.style.background = 'transparent'; el.style.color = '#7B82A0' } }}
       >
+        <span style={{ position: 'absolute', left: 0, top: '50%', transform: 'translateY(-50%)', width: ativo ? '3px' : '0px', height: '60%', borderRadius: '0 3px 3px 0', background: corAtivo, transition: 'width 0.25s ease' }} />
         <span style={{ fontSize: '14px', width: '18px', textAlign: 'center', flexShrink: 0 }}>{icon}</span>
         {label}
         {badge !== undefined && badge > 0 && (
