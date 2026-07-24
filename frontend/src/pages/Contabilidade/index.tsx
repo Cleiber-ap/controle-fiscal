@@ -68,6 +68,7 @@ export default function Contabilidade() {
   const [editandoContb, setEditandoContb] = useState<string | null>(null)
   const [editContbVal, setEditContbVal] = useState("")
   const [pulsando, setPulsando] = useState<Set<string>>(new Set())
+  const [voando, setVoando] = useState<Set<string>>(new Set())
   const [salvando, setSalvando] = useState(false)
   const [ajustadosPg, setAjustadosPg] = useState<Record<number,boolean>>({})
   const [scrollParaAguardando, setScrollParaAguardando] = useState(false)
@@ -569,7 +570,7 @@ export default function Contabilidade() {
       )}
       {loading ? (
           <div style={{ padding: '20px 4px' }}>
-            <style>{`@keyframes skeletonPulse { 0%, 100% { opacity: 0.35 } 50% { opacity: 0.8 } }`}</style>
+            <style>{`@keyframes skeletonPulse { 0%, 100% { opacity: 0.35 } 50% { opacity: 0.8 } } @keyframes voarEntrada { from { transform: translateX(-10px); opacity: 0.3 } to { transform: translateX(0); opacity: 1 } }`}</style>
             {[...Array(8)].map((_, i) => (
               <div key={i} style={{ display: 'flex', gap: 12, marginBottom: 10, animation: 'skeletonPulse 1.4s ease-in-out infinite', animationDelay: (i * 0.06) + 's' }}>
                 <div style={{ height: 14, borderRadius: 4, background: '#252836', width: 60 }} />
@@ -697,7 +698,7 @@ export default function Contabilidade() {
                               ) : (
                                 <>
                                 <span onClick={() => { setEditandoContb(contbId); setEditContbVal(contbAtual) }}
-                                  style={{ cursor: "pointer", transition: "background-color 0.4s", backgroundColor: pulsando.has(contbId) ? "rgba(52,211,153,0.35)" : "transparent", borderRadius: "4px", padding: "1px 4px", color: contbAtual ? "#7B82A0" : "#4A5070" }}>
+                                  style={{ cursor: "pointer", transition: "background-color 0.4s, transform 0.4s, opacity 0.4s", backgroundColor: pulsando.has(contbId) ? "rgba(52,211,153,0.35)" : "transparent", borderRadius: "4px", padding: "1px 4px", color: contbAtual ? "#7B82A0" : "#4A5070", display: "inline-block", transform: voando.has(contbId) ? "translateX(0)" : "none", opacity: voando.has(contbId) ? 1 : 1, animation: voando.has(contbId) ? "voarEntrada 0.5s ease" : "none" }}>
                                   {contbAtual || "—"}
                                 </span>
                                 {!contbAtual && (() => {
@@ -713,6 +714,9 @@ export default function Contabilidade() {
                                         setNotas(prev => prev.map(n => n.numero_nf === r.numero_nf ? {...n, data_contabilizacao: dtCopy} : n))
                                         await api.put("/notas/contabilizacao/" + r.id, { data_contabilizacao: dtCopy })
                                       }
+                                      const idVoo = temHistorico ? ("pgto-" + lista[0].id) : ("nota-" + r.id)
+                                      setVoando(prev => new Set([...prev, idVoo]))
+                                      setTimeout(() => setVoando(prev => { const n = new Set(prev); n.delete(idVoo); return n }), 500)
                                     }}
                                     style={{ marginLeft: "4px", padding: "1px 4px", background: "#1A1D2A", border: "1px solid #4A5070", borderRadius: "3px", color: "#7B82A0", fontSize: "10px", cursor: "pointer" }}>↳</button> : null
                                 })()}
@@ -875,7 +879,7 @@ export default function Contabilidade() {
                                 ) : (
                                   <>
                                   <span onClick={() => { setEditandoContb("pgto-" + pg.id); setEditContbVal(pg.data_contabilizacao || "") }}
-                                    style={{ cursor: "pointer", transition: "background-color 0.4s", backgroundColor: pulsando.has("pgto-" + pg.id) ? "rgba(52,211,153,0.35)" : "transparent", borderRadius: "4px", padding: "1px 4px", color: pg.data_contabilizacao ? "#7B82A0" : "#4A5070" }}>
+                                    style={{ cursor: "pointer", transition: "background-color 0.4s", backgroundColor: pulsando.has("pgto-" + pg.id) ? "rgba(52,211,153,0.35)" : "transparent", borderRadius: "4px", padding: "1px 4px", color: pg.data_contabilizacao ? "#7B82A0" : "#4A5070", display: "inline-block", animation: voando.has("pgto-" + pg.id) ? "voarEntrada 0.5s ease" : "none" }}>
                                     {pg.data_contabilizacao || "—"}
                                   </span>
                                   {!pg.data_contabilizacao && pg.dt_pagamento ? <button
@@ -884,6 +888,8 @@ export default function Contabilidade() {
                                       e.stopPropagation()
                                       setPagamentos(prev => ({...prev, [r.numero_nf]: (prev[r.numero_nf]||[]).map((p) => p.id === pg.id ? {...p, data_contabilizacao: pg.dt_pagamento} : p)}))
                                       await api.put("/notas/pagamento/contabilizacao/" + pg.id, { data_contabilizacao: pg.dt_pagamento })
+                                      setVoando(prev => new Set([...prev, "pgto-" + pg.id]))
+                                      setTimeout(() => setVoando(prev => { const n = new Set(prev); n.delete("pgto-" + pg.id); return n }), 500)
                                     }}
                                     style={{ marginLeft: "4px", padding: "1px 4px", background: "#1A1D2A", border: "1px solid #4A5070", borderRadius: "3px", color: "#7B82A0", fontSize: "10px", cursor: "pointer" }}>↳</button> : null}
                                 </>
