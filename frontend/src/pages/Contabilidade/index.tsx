@@ -569,7 +569,9 @@ export default function Contabilidade() {
             ))}
           </div>
         ) : (
-          <div style={{ overflowX: 'auto' }}>
+          <>
+          <style>{`@keyframes fadeInTabela { from { opacity: 0.2 } to { opacity: 1 } }`}</style>
+          <div key={empresa} style={{ overflowX: 'auto', animation: 'fadeInTabela 0.35s ease' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', tableLayout: 'fixed' }}>
               <thead>
                 <tr style={{ background: '#1A1D2A' }}>
@@ -988,6 +990,7 @@ export default function Contabilidade() {
               </tfoot>
             </table>
           </div>
+          </>
         )}
       </div>
     </div>
