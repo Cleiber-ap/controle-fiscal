@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from 'react'
+﻿import { useEffect, useState, useRef } from 'react'
 import { historicoAPI, dasAPI, empresasAPI } from '../../api/endpoints'
 import axios from 'axios'
 const api = axios.create({ baseURL: import.meta.env.VITE_API_URL || 'https://diligent-integrity-production-3f98.up.railway.app' })
@@ -20,6 +20,28 @@ const FAIXAS_SIMPLES = [
   { min: 1800000.01, max: 3600000, aliq: 0.143, ded: 87300, faixa: '5ª', icms: 0.335 },
   { min: 3600000.01, max: 4800000, aliq: 0.19, ded: 378000, faixa: '6ª', icms: 0 },
 ]
+
+function ContadorAnimado({ valor, cor, formatador }: { valor: number, cor: string, formatador: (n: number) => string }) {
+  const [exibido, setExibido] = useState(0)
+  const anterior = useRef(0)
+  useEffect(() => {
+    const inicio = anterior.current
+    const fim = valor
+    const duracao = 600
+    const t0 = performance.now()
+    let frameId: number
+    const passo = (t: number) => {
+      const p = Math.min(1, (t - t0) / duracao)
+      const ease = 1 - Math.pow(1 - p, 3)
+      setExibido(inicio + (fim - inicio) * ease)
+      if (p < 1) frameId = requestAnimationFrame(passo)
+      else anterior.current = fim
+    }
+    frameId = requestAnimationFrame(passo)
+    return () => cancelAnimationFrame(frameId)
+  }, [valor])
+  return <span style={{ color: cor }}>{formatador(exibido)}</span>
+}
 
 export default function Inicio() {
   const [histSix, setHistSix] = useState<any[]>([])
@@ -187,7 +209,7 @@ export default function Inicio() {
             <div key={e.key} style={{ padding: '14px 20px', borderRight: i === 0 ? '1px solid #252836' : 'none' }}>
               <div style={{ fontSize: '10px', fontWeight: 600, color: '#7B82A0', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
                 <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: e.cor, display: 'inline-block' }} />
-                {e.label} — {fmtR(e.imp)}
+                {e.label} — <ContadorAnimado valor={e.imp} cor="inherit" formatador={fmtR} />
               </div>
                   <style>{`@keyframes pulsoCredito { 0%,100% { box-shadow: 0 0 0 0 rgba(167,139,250,0.35) } 50% { box-shadow: 0 0 0 5px rgba(167,139,250,0) } }`}</style>
                   {(e.key==='six'?creditosSix:creditosEnova).filter((cr:any)=>cr.status==='pendente').map((cr:any)=>(
