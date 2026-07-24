@@ -570,7 +570,7 @@ export default function Contabilidade() {
       )}
       {loading ? (
           <div style={{ padding: '20px 4px' }}>
-            <style>{`@keyframes skeletonPulse { 0%, 100% { opacity: 0.35 } 50% { opacity: 0.8 } } @keyframes voarEntrada { from { transform: translateX(-10px); opacity: 0.3 } to { transform: translateX(0); opacity: 1 } }`}</style>
+            <style>{`@keyframes skeletonPulse { 0%, 100% { opacity: 0.35 } 50% { opacity: 0.8 } }`}</style>
             {[...Array(8)].map((_, i) => (
               <div key={i} style={{ display: 'flex', gap: 12, marginBottom: 10, animation: 'skeletonPulse 1.4s ease-in-out infinite', animationDelay: (i * 0.06) + 's' }}>
                 <div style={{ height: 14, borderRadius: 4, background: '#252836', width: 60 }} />
@@ -584,7 +584,7 @@ export default function Contabilidade() {
           </div>
         ) : (
           <>
-          <style>{`@keyframes fadeInTabela { from { opacity: 0.2 } to { opacity: 1 } }`}</style>
+          <style>{`@keyframes fadeInTabela { from { opacity: 0.2 } to { opacity: 1 } } @keyframes voarEntrada { from { transform: translateX(-10px); opacity: 0.3 } to { transform: translateX(0); opacity: 1 } }`}</style>
           <div key={empresa} style={{ overflowX: 'auto', animation: 'fadeInTabela 0.35s ease' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', tableLayout: 'fixed' }}>
               <thead>
