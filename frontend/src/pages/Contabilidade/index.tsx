@@ -151,9 +151,22 @@ export default function Contabilidade() {
           }
         }
         if (alvo) {
-          alvo.scrollIntoView({ behavior: 'smooth', block: 'center' })
-          alvo.style.outline = '2px solid #FBBF24'
-          setTimeout(() => { if (alvo) alvo.style.outline = '' }, 2000)
+          const elAlvo = alvo
+          const destino = elAlvo.getBoundingClientRect().top + window.scrollY - (window.innerHeight / 2)
+          const origem = window.scrollY
+          const distancia = destino - origem
+          const duracaoScroll = 700
+          const t0scroll = performance.now()
+          const passoScroll = (t: number) => {
+            const p = Math.min(1, (t - t0scroll) / duracaoScroll)
+            const ease = p < 0.5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2
+            window.scrollTo(0, origem + distancia * ease)
+            if (p < 1) requestAnimationFrame(passoScroll)
+          }
+          requestAnimationFrame(passoScroll)
+          elAlvo.style.transition = 'outline-color 0.5s ease, background-color 0.5s ease'
+          elAlvo.style.outline = '2px solid #FBBF24'
+          setTimeout(() => { elAlvo.style.outline = '2px solid transparent' }, 1500)
         }
         setScrollParaAguardando(false)
       }, 800)
