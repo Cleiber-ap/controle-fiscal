@@ -108,7 +108,7 @@ export default function Layout({ children, showNovaNF, onNovaNF }: LayoutProps) 
           display: 'flex',
         }}>
           <style>{`@keyframes giroLogo { 0% { transform: rotateY(0deg) } 5% { transform: rotateY(360deg) } 100% { transform: rotateY(360deg) } }`}</style>
-          <img src={ENOVA_LOGO} alt="💳" style={{ width: '72px', height: 'auto', objectFit: 'contain', animation: 'giroLogo 60s linear infinite' }} />
+          <img src={ENOVA_LOGO} alt="💳" style={{ width: '72px', height: 'auto', objectFit: 'contain', animation: 'giroLogo 180s linear infinite' }} />
           <div style={{ textAlign: 'center' }}>
             <div style={{ fontSize: '13px', fontWeight: 600, color: '#E8EAF0', lineHeight: '1.3' }}>Controle Fiscal</div>
             <div style={{ fontSize: '10px', color: '#7B82A0' }}>Gestão de Notas Fiscais</div>
