@@ -655,6 +655,8 @@ export default function Contabilidade() {
                                       setNotas(prev => prev.map(n => n.numero_nf === r.numero_nf ? {...n, ajustado: true} : n))
                                       setAjustadosPg(prev => { const upd = {...prev}; lista.forEach((p) => { upd[p.id] = true }); return upd })
                                       await api.put("/notas/ajustado/" + r.id, { ajustado: true })
+                                      setPulsando(prev => new Set([...prev, "ajuste-" + r.id]))
+                                      setTimeout(() => setPulsando(prev => { const n = new Set(prev); n.delete("ajuste-" + r.id); return n }), 900)
                                     }
                                     setPulsando(prev => new Set([...prev, contbId]))
                                     setTimeout(() => setPulsando(prev => { const n = new Set(prev); n.delete(contbId); return n }), 700)
@@ -713,7 +715,7 @@ export default function Contabilidade() {
                               setNotas(prev => prev.map(n => n.numero_nf === r.numero_nf ? {...n, ajustado: val} : n))
                               await api.put('/notas/ajustado/' + r.id, { ajustado: val })
                             }}
-                            style={{ width: 14, height: 14, borderRadius: 3, border: '1px solid #4A5070', background: r.ajustado ? '#34D399' : '#2A2D3E', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            style={{ width: 14, height: 14, borderRadius: 3, border: '1px solid #4A5070', background: r.ajustado ? '#34D399' : '#2A2D3E', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: pulsando.has('ajuste-' + r.id) ? '0 0 0 4px rgba(52,211,153,0.45)' : 'none', transition: 'box-shadow 0.4s' }}>
                             {r.ajustado && <span style={{ color: '#0D0F17', fontSize: 10, fontWeight: 700, lineHeight: 1 }}>✓</span>}
                           </button>}
                         </td>
@@ -831,6 +833,8 @@ export default function Contabilidade() {
                                         setNotas(prev => prev.map(n => n.numero_nf === r.numero_nf ? {...n, ajustado: true} : n))
                                         setAjustadosPg(prev => { const upd = {...prev}; lista.forEach((p) => { upd[p.id] = true }); return upd })
                                         await api.put("/notas/ajustado/" + r.id, { ajustado: true })
+                                        setPulsando(prev => new Set([...prev, "ajuste-" + r.id]))
+                                        setTimeout(() => setPulsando(prev => { const n = new Set(prev); n.delete("ajuste-" + r.id); return n }), 900)
                                       }
                                       setPulsando(prev => new Set([...prev, "pgto-" + pg.id]))
                                       setTimeout(() => setPulsando(prev => { const n = new Set(prev); n.delete("pgto-" + pg.id); return n }), 700)
@@ -873,7 +877,7 @@ export default function Contabilidade() {
                                   return <span style={{ color: '#4A5070' }}>—</span>
                                 })()}
                               </td>
-                              <td style={tdBase({ textAlign: 'center' })}>{isVenda && <button onClick={async (e) => { e.preventDefault(); e.stopPropagation(); const val = !(ajustadosPg[pg.id] || false); setAjustadosPg(prev => ({...prev, [pg.id]: val})); await api.put('/notas/ajustado/' + r.id, { ajustado: val }) }} style={{ width: 14, height: 14, borderRadius: 3, border: '1px solid #4A5070', background: ajustadosPg[pg.id] ? '#34D399' : '#2A2D3E', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{ajustadosPg[pg.id] && <span style={{ color: '#0D0F17', fontSize: 10, fontWeight: 700 }}>✓</span>}</button>}</td>
+                              <td style={tdBase({ textAlign: 'center' })}>{isVenda && <button onClick={async (e) => { e.preventDefault(); e.stopPropagation(); const val = !(ajustadosPg[pg.id] || false); setAjustadosPg(prev => ({...prev, [pg.id]: val})); await api.put('/notas/ajustado/' + r.id, { ajustado: val }) }} style={{ width: 14, height: 14, borderRadius: 3, border: '1px solid #4A5070', background: ajustadosPg[pg.id] ? '#34D399' : '#2A2D3E', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: pulsando.has('ajuste-' + r.id) ? '0 0 0 4px rgba(52,211,153,0.45)' : 'none', transition: 'box-shadow 0.4s' }}>{ajustadosPg[pg.id] && <span style={{ color: '#0D0F17', fontSize: 10, fontWeight: 700 }}>✓</span>}</button>}</td>
                               <td style={tdBase()}>
                                 <span style={{ padding: '3px 8px', borderRadius: '12px', fontSize: '11px', fontWeight: 600, background: 'rgba(79,142,247,0.12)', color: '#4F8EF7', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
                                   <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#4F8EF7' }} />Parcial
