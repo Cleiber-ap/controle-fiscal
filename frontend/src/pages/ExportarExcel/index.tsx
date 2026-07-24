@@ -336,9 +336,12 @@ export default function ExportarExcel() {
 
       {/* Notificação */}
       {notif && (
-        <div style={{ background: '#0D3326', border: '1px solid rgba(52,211,153,0.3)', borderLeft: '3px solid #34D399', borderRadius: '14px', padding: '12px 16px', marginBottom: '16px', fontSize: '12px', fontWeight: 600, color: '#34D399' }}>
+        <>
+        <style>{`@keyframes slideInToast { from { opacity: 0; transform: translateY(-14px) } to { opacity: 1; transform: translateY(0) } }`}</style>
+        <div style={{ background: '#0D3326', border: '1px solid rgba(52,211,153,0.3)', borderLeft: '3px solid #34D399', borderRadius: '14px', padding: '12px 16px', marginBottom: '16px', fontSize: '12px', fontWeight: 600, color: '#34D399', animation: 'slideInToast 0.3s ease' }}>
           {notif}
         </div>
+        </>
       )}
 
       {/* Preview do mês anterior */}
