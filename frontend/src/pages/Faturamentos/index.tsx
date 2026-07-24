@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from 'react'
+﻿import { useEffect, useState, useRef } from 'react'
 import { historicoAPI } from '../../api/endpoints'
 
 const MESES = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez']
@@ -10,6 +10,28 @@ function fmtM(v: number) {
   if (v >= 1000000) return 'R$' + (v / 1000000).toFixed(1) + 'M'
   if (v >= 1000) return 'R$' + (v / 1000).toFixed(0) + 'K'
   return 'R$' + v.toFixed(0)
+}
+
+function ContadorAnimado({ valor, cor, formatador }: { valor: number, cor: string, formatador: (n: number) => string }) {
+  const [exibido, setExibido] = useState(0)
+  const anterior = useRef(0)
+  useEffect(() => {
+    const inicio = anterior.current
+    const fim = valor
+    const duracao = 600
+    const t0 = performance.now()
+    let frameId: number
+    const passo = (t: number) => {
+      const p = Math.min(1, (t - t0) / duracao)
+      const ease = 1 - Math.pow(1 - p, 3)
+      setExibido(inicio + (fim - inicio) * ease)
+      if (p < 1) frameId = requestAnimationFrame(passo)
+      else anterior.current = fim
+    }
+    frameId = requestAnimationFrame(passo)
+    return () => cancelAnimationFrame(frameId)
+  }, [valor])
+  return <span style={{ color: cor }}>{formatador(exibido)}</span>
 }
 
 export default function Faturamentos() {
@@ -106,7 +128,7 @@ export default function Faturamentos() {
         <div style={{ padding: '18px 24px', borderBottom: '1px solid #252836', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div>
             <div style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1px', color: '#4A5070', marginBottom: '6px' }}>Total Consolidado — SIX + ENOVA</div>
-            <div style={{ fontSize: '30px', fontWeight: 700, ...mono, color: '#E8EAF0' }}>{fmtR(acumTotal)}</div>
+            <div style={{ fontSize: '30px', fontWeight: 700, ...mono }}><ContadorAnimado valor={acumTotal} cor="#E8EAF0" formatador={fmtR} /></div>
           </div>
           <div style={{ fontSize: '11px', color: '#7B82A0' }}>{anoAtual}</div>
         </div>
