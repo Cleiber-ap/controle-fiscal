@@ -67,6 +67,7 @@ export default function Contabilidade() {
   const [editDtp, setEditDtp] = useState('')
   const [editandoContb, setEditandoContb] = useState<string | null>(null)
   const [editContbVal, setEditContbVal] = useState("")
+  const [pulsando, setPulsando] = useState<Set<string>>(new Set())
   const [salvando, setSalvando] = useState(false)
   const [ajustadosPg, setAjustadosPg] = useState<Record<number,boolean>>({})
   const [scrollParaAguardando, setScrollParaAguardando] = useState(false)
@@ -655,6 +656,8 @@ export default function Contabilidade() {
                                       setAjustadosPg(prev => { const upd = {...prev}; lista.forEach((p) => { upd[p.id] = true }); return upd })
                                       await api.put("/notas/ajustado/" + r.id, { ajustado: true })
                                     }
+                                    setPulsando(prev => new Set([...prev, contbId]))
+                                    setTimeout(() => setPulsando(prev => { const n = new Set(prev); n.delete(contbId); return n }), 700)
                                     setEditandoContb(null)
                                   }}
                                   onKeyDown={e => { if (e.key === "Enter") (e.target as HTMLInputElement).blur() }}
@@ -663,7 +666,7 @@ export default function Contabilidade() {
                               ) : (
                                 <>
                                 <span onClick={() => { setEditandoContb(contbId); setEditContbVal(contbAtual) }}
-                                  style={{ cursor: "pointer", color: contbAtual ? "#7B82A0" : "#4A5070" }}>
+                                  style={{ cursor: "pointer", transition: "background-color 0.4s", backgroundColor: pulsando.has(contbId) ? "rgba(52,211,153,0.35)" : "transparent", borderRadius: "4px", padding: "1px 4px", color: contbAtual ? "#7B82A0" : "#4A5070" }}>
                                   {contbAtual || "—"}
                                 </span>
                                 {!contbAtual && (() => {
@@ -829,6 +832,8 @@ export default function Contabilidade() {
                                         setAjustadosPg(prev => { const upd = {...prev}; lista.forEach((p) => { upd[p.id] = true }); return upd })
                                         await api.put("/notas/ajustado/" + r.id, { ajustado: true })
                                       }
+                                      setPulsando(prev => new Set([...prev, "pgto-" + pg.id]))
+                                      setTimeout(() => setPulsando(prev => { const n = new Set(prev); n.delete("pgto-" + pg.id); return n }), 700)
                                       setEditandoContb(null)
                                     }}
                                     onKeyDown={e => { if (e.key === "Enter") (e.target as HTMLInputElement).blur() }}
@@ -837,7 +842,7 @@ export default function Contabilidade() {
                                 ) : (
                                   <>
                                   <span onClick={() => { setEditandoContb("pgto-" + pg.id); setEditContbVal(pg.data_contabilizacao || "") }}
-                                    style={{ cursor: "pointer", color: pg.data_contabilizacao ? "#7B82A0" : "#4A5070" }}>
+                                    style={{ cursor: "pointer", transition: "background-color 0.4s", backgroundColor: pulsando.has("pgto-" + pg.id) ? "rgba(52,211,153,0.35)" : "transparent", borderRadius: "4px", padding: "1px 4px", color: pg.data_contabilizacao ? "#7B82A0" : "#4A5070" }}>
                                     {pg.data_contabilizacao || "—"}
                                   </span>
                                   {!pg.data_contabilizacao && pg.dt_pagamento ? <button
