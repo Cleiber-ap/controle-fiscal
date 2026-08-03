@@ -630,7 +630,7 @@ export default function Contabilidade() {
                   const isCCE = r.numero_nf?.endsWith('-CCE')
                   const foiCancelada = nfsCanceladas.has(r.numero_nf)
                   const nat = (r.nat_operacao || r.status || '').toLowerCase()
-                  const isVenda = ((nat.includes('venda') && !nat.includes('devolu')) || nat.includes('complemento de frete')) && !foiCancelada
+                  const isVenda = ((nat.includes('venda') && !nat.includes('devolu')) || nat.includes('complemento de frete') || nat.includes('complementar')) && !foiCancelada
                   const stStyle = foiCancelada && (r.nat_operacao || r.status || '').toLowerCase().includes('venda')
                     ? { bg: 'rgba(248,113,113,0.15)', cor: '#FCA5A5' }
                     : statusStyle(r.nat_operacao || r.status)
