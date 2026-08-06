@@ -71,6 +71,16 @@ export default function Contabilidade() {
   const [voando, setVoando] = useState<Set<string>>(new Set())
   const [salvando, setSalvando] = useState(false)
   const [ajustadosPg, setAjustadosPg] = useState<Record<number,boolean>>({})
+  useEffect(() => {
+    const upd: Record<number, boolean> = {}
+    notas.forEach((n: any) => {
+      if (n.ajustado) {
+        const lista = pagamentos[n.numero_nf] || []
+        lista.forEach((p: any) => { upd[p.id] = true })
+      }
+    })
+    setAjustadosPg(upd)
+  }, [notas, pagamentos])
   const [scrollParaAguardando, setScrollParaAguardando] = useState(false)
   const [editandoPgto, setEditandoPgto] = useState<number | null>(null)
   const [editPgtoVal, setEditPgtoVal] = useState('')
