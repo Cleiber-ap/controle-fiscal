@@ -88,7 +88,8 @@ export default function Contabilidade() {
   const [editMesLct, setEditMesLct] = useState('')
   const [filtroMesPagto, setFiltroMesPagto] = useState<string[]>([])
   const [showPagtoMenu, setShowPagtoMenu] = useState(false)
-  const [filtroMesEmissao, setFiltroMesEmissao] = useState('')
+  const [filtroMesEmissao, setFiltroMesEmissao] = useState<string[]>([])
+  const [showEmissaoMenu, setShowEmissaoMenu] = useState(false)
   const [filtroTipo, setFiltroTipo] = useState('')
   const [filtroMesContb, setFiltroMesContb] = useState<string[]>([])
   const [showContbMenu, setShowContbMenu] = useState(false)
@@ -250,13 +251,14 @@ export default function Contabilidade() {
       })
     : ultimos4
 
-  const notasFiltradas2 = filtroMesEmissao
+  const notasFiltradas2 = filtroMesEmissao.length > 0
     ? notasFiltradas.filter(r => {
         const dt = r.data_emissao || ''
+        if (!dt) return false
         const parts = dt.includes('-') ? dt.split('-').reverse() : dt.split('/')
         const mm = parts[1]?.padStart(2, '0')
         const aa = parts[2]
-        return (mm + '/' + aa) === filtroMesEmissao
+        return filtroMesEmissao.includes(mm + '/' + aa)
       })
     : notasFiltradas
 
@@ -506,10 +508,23 @@ export default function Contabilidade() {
                 <option value='saida'>Saída</option>
                 <option value='entrada'>Entrada</option>
               </select>
-              <select value={filtroMesEmissao} onChange={e=>setFiltroMesEmissao(e.target.value)} style={{ background:'#1A1D2A', color:'#E8EAF0', border:'1px solid #353849', borderRadius:6, padding:'2px 8px', fontSize:'12px', cursor:'pointer' }}>
-                <option value="">Emissão: todos</option>
-                {[...new Set(notas.map((r:any)=>{ const dt=r.data_emissao||''; if(!dt) return null; const parts=dt.includes('-')?dt.split('-').reverse():dt.split('/'); const mm=parts[1]; const aa=parts[2]; return (mm&&aa&&!isNaN(+mm)&&!isNaN(+aa)) ? mm.padStart(2,'0')+'/'+aa : null }).filter(Boolean))].sort().map((m:any)=>(<option key={m} value={m}>{m}</option>))}
-              </select>
+              <div style={{ position: 'relative' }}>
+                <button onClick={() => setShowEmissaoMenu(p => !p)} style={{ background:'#1A1D2A', color:'#E8EAF0', border:'1px solid #353849', borderRadius:6, padding:'2px 8px', fontSize:'12px', cursor:'pointer' }}>
+                  {filtroMesEmissao.length === 0 ? 'Emissão: todos' : `Emissão: ${filtroMesEmissao.length} selecionado${filtroMesEmissao.length>1?'s':''}`}
+                </button>
+                {showEmissaoMenu && (<div style={{ position:'absolute', top:'100%', left:0, zIndex:100, background:'#1A1D2A', border:'1px solid #353849', borderRadius:6, padding:'4px 0', minWidth:'160px', maxHeight:'260px', overflowY:'auto' }}>
+                  {[...new Set(notas.map((r:any)=>{ const dt=r.data_emissao||''; if(!dt) return null; const parts=dt.includes('-')?dt.split('-').reverse():dt.split('/'); const mm=parts[1]; const aa=parts[2]; return (mm&&aa&&!isNaN(+mm)&&!isNaN(+aa)) ? mm.padStart(2,'0')+'/'+aa : null }).filter(Boolean))].sort().map((m:any)=>(
+                    <label key={m} style={{ display:'flex', alignItems:'center', gap:6, padding:'4px 12px', cursor:'pointer', color:'#E8EAF0', fontSize:'12px' }}>
+                      <input type='checkbox' checked={filtroMesEmissao.includes(m)} onChange={e => setFiltroMesEmissao(prev => e.target.checked ? [...prev, m] : prev.filter(x => x !== m))} />
+                      {m}
+                    </label>
+                  ))}
+                  <div style={{ borderTop:'1px solid #353849', margin:'4px 0', padding:'4px 12px' }}>
+                    <button onClick={() => { setFiltroMesEmissao([]); setShowEmissaoMenu(false) }} style={{ fontSize:'11px', color:'#7B82A0', background:'none', border:'none', cursor:'pointer' }}>Limpar</button>
+                    <button onClick={() => setShowEmissaoMenu(false)} style={{ fontSize:'11px', color:'#34D399', background:'none', border:'none', cursor:'pointer', marginLeft:8 }}>Fechar</button>
+                  </div>
+                </div>)}
+              </div>
               <div style={{ position: 'relative' }}>
                 <button onClick={() => setShowPagtoMenu(p => !p)} style={{ background:'#1A1D2A', color:'#E8EAF0', border:'1px solid #353849', borderRadius:6, padding:'2px 8px', fontSize:'12px', cursor:'pointer' }}>
                   {filtroMesPagto.length === 0 ? 'Pagamento: todos' : `Pagamento: ${filtroMesPagto.length} selecionado${filtroMesPagto.length>1?'s':''}`}
@@ -1036,9 +1051,9 @@ export default function Contabilidade() {
               <tfoot>
                 <tr style={{ background: '#1A1D2A', borderTop: '2px solid #252836' }}>
                   <td colSpan={4} style={{ padding: '8px 12px', fontSize: '11px', fontWeight: 700, color: '#7B82A0' }}>TOTAIS</td>
-                  <td style={{ padding: '8px 12px', textAlign: 'right', fontWeight: 700, ...mono, color: corEmp }}>{fmtR((filtroMesEmissao || filtroMesPagto.length > 0 || filtroTipo || filtroMesContb.length > 0) ? notasFiltradas5.filter((r:any) => isVendaOuParcial(r) && !nfsCanceladas.has(r.numero_nf)).reduce((s:number,r:any) => s + (parseFloat(r.valor_nf)||0), 0) : tNF)}</td>
+                  <td style={{ padding: '8px 12px', textAlign: 'right', fontWeight: 700, ...mono, color: corEmp }}>{fmtR((filtroMesEmissao.length > 0 || filtroMesPagto.length > 0 || filtroTipo || filtroMesContb.length > 0) ? notasFiltradas5.filter((r:any) => isVendaOuParcial(r) && !nfsCanceladas.has(r.numero_nf)).reduce((s:number,r:any) => s + (parseFloat(r.valor_nf)||0), 0) : tNF)}</td>
                   <td></td>
-                  <td style={{ padding: '8px 12px', textAlign: 'right', fontWeight: 700, ...mono, color: '#34D399' }}>{fmtR((filtroMesEmissao || filtroMesPagto.length > 0 || filtroTipo || filtroMesContb.length > 0) ? notasFiltradas5.filter((r:any) => r.valor_pago).reduce((s:number,r:any) => s + (parseFloat(r.valor_pago)||0), 0) : tPago)}</td>
+                  <td style={{ padding: '8px 12px', textAlign: 'right', fontWeight: 700, ...mono, color: '#34D399' }}>{fmtR((filtroMesEmissao.length > 0 || filtroMesPagto.length > 0 || filtroTipo || filtroMesContb.length > 0) ? notasFiltradas5.filter((r:any) => r.valor_pago).reduce((s:number,r:any) => s + (parseFloat(r.valor_pago)||0), 0) : tPago)}</td>
                   <td></td><td></td><td></td><td></td><td></td><td></td>
                 </tr>
               </tfoot>
