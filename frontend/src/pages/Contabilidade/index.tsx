@@ -513,7 +513,7 @@ export default function Contabilidade() {
                   {filtroMesEmissao.length === 0 ? 'Emissão: todos' : `Emissão: ${filtroMesEmissao.length} selecionado${filtroMesEmissao.length>1?'s':''}`}
                 </button>
                 {showEmissaoMenu && (<div style={{ position:'absolute', top:'100%', left:0, zIndex:100, background:'#1A1D2A', border:'1px solid #353849', borderRadius:6, padding:'4px 0', minWidth:'160px', maxHeight:'260px', overflowY:'auto' }}>
-                  {[...new Set(notas.map((r:any)=>{ const dt=r.data_emissao||''; if(!dt) return null; const parts=dt.includes('-')?dt.split('-').reverse():dt.split('/'); const mm=parts[1]; const aa=parts[2]; return (mm&&aa&&!isNaN(+mm)&&!isNaN(+aa)) ? mm.padStart(2,'0')+'/'+aa : null }).filter(Boolean))].sort().map((m:any)=>(
+                  {[...new Set(notas.map((r:any)=>{ const dt=r.data_emissao||''; if(!dt) return null; const parts=dt.includes('-')?dt.split('-').reverse():dt.split('/'); const mm=parts[1]; const aa=parts[2]; return (mm&&aa&&!isNaN(+mm)&&!isNaN(+aa)) ? mm.padStart(2,'0')+'/'+aa : null }).filter(Boolean))].sort().reverse().map((m:any)=>(
                     <label key={m} style={{ display:'flex', alignItems:'center', gap:6, padding:'4px 12px', cursor:'pointer', color:'#E8EAF0', fontSize:'12px' }}>
                       <input type='checkbox' checked={filtroMesEmissao.includes(m)} onChange={e => setFiltroMesEmissao(prev => e.target.checked ? [...prev, m] : prev.filter(x => x !== m))} />
                       {m}
@@ -538,7 +538,7 @@ export default function Contabilidade() {
                     const lista=pagamentos[r.numero_nf]||[]
                     if(lista.length>0) return lista.map((p:any)=>{ const dt=p.dt_pagamento||''; if(!dt) return null; const parts=dt.includes('-')?dt.split('-').reverse():dt.split('/'); const mm=parts[1]; const aa=parts[2]; return (mm&&aa&&!isNaN(+mm)&&!isNaN(+aa)) ? mm.padStart(2,'0')+'/'+aa : null }).filter(Boolean)
                     const dtP=r.dt_pagamento||r.data_pagamento||''; if(!dtP) return []; const parts=dtP.includes('-')?dtP.split('-').reverse():dtP.split('/'); const mm=parts[1]; const aa=parts[2]; return (mm&&aa&&!isNaN(+mm)&&!isNaN(+aa)) ? [mm.padStart(2,'0')+'/'+aa] : []
-                  }))].filter(Boolean).sort().map((m:any)=>(
+                  }))].filter(Boolean).sort().reverse().map((m:any)=>(
                     <label key={m} style={{ display:'flex', alignItems:'center', gap:6, padding:'4px 12px', cursor:'pointer', color:'#E8EAF0', fontSize:'12px' }}>
                       <input type='checkbox' checked={filtroMesPagto.includes(m)} onChange={e => setFiltroMesPagto(prev => e.target.checked ? [...prev, m] : prev.filter(x => x !== m))} />
                       {m}
@@ -563,7 +563,7 @@ export default function Contabilidade() {
                     const lista=pagamentos[r.numero_nf]||[]
                     if(lista.length>0) return lista.map((p:any)=>{ const dt=p.data_contabilizacao||''; if(!dt) return null; const parts=dt.includes('-')?dt.split('-').reverse():dt.split('/'); const mm=parts[1]; const aa=parts[2]; return (mm&&aa&&!isNaN(+mm)&&!isNaN(+aa)) ? mm.padStart(2,'0')+'/'+aa : null }).filter(Boolean)
                     const dtC=r.data_contabilizacao||''; if(!dtC) return []; const parts=dtC.includes('-')?dtC.split('-').reverse():dtC.split('/'); const mm=parts[1]; const aa=parts[2]; return (mm&&aa&&!isNaN(+mm)&&!isNaN(+aa)) ? [mm.padStart(2,'0')+'/'+aa] : []
-                  }))].filter(Boolean).sort().map((m:any)=>(
+                  }))].filter(Boolean).sort().reverse().map((m:any)=>(
                     <label key={m} style={{ display:'flex', alignItems:'center', gap:6, padding:'4px 12px', cursor:'pointer', color:'#E8EAF0', fontSize:'12px' }}>
                       <input type='checkbox' checked={filtroMesContb.includes(m)} onChange={e => setFiltroMesContb(prev => e.target.checked ? [...prev, m] : prev.filter(x => x !== m))} />
                       {m}
