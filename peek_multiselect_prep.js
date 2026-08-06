@@ -1,0 +1,11 @@
+﻿const fs = require("fs");
+const c = fs.readFileSync("C:/projetos/controle-fiscal/frontend/src/pages/Contabilidade/index.tsx", "utf8");
+console.log("=== notasFiltradas ===");
+let i = c.indexOf("const notasFiltradas = filtroMesPagto");
+console.log(JSON.stringify(c.substring(i, i+950)));
+console.log("=== dtNoMesFiltro ===");
+i = c.indexOf("const dtNoMesFiltro");
+console.log(JSON.stringify(c.substring(i, i+320)));
+console.log("=== SELECT UI ===");
+i = c.indexOf("<select value={filtroMesPagto}");
+console.log(JSON.stringify(c.substring(i, i+1050)));

@@ -76,7 +76,8 @@ export default function Contabilidade() {
   const [editPgtoVal, setEditPgtoVal] = useState('')
   const [editPgtoDt, setEditPgtoDt] = useState('')
   const [editMesLct, setEditMesLct] = useState('')
-  const [filtroMesPagto, setFiltroMesPagto] = useState('')
+  const [filtroMesPagto, setFiltroMesPagto] = useState<string[]>([])
+  const [showPagtoMenu, setShowPagtoMenu] = useState(false)
   const [filtroMesEmissao, setFiltroMesEmissao] = useState('')
   const [filtroTipo, setFiltroTipo] = useState('')
   const [filtroMesContb, setFiltroMesContb] = useState('')
@@ -217,27 +218,24 @@ export default function Contabilidade() {
     return diff < 7
   })
 
-  const notasFiltradas = filtroMesPagto
+  const notasFiltradas = filtroMesPagto.length > 0
     ? ultimos4.filter(r => {
         const lista = pagamentos[r.numero_nf] || []
         const dtPgto = r.dt_pagamento || r.data_pagamento
-        if (filtroMesPagto === '__VAZIO__') {
-          return lista.length === 0 && !dtPgto
-        }
         if (lista.length > 0) {
           return lista.some((p: any) => {
-            const dt = p.dt_pagamento || ''
-            const parts = dt.includes('-') ? dt.split('-').reverse() : dt.split('/')
+            if (!p.dt_pagamento) return filtroMesPagto.includes('__VAZIO__')
+            const parts = p.dt_pagamento.includes('-') ? p.dt_pagamento.split('-').reverse() : p.dt_pagamento.split('/')
             const mm = parts[1]?.padStart(2,'0')
             const aa = parts[2]
-            return (mm + '/' + aa) === filtroMesPagto
+            return filtroMesPagto.includes(mm + '/' + aa)
           })
         }
-        if (!dtPgto) return false
+        if (!dtPgto) return filtroMesPagto.includes('__VAZIO__')
         const parts = dtPgto.includes('-') ? dtPgto.split('-').reverse() : dtPgto.split('/')
         const mm = parts[1]?.padStart(2,'0')
         const aa = parts[2]
-        return (mm + '/' + aa) === filtroMesPagto
+        return filtroMesPagto.includes(mm + '/' + aa)
       })
     : ultimos4
 
@@ -278,13 +276,12 @@ export default function Contabilidade() {
     return (mm + '/' + aa) === filtroMesContb
   }) : notasFiltradas4
   const dtNoMesFiltro = (dtStr: string | undefined) => {
-    if (!filtroMesPagto) return true
-    if (filtroMesPagto === '__VAZIO__') return !dtStr
-    if (!dtStr) return false
+    if (filtroMesPagto.length === 0) return true
+    if (!dtStr) return filtroMesPagto.includes('__VAZIO__')
     const parts = dtStr.includes('-') ? dtStr.split('-').reverse() : dtStr.split('/')
     const mm = parts[1]?.padStart(2, '0')
     const aa = parts[2]
-    return (mm + '/' + aa) === filtroMesPagto
+    return filtroMesPagto.includes(mm + '/' + aa)
   }
 
   const isVendaOuParcial = (r: any) => {
@@ -508,15 +505,31 @@ export default function Contabilidade() {
                 <option value="">Emissão: todos</option>
                 {[...new Set(notas.map((r:any)=>{ const dt=r.data_emissao||''; if(!dt) return null; const parts=dt.includes('-')?dt.split('-').reverse():dt.split('/'); const mm=parts[1]; const aa=parts[2]; return (mm&&aa&&!isNaN(+mm)&&!isNaN(+aa)) ? mm.padStart(2,'0')+'/'+aa : null }).filter(Boolean))].sort().map((m:any)=>(<option key={m} value={m}>{m}</option>))}
               </select>
-              <select value={filtroMesPagto} onChange={e=>setFiltroMesPagto(e.target.value)} style={{ background:'#1A1D2A', color:'#E8EAF0', border:'1px solid #353849', borderRadius:6, padding:'2px 8px', fontSize:'12px', cursor:'pointer' }}>
-                <option value="">Pagamento: todos</option>
-                <option value="__VAZIO__">Sem pagamento</option>
-                {[...new Set(notas.flatMap((r:any)=>{
-                  const lista=pagamentos[r.numero_nf]||[]
-                  if(lista.length>0) return lista.map((p:any)=>{ const dt=p.dt_pagamento||''; if(!dt) return null; const parts=dt.includes('-')?dt.split('-').reverse():dt.split('/'); const mm=parts[1]; const aa=parts[2]; return (mm&&aa&&!isNaN(+mm)&&!isNaN(+aa)) ? mm.padStart(2,'0')+'/'+aa : null }).filter(Boolean)
-                  const dtP=r.dt_pagamento||r.data_pagamento||''; if(!dtP) return []; const parts=dtP.includes('-')?dtP.split('-').reverse():dtP.split('/'); const mm=parts[1]; const aa=parts[2]; return (mm&&aa&&!isNaN(+mm)&&!isNaN(+aa)) ? [mm.padStart(2,'0')+'/'+aa] : []
-                }))].filter(Boolean).sort().map((m:any)=>(<option key={m} value={m}>{m}</option>))}
-              </select>
+              <div style={{ position: 'relative' }}>
+                <button onClick={() => setShowPagtoMenu(p => !p)} style={{ background:'#1A1D2A', color:'#E8EAF0', border:'1px solid #353849', borderRadius:6, padding:'2px 8px', fontSize:'12px', cursor:'pointer' }}>
+                  {filtroMesPagto.length === 0 ? 'Pagamento: todos' : `Pagamento: ${filtroMesPagto.length} selecionado${filtroMesPagto.length>1?'s':''}`}
+                </button>
+                {showPagtoMenu && (<div style={{ position:'absolute', top:'100%', left:0, zIndex:100, background:'#1A1D2A', border:'1px solid #353849', borderRadius:6, padding:'4px 0', minWidth:'160px', maxHeight:'260px', overflowY:'auto' }}>
+                  <label style={{ display:'flex', alignItems:'center', gap:6, padding:'4px 12px', cursor:'pointer', color:'#E8EAF0', fontSize:'12px' }}>
+                    <input type='checkbox' checked={filtroMesPagto.includes('__VAZIO__')} onChange={e => setFiltroMesPagto(prev => e.target.checked ? [...prev, '__VAZIO__'] : prev.filter(x => x !== '__VAZIO__'))} />
+                    Sem pagamento
+                  </label>
+                  {[...new Set(notas.flatMap((r:any)=>{
+                    const lista=pagamentos[r.numero_nf]||[]
+                    if(lista.length>0) return lista.map((p:any)=>{ const dt=p.dt_pagamento||''; if(!dt) return null; const parts=dt.includes('-')?dt.split('-').reverse():dt.split('/'); const mm=parts[1]; const aa=parts[2]; return (mm&&aa&&!isNaN(+mm)&&!isNaN(+aa)) ? mm.padStart(2,'0')+'/'+aa : null }).filter(Boolean)
+                    const dtP=r.dt_pagamento||r.data_pagamento||''; if(!dtP) return []; const parts=dtP.includes('-')?dtP.split('-').reverse():dtP.split('/'); const mm=parts[1]; const aa=parts[2]; return (mm&&aa&&!isNaN(+mm)&&!isNaN(+aa)) ? [mm.padStart(2,'0')+'/'+aa] : []
+                  }))].filter(Boolean).sort().map((m:any)=>(
+                    <label key={m} style={{ display:'flex', alignItems:'center', gap:6, padding:'4px 12px', cursor:'pointer', color:'#E8EAF0', fontSize:'12px' }}>
+                      <input type='checkbox' checked={filtroMesPagto.includes(m)} onChange={e => setFiltroMesPagto(prev => e.target.checked ? [...prev, m] : prev.filter(x => x !== m))} />
+                      {m}
+                    </label>
+                  ))}
+                  <div style={{ borderTop:'1px solid #353849', margin:'4px 0', padding:'4px 12px' }}>
+                    <button onClick={() => { setFiltroMesPagto([]); setShowPagtoMenu(false) }} style={{ fontSize:'11px', color:'#7B82A0', background:'none', border:'none', cursor:'pointer' }}>Limpar</button>
+                    <button onClick={() => setShowPagtoMenu(false)} style={{ fontSize:'11px', color:'#34D399', background:'none', border:'none', cursor:'pointer', marginLeft:8 }}>Aplicar</button>
+                  </div>
+                </div>)}
+              </div>
               <select value={filtroMesContb} onChange={e=>setFiltroMesContb(e.target.value)} style={{ background:'#1A1D2A', color:'#E8EAF0', border:'1px solid #353849', borderRadius:6, padding:'2px 8px', fontSize:'12px', cursor:'pointer' }}>
                 <option value="">Contabilização: todos</option>
                 <option value="__VAZIO__">Sem contabilização</option>
@@ -623,7 +636,7 @@ export default function Contabilidade() {
                   const mostrarProxima = lista.length >= 1 && temSaldoReal
                   // Data exibida na linha original para comparar com filtro
                   const dtLinhaOriginal = temHistorico ? (lista[0]?.dt_pagamento || '') : (r.dt_pagamento || r.data_pagamento || '')
-                  const linhaOriginalNoFiltro = !filtroMesPagto || dtNoMesFiltro(dtLinhaOriginal)
+                  const linhaOriginalNoFiltro = filtroMesPagto.length === 0 || dtNoMesFiltro(dtLinhaOriginal)
 
                   const isCancelada = r.numero_nf?.endsWith('-CAN')
                   const isInut = r.numero_nf?.endsWith('-INUT')
@@ -831,7 +844,7 @@ export default function Contabilidade() {
 
                       </>)}
                       {/* LINHAS PAGAMENTOS PARCIAIS — so quando 2+ pagamentos com saldo */}
-                      {mostrarHistorico && lista.slice(1).filter((pg: any) => !filtroMesPagto || dtNoMesFiltro(pg.dt_pagamento)).map((pg: any, idx: number) => {
+                      {mostrarHistorico && lista.slice(1).filter((pg: any) => filtroMesPagto.length === 0 || dtNoMesFiltro(pg.dt_pagamento)).map((pg: any, idx: number) => {
                         const somaAteEsta = lista.slice(0, idx + 2).reduce((s: number, p: any) => s + (parseFloat(p.valor_pago) || 0), 0)
                         const restanteParcela = valorNF - somaAteEsta
                         const isEditPg = editandoPgto === pg.id
@@ -948,7 +961,7 @@ export default function Contabilidade() {
                       })}
 
                       {/* PROXIMA LINHA VAZIA */}
-                      {mostrarProxima && !filtroMesPagto && (
+                      {mostrarProxima && filtroMesPagto.length === 0 && (
                         <>
                           <tr key={r.numero_nf + '-prox'} style={{ background: 'rgba(248,113,113,0.03)', borderLeft: '3px solid #F87171' }}>
                             <td style={tdSm()}><span style={{ background: 'rgba(248,113,113,0.15)', color: '#F87171', borderRadius: '5px', padding: '2px 8px', fontWeight: 700, fontSize: '11px', ...mono }}>{r.numero_nf}/{lista.length + 1}</span></td>
@@ -1002,9 +1015,9 @@ export default function Contabilidade() {
               <tfoot>
                 <tr style={{ background: '#1A1D2A', borderTop: '2px solid #252836' }}>
                   <td colSpan={4} style={{ padding: '8px 12px', fontSize: '11px', fontWeight: 700, color: '#7B82A0' }}>TOTAIS</td>
-                  <td style={{ padding: '8px 12px', textAlign: 'right', fontWeight: 700, ...mono, color: corEmp }}>{fmtR((filtroMesEmissao || filtroMesPagto || filtroTipo || filtroMesContb) ? notasFiltradas5.filter((r:any) => isVendaOuParcial(r) && !nfsCanceladas.has(r.numero_nf)).reduce((s:number,r:any) => s + (parseFloat(r.valor_nf)||0), 0) : tNF)}</td>
+                  <td style={{ padding: '8px 12px', textAlign: 'right', fontWeight: 700, ...mono, color: corEmp }}>{fmtR((filtroMesEmissao || filtroMesPagto.length > 0 || filtroTipo || filtroMesContb) ? notasFiltradas5.filter((r:any) => isVendaOuParcial(r) && !nfsCanceladas.has(r.numero_nf)).reduce((s:number,r:any) => s + (parseFloat(r.valor_nf)||0), 0) : tNF)}</td>
                   <td></td>
-                  <td style={{ padding: '8px 12px', textAlign: 'right', fontWeight: 700, ...mono, color: '#34D399' }}>{fmtR((filtroMesEmissao || filtroMesPagto || filtroTipo || filtroMesContb) ? notasFiltradas5.filter((r:any) => r.valor_pago).reduce((s:number,r:any) => s + (parseFloat(r.valor_pago)||0), 0) : tPago)}</td>
+                  <td style={{ padding: '8px 12px', textAlign: 'right', fontWeight: 700, ...mono, color: '#34D399' }}>{fmtR((filtroMesEmissao || filtroMesPagto.length > 0 || filtroTipo || filtroMesContb) ? notasFiltradas5.filter((r:any) => r.valor_pago).reduce((s:number,r:any) => s + (parseFloat(r.valor_pago)||0), 0) : tPago)}</td>
                   <td></td><td></td><td></td><td></td><td></td><td></td>
                 </tr>
               </tfoot>
