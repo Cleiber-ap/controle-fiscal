@@ -509,7 +509,7 @@ export default function Contabilidade() {
                 <option value='entrada'>Entrada</option>
               </select>
               <div style={{ position: 'relative' }}>
-                <button onClick={() => setShowEmissaoMenu(p => !p)} style={{ background:'#1A1D2A', color:'#E8EAF0', border:'1px solid #353849', borderRadius:6, padding:'2px 8px', fontSize:'12px', cursor:'pointer' }}>
+                <button onClick={() => setShowEmissaoMenu(p => !p)} style={{ background: (filtroMesEmissao.length > 0) ? 'rgba(79,142,247,0.15)' : '#1A1D2A', color: (filtroMesEmissao.length > 0) ? '#4F8EF7' : '#E8EAF0', border: (filtroMesEmissao.length > 0) ? '1px solid #4F8EF7' : '1px solid #353849', borderRadius:6, padding:'2px 8px', fontSize:'12px', cursor:'pointer', fontWeight: (filtroMesEmissao.length > 0) ? 600 : 400 }}>
                   {filtroMesEmissao.length === 0 ? 'Emissão: todos' : `Emissão: ${filtroMesEmissao.length} selecionado${filtroMesEmissao.length>1?'s':''}`}
                 </button>
                 {showEmissaoMenu && (<div style={{ position:'absolute', top:'100%', left:0, zIndex:100, background:'#1A1D2A', border:'1px solid #353849', borderRadius:6, padding:'4px 0', minWidth:'160px', maxHeight:'260px', overflowY:'auto' }}>
@@ -526,7 +526,7 @@ export default function Contabilidade() {
                 </div>)}
               </div>
               <div style={{ position: 'relative' }}>
-                <button onClick={() => setShowPagtoMenu(p => !p)} style={{ background:'#1A1D2A', color:'#E8EAF0', border:'1px solid #353849', borderRadius:6, padding:'2px 8px', fontSize:'12px', cursor:'pointer' }}>
+                <button onClick={() => setShowPagtoMenu(p => !p)} style={{ background: (filtroMesPagto.length > 0) ? 'rgba(79,142,247,0.15)' : '#1A1D2A', color: (filtroMesPagto.length > 0) ? '#4F8EF7' : '#E8EAF0', border: (filtroMesPagto.length > 0) ? '1px solid #4F8EF7' : '1px solid #353849', borderRadius:6, padding:'2px 8px', fontSize:'12px', cursor:'pointer', fontWeight: (filtroMesPagto.length > 0) ? 600 : 400 }}>
                   {filtroMesPagto.length === 0 ? 'Pagamento: todos' : `Pagamento: ${filtroMesPagto.length} selecionado${filtroMesPagto.length>1?'s':''}`}
                 </button>
                 {showPagtoMenu && (<div style={{ position:'absolute', top:'100%', left:0, zIndex:100, background:'#1A1D2A', border:'1px solid #353849', borderRadius:6, padding:'4px 0', minWidth:'160px', maxHeight:'260px', overflowY:'auto' }}>
@@ -551,7 +551,7 @@ export default function Contabilidade() {
                 </div>)}
               </div>
               <div style={{ position: 'relative' }}>
-                <button onClick={() => setShowContbMenu(p => !p)} style={{ background:'#1A1D2A', color:'#E8EAF0', border:'1px solid #353849', borderRadius:6, padding:'2px 8px', fontSize:'12px', cursor:'pointer' }}>
+                <button onClick={() => setShowContbMenu(p => !p)} style={{ background: (filtroMesContb.length > 0) ? 'rgba(79,142,247,0.15)' : '#1A1D2A', color: (filtroMesContb.length > 0) ? '#4F8EF7' : '#E8EAF0', border: (filtroMesContb.length > 0) ? '1px solid #4F8EF7' : '1px solid #353849', borderRadius:6, padding:'2px 8px', fontSize:'12px', cursor:'pointer', fontWeight: (filtroMesContb.length > 0) ? 600 : 400 }}>
                   {filtroMesContb.length === 0 ? 'Contabilização: todos' : `Contabilização: ${filtroMesContb.length} selecionado${filtroMesContb.length>1?'s':''}`}
                 </button>
                 {showContbMenu && (<div style={{ position:'absolute', top:'100%', left:0, zIndex:100, background:'#1A1D2A', border:'1px solid #353849', borderRadius:6, padding:'4px 0', minWidth:'170px', maxHeight:'260px', overflowY:'auto' }}>
@@ -576,7 +576,7 @@ export default function Contabilidade() {
                 </div>)}
               </div>
               <div style={{ position: 'relative' }}>
-                <button onClick={() => setShowStatusMenu(p => !p)} style={{ background:'#1A1D2A', color:'#E8EAF0', border:'1px solid #353849', borderRadius:6, padding:'2px 8px', fontSize:'12px', cursor:'pointer' }}>
+                <button onClick={() => setShowStatusMenu(p => !p)} style={{ background: (filtroStatus.length > 0) ? 'rgba(79,142,247,0.15)' : '#1A1D2A', color: (filtroStatus.length > 0) ? '#4F8EF7' : '#E8EAF0', border: (filtroStatus.length > 0) ? '1px solid #4F8EF7' : '1px solid #353849', borderRadius:6, padding:'2px 8px', fontSize:'12px', cursor:'pointer', fontWeight: (filtroStatus.length > 0) ? 600 : 400 }}>
                   {filtroStatus.length === 0 ? 'Status: todos' : `Status: ${filtroStatus.length} selecionado${filtroStatus.length>1?'s':''}`}
                 </button>
                 {showStatusMenu && (<div style={{ position:'absolute', top:'100%', left:0, zIndex:100, background:'#1A1D2A', border:'1px solid #353849', borderRadius:6, padding:'4px 0', minWidth:'200px' }}>
