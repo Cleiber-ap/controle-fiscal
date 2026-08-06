@@ -531,7 +531,7 @@ export default function Contabilidade() {
                   ))}
                   <div style={{ borderTop:'1px solid #353849', margin:'4px 0', padding:'4px 12px' }}>
                     <button onClick={() => { setFiltroMesPagto([]); setShowPagtoMenu(false) }} style={{ fontSize:'11px', color:'#7B82A0', background:'none', border:'none', cursor:'pointer' }}>Limpar</button>
-                    <button onClick={() => setShowPagtoMenu(false)} style={{ fontSize:'11px', color:'#34D399', background:'none', border:'none', cursor:'pointer', marginLeft:8 }}>Aplicar</button>
+                    <button onClick={() => setShowPagtoMenu(false)} style={{ fontSize:'11px', color:'#34D399', background:'none', border:'none', cursor:'pointer', marginLeft:8 }}>Fechar</button>
                   </div>
                 </div>)}
               </div>
@@ -556,7 +556,7 @@ export default function Contabilidade() {
                   ))}
                   <div style={{ borderTop:'1px solid #353849', margin:'4px 0', padding:'4px 12px' }}>
                     <button onClick={() => { setFiltroMesContb([]); setShowContbMenu(false) }} style={{ fontSize:'11px', color:'#7B82A0', background:'none', border:'none', cursor:'pointer' }}>Limpar</button>
-                    <button onClick={() => setShowContbMenu(false)} style={{ fontSize:'11px', color:'#34D399', background:'none', border:'none', cursor:'pointer', marginLeft:8 }}>Aplicar</button>
+                    <button onClick={() => setShowContbMenu(false)} style={{ fontSize:'11px', color:'#34D399', background:'none', border:'none', cursor:'pointer', marginLeft:8 }}>Fechar</button>
                   </div>
                 </div>)}
               </div>
@@ -572,7 +572,7 @@ export default function Contabilidade() {
                     </label>
                   ))}
                   <div style={{ borderTop:'1px solid #353849', margin:'4px 0', padding:'4px 12px' }}>
-                    <button onClick={() => { setFiltroStatus([]); setShowStatusMenu(false) }} style={{ fontSize:'11px', color:'#7B82A0', background:'none', border:'none', cursor:'pointer' }}>Limpar</button><button onClick={() => setShowStatusMenu(false)} style={{ fontSize:'11px', color:'#34D399', background:'none', border:'none', cursor:'pointer', marginLeft:8 }}>Aplicar</button>
+                    <button onClick={() => { setFiltroStatus([]); setShowStatusMenu(false) }} style={{ fontSize:'11px', color:'#7B82A0', background:'none', border:'none', cursor:'pointer' }}>Limpar</button><button onClick={() => setShowStatusMenu(false)} style={{ fontSize:'11px', color:'#34D399', background:'none', border:'none', cursor:'pointer', marginLeft:8 }}>Fechar</button>
                   </div>
                 </div>)}
               </div>
