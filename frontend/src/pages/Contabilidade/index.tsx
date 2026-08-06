@@ -80,7 +80,8 @@ export default function Contabilidade() {
   const [showPagtoMenu, setShowPagtoMenu] = useState(false)
   const [filtroMesEmissao, setFiltroMesEmissao] = useState('')
   const [filtroTipo, setFiltroTipo] = useState('')
-  const [filtroMesContb, setFiltroMesContb] = useState('')
+  const [filtroMesContb, setFiltroMesContb] = useState<string[]>([])
+  const [showContbMenu, setShowContbMenu] = useState(false)
   const [creditos, setCreditos] = useState<any[]>([])
   const [filtroStatus, setFiltroStatus] = useState<string[]>([])
   const [showStatusMenu, setShowStatusMenu] = useState(false)
@@ -251,29 +252,23 @@ export default function Contabilidade() {
 
   const notasFiltradas3 = filtroTipo ? notasFiltradas2.filter((r: any) => (r.tipo || 'saida') === filtroTipo) : notasFiltradas2
   const notasFiltradas4 = filtroStatus.length > 0 ? notasFiltradas3.filter((r: any) => { const nat = r.nat_operacao || r.status || ''; const cancelada = nfsCanceladas.has(r.numero_nf); if (filtroStatus.includes('Venda') && cancelada) return false; return filtroStatus.includes(nat); }) : notasFiltradas3
-  const notasFiltradas5 = filtroMesContb ? notasFiltradas4.filter((r: any) => {
+  const notasFiltradas5 = filtroMesContb.length > 0 ? notasFiltradas4.filter((r: any) => {
     const lista = pagamentos[r.numero_nf] || []
-    if (filtroMesContb === '__VAZIO__') {
-      if (lista.length > 0) {
-        return lista.some((p: any) => !p.data_contabilizacao)
-      }
-      return !r.data_contabilizacao
-    }
     if (lista.length > 0) {
       return lista.some((p: any) => {
-        const dt = p.data_contabilizacao || ''
-        const parts = dt.includes('-') ? dt.split('-').reverse() : dt.split('/')
+        if (!p.data_contabilizacao) return filtroMesContb.includes('__VAZIO__')
+        const parts = p.data_contabilizacao.includes('-') ? p.data_contabilizacao.split('-').reverse() : p.data_contabilizacao.split('/')
         const mm = parts[1]?.padStart(2,'0')
         const aa = parts[2]
-        return (mm + '/' + aa) === filtroMesContb
+        return filtroMesContb.includes(mm + '/' + aa)
       })
     }
     const dtC = r.data_contabilizacao || ''
-    if (!dtC) return false
+    if (!dtC) return filtroMesContb.includes('__VAZIO__')
     const parts = dtC.includes('-') ? dtC.split('-').reverse() : dtC.split('/')
     const mm = parts[1]?.padStart(2,'0')
     const aa = parts[2]
-    return (mm + '/' + aa) === filtroMesContb
+    return filtroMesContb.includes(mm + '/' + aa)
   }) : notasFiltradas4
   const dtNoMesFiltro = (dtStr: string | undefined) => {
     if (filtroMesPagto.length === 0) return true
@@ -530,15 +525,31 @@ export default function Contabilidade() {
                   </div>
                 </div>)}
               </div>
-              <select value={filtroMesContb} onChange={e=>setFiltroMesContb(e.target.value)} style={{ background:'#1A1D2A', color:'#E8EAF0', border:'1px solid #353849', borderRadius:6, padding:'2px 8px', fontSize:'12px', cursor:'pointer' }}>
-                <option value="">Contabilização: todos</option>
-                <option value="__VAZIO__">Sem contabilização</option>
-                {[...new Set(notas.flatMap((r:any)=>{
-                  const lista=pagamentos[r.numero_nf]||[]
-                  if(lista.length>0) return lista.map((p:any)=>{ const dt=p.data_contabilizacao||''; if(!dt) return null; const parts=dt.includes('-')?dt.split('-').reverse():dt.split('/'); const mm=parts[1]; const aa=parts[2]; return (mm&&aa&&!isNaN(+mm)&&!isNaN(+aa)) ? mm.padStart(2,'0')+'/'+aa : null }).filter(Boolean)
-                  const dtC=r.data_contabilizacao||''; if(!dtC) return []; const parts=dtC.includes('-')?dtC.split('-').reverse():dtC.split('/'); const mm=parts[1]; const aa=parts[2]; return (mm&&aa&&!isNaN(+mm)&&!isNaN(+aa)) ? [mm.padStart(2,'0')+'/'+aa] : []
-                }))].filter(Boolean).sort().map((m:any)=>(<option key={m} value={m}>{m}</option>))}
-              </select>
+              <div style={{ position: 'relative' }}>
+                <button onClick={() => setShowContbMenu(p => !p)} style={{ background:'#1A1D2A', color:'#E8EAF0', border:'1px solid #353849', borderRadius:6, padding:'2px 8px', fontSize:'12px', cursor:'pointer' }}>
+                  {filtroMesContb.length === 0 ? 'Contabilização: todos' : `Contabilização: ${filtroMesContb.length} selecionado${filtroMesContb.length>1?'s':''}`}
+                </button>
+                {showContbMenu && (<div style={{ position:'absolute', top:'100%', left:0, zIndex:100, background:'#1A1D2A', border:'1px solid #353849', borderRadius:6, padding:'4px 0', minWidth:'170px', maxHeight:'260px', overflowY:'auto' }}>
+                  <label style={{ display:'flex', alignItems:'center', gap:6, padding:'4px 12px', cursor:'pointer', color:'#E8EAF0', fontSize:'12px' }}>
+                    <input type='checkbox' checked={filtroMesContb.includes('__VAZIO__')} onChange={e => setFiltroMesContb(prev => e.target.checked ? [...prev, '__VAZIO__'] : prev.filter(x => x !== '__VAZIO__'))} />
+                    Sem contabilização
+                  </label>
+                  {[...new Set(notas.flatMap((r:any)=>{
+                    const lista=pagamentos[r.numero_nf]||[]
+                    if(lista.length>0) return lista.map((p:any)=>{ const dt=p.data_contabilizacao||''; if(!dt) return null; const parts=dt.includes('-')?dt.split('-').reverse():dt.split('/'); const mm=parts[1]; const aa=parts[2]; return (mm&&aa&&!isNaN(+mm)&&!isNaN(+aa)) ? mm.padStart(2,'0')+'/'+aa : null }).filter(Boolean)
+                    const dtC=r.data_contabilizacao||''; if(!dtC) return []; const parts=dtC.includes('-')?dtC.split('-').reverse():dtC.split('/'); const mm=parts[1]; const aa=parts[2]; return (mm&&aa&&!isNaN(+mm)&&!isNaN(+aa)) ? [mm.padStart(2,'0')+'/'+aa] : []
+                  }))].filter(Boolean).sort().map((m:any)=>(
+                    <label key={m} style={{ display:'flex', alignItems:'center', gap:6, padding:'4px 12px', cursor:'pointer', color:'#E8EAF0', fontSize:'12px' }}>
+                      <input type='checkbox' checked={filtroMesContb.includes(m)} onChange={e => setFiltroMesContb(prev => e.target.checked ? [...prev, m] : prev.filter(x => x !== m))} />
+                      {m}
+                    </label>
+                  ))}
+                  <div style={{ borderTop:'1px solid #353849', margin:'4px 0', padding:'4px 12px' }}>
+                    <button onClick={() => { setFiltroMesContb([]); setShowContbMenu(false) }} style={{ fontSize:'11px', color:'#7B82A0', background:'none', border:'none', cursor:'pointer' }}>Limpar</button>
+                    <button onClick={() => setShowContbMenu(false)} style={{ fontSize:'11px', color:'#34D399', background:'none', border:'none', cursor:'pointer', marginLeft:8 }}>Aplicar</button>
+                  </div>
+                </div>)}
+              </div>
               <div style={{ position: 'relative' }}>
                 <button onClick={() => setShowStatusMenu(p => !p)} style={{ background:'#1A1D2A', color:'#E8EAF0', border:'1px solid #353849', borderRadius:6, padding:'2px 8px', fontSize:'12px', cursor:'pointer' }}>
                   {filtroStatus.length === 0 ? 'Status: todos' : `Status: ${filtroStatus.length} selecionado${filtroStatus.length>1?'s':''}`}
@@ -1015,9 +1026,9 @@ export default function Contabilidade() {
               <tfoot>
                 <tr style={{ background: '#1A1D2A', borderTop: '2px solid #252836' }}>
                   <td colSpan={4} style={{ padding: '8px 12px', fontSize: '11px', fontWeight: 700, color: '#7B82A0' }}>TOTAIS</td>
-                  <td style={{ padding: '8px 12px', textAlign: 'right', fontWeight: 700, ...mono, color: corEmp }}>{fmtR((filtroMesEmissao || filtroMesPagto.length > 0 || filtroTipo || filtroMesContb) ? notasFiltradas5.filter((r:any) => isVendaOuParcial(r) && !nfsCanceladas.has(r.numero_nf)).reduce((s:number,r:any) => s + (parseFloat(r.valor_nf)||0), 0) : tNF)}</td>
+                  <td style={{ padding: '8px 12px', textAlign: 'right', fontWeight: 700, ...mono, color: corEmp }}>{fmtR((filtroMesEmissao || filtroMesPagto.length > 0 || filtroTipo || filtroMesContb.length > 0) ? notasFiltradas5.filter((r:any) => isVendaOuParcial(r) && !nfsCanceladas.has(r.numero_nf)).reduce((s:number,r:any) => s + (parseFloat(r.valor_nf)||0), 0) : tNF)}</td>
                   <td></td>
-                  <td style={{ padding: '8px 12px', textAlign: 'right', fontWeight: 700, ...mono, color: '#34D399' }}>{fmtR((filtroMesEmissao || filtroMesPagto.length > 0 || filtroTipo || filtroMesContb) ? notasFiltradas5.filter((r:any) => r.valor_pago).reduce((s:number,r:any) => s + (parseFloat(r.valor_pago)||0), 0) : tPago)}</td>
+                  <td style={{ padding: '8px 12px', textAlign: 'right', fontWeight: 700, ...mono, color: '#34D399' }}>{fmtR((filtroMesEmissao || filtroMesPagto.length > 0 || filtroTipo || filtroMesContb.length > 0) ? notasFiltradas5.filter((r:any) => r.valor_pago).reduce((s:number,r:any) => s + (parseFloat(r.valor_pago)||0), 0) : tPago)}</td>
                   <td></td><td></td><td></td><td></td><td></td><td></td>
                 </tr>
               </tfoot>
