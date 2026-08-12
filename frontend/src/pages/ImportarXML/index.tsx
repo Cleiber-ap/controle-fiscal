@@ -245,18 +245,26 @@ export default function ImportarXML() {
         continue
       }
 
-      // Encontrar a nota de Venda entre as NFs da linha
+      // Encontrar a nota correta entre as NFs da linha: primeiro tenta bater pelo VALOR, so cai para a primeira Venda/Complemento se nenhum valor bater
       let notaVenda: any = null
+      const candidatosLinha: any[] = []
       for (const nfNum of nfsLinha) {
         const nota = todasNotas.find((n: any) => {
           const numMatch = n.numero_nf === nfNum
-          const nat = (n.nat_operacao || n.status || '').toLowerCase(); const isVenda = nat.includes('venda') || nat.includes('complemento de frete')
+          const nat = (n.nat_operacao || n.status || '').toLowerCase(); const isVenda = nat.includes('venda') || nat.includes('complemento de frete') || nat.includes('complementar')
           // Filtrar por unidade se disponível
           if (unidade && unidade.includes('six') && n.empresa_id !== 1) return false
           if (unidade && unidade.includes('enova') && n.empresa_id !== 2) return false
           return numMatch && isVenda
         })
-        if (nota) { notaVenda = nota; break }
+        if (nota) candidatosLinha.push(nota)
+      }
+      if (candidatosLinha.length === 1) {
+        notaVenda = candidatosLinha[0]
+      } else if (candidatosLinha.length > 1) {
+        notaVenda = candidatosLinha.find((n: any) => Math.abs((parseFloat(n.valor_nf) || 0) - (parseFloat(n.valor_pago) || 0) - valor) < 0.5)
+          || candidatosLinha.find((n: any) => Math.abs((parseFloat(n.valor_nf) || 0) - valor) < 0.5)
+          || candidatosLinha[0]
       }
 
       if (!notaVenda) {
