@@ -277,7 +277,7 @@ export default function Contabilidade() {
     : notasFiltradas
 
   const notasFiltradas3 = filtroTipo ? notasFiltradas2.filter((r: any) => (r.tipo || 'saida') === filtroTipo) : notasFiltradas2
-  const notasFiltradas4 = filtroStatus.length > 0 ? notasFiltradas3.filter((r: any) => { const nat = r.nat_operacao || r.status || ''; const cancelada = nfsCanceladas.has(r.numero_nf); if (filtroStatus.includes('Venda') && cancelada) return false; return filtroStatus.includes(nat); }) : notasFiltradas3
+  const notasFiltradas4 = filtroStatus.length > 0 ? notasFiltradas3.filter((r: any) => { const nat = r.nat_operacao || r.status || ''; const cancelada = nfsCanceladas.has(r.numero_nf); const isEntrada = cancelada && !nfsCanReal.has(r.numero_nf) && nat.toLowerCase().includes('venda'); if (filtroStatus.includes('Venda/Entrada') && isEntrada) return true; if (filtroStatus.includes('Venda') && cancelada) return false; return filtroStatus.includes(nat); }) : notasFiltradas3
   const notasFiltradas5 = filtroMesContb.length > 0 ? notasFiltradas4.filter((r: any) => {
     const lista = pagamentos[r.numero_nf] || []
     if (lista.length > 0) {
@@ -596,7 +596,7 @@ export default function Contabilidade() {
                   {filtroStatus.length === 0 ? 'Status: todos' : `Status: ${filtroStatus.length} selecionado${filtroStatus.length>1?'s':''}`}
                 </button>
                 {showStatusMenu && (<div style={{ position:'absolute', top:'100%', left:0, zIndex:100, background:'#1A1D2A', border:'1px solid #353849', borderRadius:6, padding:'4px 0', minWidth:'200px' }}>
-                  {['Venda','NF-e COMPLEMENTAR','Complemento de Frete','Simples Remessa','Cancelamento','Inutilizacao','Carta de Correcao','Devolucao de venda de mercadorias','Devolucao de simples remessa'].map(s => (
+                  {['Venda','Venda/Entrada','NF-e COMPLEMENTAR','Complemento de Frete','Simples Remessa','Cancelamento','Inutilizacao','Carta de Correcao','Devolucao de venda de mercadorias','Devolucao de simples remessa'].map(s => (
                     <label key={s} style={{ display:'flex', alignItems:'center', gap:6, padding:'4px 12px', cursor:'pointer', color:'#E8EAF0', fontSize:'12px' }}>
                       <input type='checkbox' checked={filtroStatus.includes(s)} onChange={e => setFiltroStatus(prev => e.target.checked ? [...prev, s] : prev.filter(x => x !== s))} />
                       {s === 'Carta de Correcao' ? 'Carta de Correção' : s === 'Devolucao de venda de mercadorias' ? 'Devolução de Venda' : s === 'Devolucao de simples remessa' ? 'Devolução de Remessa' : s === 'Inutilizacao' ? 'Inutilização' : s}
