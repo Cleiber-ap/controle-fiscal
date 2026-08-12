@@ -175,6 +175,7 @@ export default function ExportarExcel() {
     const colWidths = [11,43,17,52,18,13,17,17,17]
     const buildSheet = (lista: any[], emp: string, ajustesEmp: any[]) => {
       const nfsCan = new Set([...lista.filter((n:any)=>n.numero_nf?.endsWith("-CAN")).map((n:any)=>n.numero_nf.replace("-CAN","")), ...ajustesEmp.filter((aj:any)=>aj.nf_referenciada).map((aj:any)=>aj.nf_referenciada)])
+      const nfsCanReal = new Set(lista.filter((n:any)=>n.numero_nf?.endsWith("-CAN")).map((n:any)=>n.numero_nf.replace("-CAN","")))
       const listaFiltrada = lista.filter((n:any)=>{ const st=(n.nat_operacao||n.status||"").toLowerCase(); return !st.includes("cancelamento")&&!st.includes("cce")&&!st.includes("carta") })
       const notasMes = listaFiltrada.filter((n:any)=>{
         if(!n.data_emissao) return false
@@ -208,9 +209,9 @@ export default function ExportarExcel() {
         const dtEm=parseDate(n.data_emissao)
         const pgtosMes = pgtos.filter((p:any)=>{ const dt=p.data_contabilizacao; if(!dt) return false; const parts=dt.includes("-")?dt.split("-"):dt.split("/").reverse(); const m=parseInt(parts[1]); const a=parseInt(parts[0]); return (m===mesAntIdx+1&&a===anoAnt)||(m===mesAtualIdx2+1&&a===anoAtual2) })
         if(pgtosMes.length>0){
-          pgtosMes.forEach((p:any)=>rows.push([n.numero_nf||"",emp,n.cnpj_dest||"",n.destinatario||"",parseFloat(n.valor_nf)||0,dtEm,parseFloat(p.valor_pago)||0,parseDate(p.data_contabilizacao),(n.nat_operacao||n.status||"")+(nfsCan.has(n.numero_nf)?"/Cancelada":"")]))
+          pgtosMes.forEach((p:any)=>rows.push([n.numero_nf||"",emp,n.cnpj_dest||"",n.destinatario||"",parseFloat(n.valor_nf)||0,dtEm,parseFloat(p.valor_pago)||0,parseDate(p.data_contabilizacao),(n.nat_operacao||n.status||"")+(nfsCan.has(n.numero_nf)?(nfsCanReal.has(n.numero_nf)?"/Cancelada":"/Entrada"):"")]))
         } else {
-          rows.push([n.numero_nf||"",emp,n.cnpj_dest||"",n.destinatario||"",parseFloat(n.valor_nf)||0,dtEm,n.valor_pago?parseFloat(n.valor_pago):null,parseDate(n.data_contabilizacao),(n.nat_operacao||n.status||"")+(nfsCan.has(n.numero_nf)?"/Cancelada":"")])
+          rows.push([n.numero_nf||"",emp,n.cnpj_dest||"",n.destinatario||"",parseFloat(n.valor_nf)||0,dtEm,n.valor_pago?parseFloat(n.valor_pago):null,parseDate(n.data_contabilizacao),(n.nat_operacao||n.status||"")+(nfsCan.has(n.numero_nf)?(nfsCanReal.has(n.numero_nf)?"/Cancelada":"/Entrada"):"")])
         }
       }
       const nRows = rows.length
