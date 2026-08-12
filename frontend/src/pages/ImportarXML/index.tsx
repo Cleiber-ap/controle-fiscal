@@ -408,8 +408,9 @@ export default function ImportarXML() {
       const empresasImportadas = [...new Set(notas.map(n => (n as any).empresaDetectada === 'six' ? 1 : 2))]
       for (const emp of empresasImportadas) {
         const todasNotas = await api.get('/notas/' + emp).then((r: any) => r.data).catch(() => [])
+        const canceladasRecalc = new Set(todasNotas.filter((n: any) => n.numero_nf?.endsWith('-CAN')).map((n: any) => n.numero_nf.replace('-CAN', '')))
         const porMesRecalc: Record<string, number> = {}
-        todasNotas.filter((n: any) => { const st = (n.nat_operacao || n.status || '').toLowerCase(); return (st.includes('venda') && !st.includes('devolu')) || st.includes('complemento de frete') || st.includes('complementar') }).forEach((n: any) => {
+        todasNotas.filter((n: any) => { if (canceladasRecalc.has(n.numero_nf)) return false; const st = (n.nat_operacao || n.status || '').toLowerCase(); return (st.includes('venda') && !st.includes('devolu')) || st.includes('complemento de frete') || st.includes('complementar') }).forEach((n: any) => {
           if (n.data_emissao) {
             const [, m, a] = n.data_emissao.split('/')
             const key = `${a}-${m}`
