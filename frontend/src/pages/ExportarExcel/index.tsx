@@ -226,7 +226,7 @@ export default function ExportarExcel() {
       })
       rows.forEach((row:any[], ri:number) => {
         const bg = ri%2===0 ? "FFFFFF" : "ECECEC"
-        const isCancelada = String(row[8]||"").includes("/Cancelada")
+        const isCancelada = String(row[8]||"").includes("/Cancelada") || String(row[8]||"").includes("/Entrada")
         for(let ci=0;ci<9;ci++){
           const addr = XLSXStyle.utils.encode_cell({r:ri+1,c:ci})
           const cellVal = row[ci] ?? ""
