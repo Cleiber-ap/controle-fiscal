@@ -54,7 +54,20 @@ function ContadorAnimado({ valor, cor, formatador }: { valor: number, cor: strin
   return <span style={{ color: cor }}>{formatador(exibido)}</span>
 }
 
+function useIsMobile(breakpoint = 768) {
+  const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' && window.innerWidth <= breakpoint)
+  useEffect(() => {
+    const mq = window.matchMedia(`(max-width: ${breakpoint}px)`)
+    const handler = () => setIsMobile(mq.matches)
+    handler()
+    mq.addEventListener('change', handler)
+    return () => mq.removeEventListener('change', handler)
+  }, [breakpoint])
+  return isMobile
+}
+
 export default function Contabilidade() {
+  const isMobile = useIsMobile()
   const [empresa, setEmpresa] = useState<'six' | 'enova'>('six')
   const [notas, setNotas] = useState<any[]>([])
   const [notasOutra, setNotasOutra] = useState<any[]>([])
@@ -446,24 +459,26 @@ export default function Contabilidade() {
   const tdSm = (extra?: any) => ({ padding: '5px 12px', borderBottom: '1px solid #1A1D2A', ...extra })
 
   return (
-    <div style={{ padding: '16px 24px' }}>
-      <div style={{ display: 'flex', gap: '8px', marginBottom: '16px', alignItems: 'center' }}>
-        <span style={{ fontSize: '11px', color: '#7B82A0', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1px' }}>Empresa Ativa</span>
-        {(['six','enova'] as const).map(e => (
-          <button key={e} onClick={() => setEmpresa(e)}
-            style={{ padding: '5px 14px', borderRadius: '20px', border: empresa === e ? 'none' : '1px solid #252836', background: empresa === e ? (e === 'six' ? '#1A3A6A' : '#1A4A2A') : 'transparent', color: empresa === e ? (e === 'six' ? '#4F8EF7' : '#34D399') : '#7B82A0', fontSize: '12px', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: empresa === e ? (e === 'six' ? '#4F8EF7' : '#34D399') : '#4A5070', display: 'inline-block' }} />
-            {e === 'six' ? 'SIX Comercial' : 'ENOVA Comercial'}
-          </button>
-        ))}
-        <div style={{ marginLeft: 'auto', background: '#13161F', border: '1px solid rgba(167,139,250,0.3)', borderRadius: '10px', padding: '6px 16px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+    <div style={{ padding: isMobile ? '12px' : '16px 24px' }}>
+      <div style={{ display: 'flex', gap: '8px', marginBottom: '16px', alignItems: isMobile ? 'flex-start' : 'center', flexWrap: isMobile ? 'wrap' as const : 'nowrap' as const, flexDirection: isMobile ? 'column' as const : 'row' as const }}>
+        <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' as const }}>
+          <span style={{ fontSize: '11px', color: '#7B82A0', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1px' }}>Empresa Ativa</span>
+          {(['six','enova'] as const).map(e => (
+            <button key={e} onClick={() => setEmpresa(e)}
+              style={{ padding: '5px 14px', borderRadius: '20px', border: empresa === e ? 'none' : '1px solid #252836', background: empresa === e ? (e === 'six' ? '#1A3A6A' : '#1A4A2A') : 'transparent', color: empresa === e ? (e === 'six' ? '#4F8EF7' : '#34D399') : '#7B82A0', fontSize: '12px', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: empresa === e ? (e === 'six' ? '#4F8EF7' : '#34D399') : '#4A5070', display: 'inline-block' }} />
+              {e === 'six' ? 'SIX Comercial' : 'ENOVA Comercial'}
+            </button>
+          ))}
+        </div>
+        <div style={{ marginLeft: isMobile ? 0 : 'auto', width: isMobile ? '100%' : 'auto', background: '#13161F', border: '1px solid rgba(167,139,250,0.3)', borderRadius: '10px', padding: '6px 16px', display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' as const, boxSizing: 'border-box' as const }}>
           <span style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1px', color: '#A78BFA' }}>SIX + ENOVA Aguardando</span>
           <span style={{ fontSize: '16px', fontWeight: 700, color: '#A78BFA', fontFamily: 'monospace' }}>{fmtR(valTotalCombinado)}</span>
         </div>
       </div>
 
       <div style={st}>Resumo Geral das Notas — {MESES[mesAntIdx]}/{anoAnt}<div style={{ flex: 1, height: '1px', background: '#252836' }} /></div>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: '12px', marginBottom: '16px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3,1fr)', gap: '12px', marginBottom: '16px' }}>
         {[
           { label: 'Total em NFs', valorNum: tNF, sub: 'Notas Venda/Parcial de ' + mesAntNome + '/' + anoAnt, cor: '#4F8EF7' },
           { label: 'Total Recebido', valorNum: tPago, sub: 'Pago em ' + mesAntNome + '/' + anoAnt, cor: '#34D399' },
@@ -500,8 +515,8 @@ export default function Contabilidade() {
 
       <div style={st}>Notas Fiscais — <div style={{ flex: 1, height: '1px', background: '#252836' }} /></div>
       <div style={{ background: '#13161F', border: '1px solid #252836', borderRadius: '14px', overflow: 'hidden' }}>
-        <div style={{ padding: '10px 16px', background: '#1A1D2A', borderBottom: '1px solid #252836', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+        <div style={{ padding: '10px 16px', background: '#1A1D2A', borderBottom: '1px solid #252836', display: 'flex', justifyContent: 'space-between', alignItems: isMobile ? 'flex-start' : 'center', flexDirection: isMobile ? 'column' as const : 'row' as const, gap: isMobile ? 8 : 0 }}>
+          <div style={{ display:'flex', alignItems:'center', gap:8, flexWrap: isMobile ? 'wrap' as const : 'nowrap' as const }}>
               <span style={{ fontSize: '12px', fontWeight: 600, color: '#E8EAF0' }}>{notasFiltradas4.length} notas · {isSix ? 'SIX' : 'ENOVA'} · últimos 6 meses</span>
               <select value={filtroTipo} onChange={e=>setFiltroTipo(e.target.value)} style={{ background:'#1A1D2A', color:'#E8EAF0', border:'1px solid #353849', borderRadius:6, padding:'2px 8px', fontSize:'12px', cursor:'pointer' }}>
                 <option value=''>Tipo: todos</option>
@@ -635,7 +650,7 @@ export default function Contabilidade() {
           <>
           <style>{`@keyframes fadeInTabela { from { opacity: 0.2 } to { opacity: 1 } } @keyframes voarEntrada { from { transform: translateX(-10px); opacity: 0.3 } to { transform: translateX(0); opacity: 1 } }`}</style>
           <div key={empresa} style={{ overflowX: 'auto', animation: 'fadeInTabela 0.35s ease' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', tableLayout: 'fixed' }}>
+            <table style={{ width: isMobile ? 'max-content' : '100%', minWidth: isMobile ? '900px' : undefined, borderCollapse: 'collapse', fontSize: '12px', tableLayout: 'fixed' }}>
               <thead>
                 <tr style={{ background: '#1A1D2A' }}>
                   <th style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase' as const, letterSpacing: '1px', color: '#7B82A0', borderBottom: '1px solid #252836', whiteSpace: 'nowrap' as const, padding: '8px 6px', width: '70px' }}>Nº NF</th>
@@ -782,7 +797,7 @@ export default function Contabilidade() {
                             const partsP = dtPgto.includes('-') ? dtPgto.split('-').reverse() : dtPgto.split('/')
                             const mmP = parseInt(partsP[1]); const aaP = parseInt(partsP[2])
                             const now2 = new Date(); const mesCont = now2.getMonth() + 1; const anoCont = now2.getFullYear()
-                            const condMesAnt = !!(dtContb && mmC === mesAntIdx + 1 && aaC === anoAnt)
+                            const condMesAnt = dtContb ? (mmC === mesAntIdx + 1 && aaC === anoAnt) : (mmP === mesAntIdx + 1 && aaP === anoAnt)
                             const condMesAtual = dtContb ? (mmC === mesCont && aaC === anoCont) : (mmP === mesCont && aaP === anoCont)
                             if ((condMesAnt || condMesAtual) && primeiroPagamento > 0) {
                               return <span style={{ color: '#FBBF24', fontWeight: 600 }}>{fmtR(primeiroPagamento * aliqEfetivaCont)}</span>
@@ -953,7 +968,7 @@ export default function Contabilidade() {
                                   const partsPPg = dtPgtoPg.includes('-') ? dtPgtoPg.split('-').reverse() : dtPgtoPg.split('/')
                                   const mmPPg = parseInt(partsPPg[1]); const aaPPg = parseInt(partsPPg[2])
                                   const now2Pg = new Date(); const mesContPg = now2Pg.getMonth() + 1; const anoContPg = now2Pg.getFullYear()
-                                  const condMesAntPg = !!(dtContbPg && mmCPg === mesAntIdx + 1 && aaCPg === anoAnt)
+                                  const condMesAntPg = dtContbPg ? (mmCPg === mesAntIdx + 1 && aaCPg === anoAnt) : (mmPPg === mesAntIdx + 1 && aaPPg === anoAnt)
                                   const condMesAtualPg = dtContbPg ? (mmCPg === mesContPg && aaCPg === anoContPg) : (mmPPg === mesContPg && aaPPg === anoContPg)
                                   if ((condMesAntPg || condMesAtualPg) && pg.valor_pago > 0) {
                                     return <span style={{ color: '#FBBF24', fontWeight: 600 }}>{fmtR(parseFloat(pg.valor_pago) * aliqEfetivaCont)}</span>
