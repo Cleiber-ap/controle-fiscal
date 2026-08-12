@@ -210,11 +210,14 @@ export default function ImportarXML() {
     }
 
     // Buscar notas do sistema
-    const [notasSix, notasEnova] = await Promise.all([
+    const [notasSix, notasEnova, pgtosSix, pgtosEnova] = await Promise.all([
       api.get('/notas/1').then(r => r.data).catch(() => []),
       api.get('/notas/2').then(r => r.data).catch(() => []),
+      api.get('/notas/pagamentos/1').then(r => r.data).catch(() => ({})),
+      api.get('/notas/pagamentos/2').then(r => r.data).catch(() => ({})),
     ])
     const todasNotas = [...notasSix.map((n: any) => ({...n, empresa_id: 1})), ...notasEnova.map((n: any) => ({...n, empresa_id: 2}))]
+    const pagamentosPorEmpresa: Record<number, Record<string, any[]>> = { 1: pgtosSix, 2: pgtosEnova }
 
     const resultado: any[] = []
     const erros: string[] = []
@@ -267,18 +270,26 @@ export default function ImportarXML() {
         continue
       }
 
-      resultado.push({
-        numero_nf: notaVenda.numero_nf,
-        empresa_id: notaVenda.empresa_id,
-        empresa: notaVenda.empresa_id === 1 ? 'SIX' : 'ENOVA',
-        destinatario: notaVenda.destinatario,
-        valor_nf: parseFloat(notaVenda.valor_nf) || 0,
-        valor_pago: valor,
-        data_pagamento: data,
-        ja_pago: notaVenda.valor_pago ? parseFloat(notaVenda.valor_pago) > 0 : false,
-        valor_atual: parseFloat(notaVenda.valor_pago) || 0,
-        id: notaVenda.id,
-      })
+      const listaPgExistentes = (pagamentosPorEmpresa[notaVenda.empresa_id] || {})[notaVenda.numero_nf] || []
+        let jaPago = false
+        if (listaPgExistentes.length > 0) {
+          jaPago = listaPgExistentes.some((p: any) => Math.abs((parseFloat(p.valor_pago) || 0) - valor) < 0.01 && p.dt_pagamento === data)
+        } else if (notaVenda.valor_pago) {
+          const dtNotaAtual = notaVenda.dt_pagamento || notaVenda.data_pagamento
+          jaPago = Math.abs((parseFloat(notaVenda.valor_pago) || 0) - valor) < 0.01 && dtNotaAtual === data
+        }
+        resultado.push({
+          numero_nf: notaVenda.numero_nf,
+          empresa_id: notaVenda.empresa_id,
+          empresa: notaVenda.empresa_id === 1 ? 'SIX' : 'ENOVA',
+          destinatario: notaVenda.destinatario,
+          valor_nf: parseFloat(notaVenda.valor_nf) || 0,
+          valor_pago: valor,
+          data_pagamento: data,
+          ja_pago: jaPago,
+          valor_atual: parseFloat(notaVenda.valor_pago) || 0,
+          id: notaVenda.id,
+        })
     }
 
     setPlanilhaNotas(resultado)
