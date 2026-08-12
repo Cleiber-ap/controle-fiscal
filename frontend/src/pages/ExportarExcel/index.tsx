@@ -21,6 +21,8 @@ export default function ExportarExcel() {
   const [dasEnova, setDasEnova] = useState<any[]>([])
   const [notas, setNotas] = useState<{ six: any[]; enova: any[] }>({ six: [], enova: [] })
   const [pagamentos, setPagamentos] = useState<Record<string, any[]>>({})
+  const [ajustesSix, setAjustesSix] = useState<any[]>([])
+  const [ajustesEnova, setAjustesEnova] = useState<any[]>([])
   const [empresas, setEmpresas] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [gerando, setGerando] = useState<string | null>(null)
@@ -41,11 +43,15 @@ export default function ExportarExcel() {
       empresasAPI.listar().then(r => r.data).catch(() => []),
       api.get('/notas/1').then(r => r.data).catch(() => []),
       api.get('/notas/2').then(r => r.data).catch(() => []),
-    ]).then(([h1, h2, d1, d2, emp, n1, n2]) => {
+      api.get('/notas/ajustes/1').then((r:any) => r.data).catch(() => []),
+      api.get('/notas/ajustes/2').then((r:any) => r.data).catch(() => []),
+    ]).then(([h1, h2, d1, d2, emp, n1, n2, aj1, aj2]) => {
       setHistSix(h1); setHistEnova(h2)
       setDasSix(d1); setDasEnova(d2)
       setEmpresas(emp)
       setNotas({ six: n1, enova: n2 })
+      setAjustesSix(Array.isArray(aj1) ? aj1 : [])
+      setAjustesEnova(Array.isArray(aj2) ? aj2 : [])
       // Carregar todos os pagamentos de uma vez
       Promise.all([
         api.get('/notas/pagamentos/1').then((r: any) => r.data).catch(() => ({})),
@@ -167,8 +173,8 @@ export default function ExportarExcel() {
     const aligns = ["center","center","center","left","left","center","center","center","center"]
     const cab = ["Nº NF","RzEmit","CnpjDest","RzDest","Valor NF","DtEmissao","Valor Pago","Data Contabilização","Status Nota Fiscal"]
     const colWidths = [11,43,17,52,18,13,17,17,17]
-    const buildSheet = (lista: any[], emp: string) => {
-      const nfsCan = new Set(lista.filter((n:any)=>n.numero_nf?.endsWith("-CAN")).map((n:any)=>n.numero_nf.replace("-CAN","")))
+    const buildSheet = (lista: any[], emp: string, ajustesEmp: any[]) => {
+      const nfsCan = new Set([...lista.filter((n:any)=>n.numero_nf?.endsWith("-CAN")).map((n:any)=>n.numero_nf.replace("-CAN","")), ...ajustesEmp.filter((aj:any)=>aj.nf_referenciada).map((aj:any)=>aj.nf_referenciada)])
       const listaFiltrada = lista.filter((n:any)=>{ const st=(n.nat_operacao||n.status||"").toLowerCase(); return !st.includes("cancelamento")&&!st.includes("cce")&&!st.includes("carta") })
       const notasMes = listaFiltrada.filter((n:any)=>{
         if(!n.data_emissao) return false
@@ -251,8 +257,8 @@ export default function ExportarExcel() {
       return ws
     }
     const wb = XLSXStyle.utils.book_new()
-    XLSXStyle.utils.book_append_sheet(wb, buildSheet(notas.six,"SIX COMERCIAL ARTIGOS PROMOCIONAIS"), "SIX")
-    XLSXStyle.utils.book_append_sheet(wb, buildSheet(notas.enova,"ENOVA COMERCIAL ARTIGOS PROMOCIONAIS"), "ENOVA")
+    XLSXStyle.utils.book_append_sheet(wb, buildSheet(notas.six,"SIX COMERCIAL ARTIGOS PROMOCIONAIS",ajustesSix), "SIX")
+    XLSXStyle.utils.book_append_sheet(wb, buildSheet(notas.enova,"ENOVA COMERCIAL ARTIGOS PROMOCIONAIS",ajustesEnova), "ENOVA")
     const wbout = XLSXStyle.write(wb, { bookType: "xlsx", type: "array" })
     console.log("WBOUT_SIZE:", wbout?.byteLength)
     const blob = new Blob([wbout], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" })

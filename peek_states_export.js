@@ -1,0 +1,11 @@
+﻿const fs = require("fs");
+const c = fs.readFileSync("C:/projetos/controle-fiscal/frontend/src/pages/ExportarExcel/index.tsx", "utf8");
+console.log("=== states ===");
+let i = c.indexOf("const [pagamentos, setPagamentos]");
+console.log(JSON.stringify(c.substring(i-200, i+200)));
+console.log("=== nfsCan atual ===");
+i = c.indexOf("const nfsCan = new Set");
+console.log(JSON.stringify(c.substring(i, i+200)));
+console.log("=== chamadas buildSheet ===");
+i = c.indexOf("book_append_sheet(wb, buildSheet(notas.six");
+console.log(JSON.stringify(c.substring(i-30, i+300)));
