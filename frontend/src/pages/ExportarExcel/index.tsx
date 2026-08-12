@@ -178,7 +178,7 @@ export default function ExportarExcel() {
       const notasAguardando = listaFiltrada.filter((n:any)=>{
         const st=(n.nat_operacao||n.status||"").toLowerCase()
         const semPag=!n.valor_pago||parseFloat(n.valor_pago)===0
-        if(!n.data_emissao||!st.includes("venda")||nfsCan.has(n.numero_nf)||!semPag) return false
+        if(!n.data_emissao||!st.includes("venda")||st.includes("devolu")||nfsCan.has(n.numero_nf)||!semPag) return false
         const parts=n.data_emissao.includes("-")?n.data_emissao.split("-"):n.data_emissao.split("/").reverse()
         return !(parseInt(parts[1])===mesAntIdx+1&&parseInt(parts[0])===anoAnt)
       })
