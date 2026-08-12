@@ -219,6 +219,7 @@ export default function ExportarExcel() {
       })
       rows.forEach((row:any[], ri:number) => {
         const bg = ri%2===0 ? "FFFFFF" : "ECECEC"
+        const isCancelada = String(row[8]||"").includes("/Cancelada")
         for(let ci=0;ci<9;ci++){
           const addr = XLSXStyle.utils.encode_cell({r:ri+1,c:ci})
           const cellVal = row[ci] ?? ""
@@ -226,7 +227,7 @@ export default function ExportarExcel() {
           if(!ws[addr]) ws[addr] = {t:cellType, v:cellVal}
           else { ws[addr].t = cellType; ws[addr].v = cellVal }
           const isDate = (ci===5||ci===7) && row[ci] instanceof Date
-          ws[addr].s = { font:{name:"Calibri",sz:11}, fill:{patternType:"solid",fgColor:{rgb:bg}}, alignment:{horizontal:aligns[ci]||"left",vertical:"center"}, border }
+          ws[addr].s = { font:{name:"Calibri",sz:11,color:isCancelada?{rgb:"FF0000"}:undefined}, fill:{patternType:"solid",fgColor:{rgb:bg}}, alignment:{horizontal:aligns[ci]||"left",vertical:"center"}, border }
           if(isDate) ws[addr].z = "dd/mm/yyyy"
           if(ci===4||ci===6) ws[addr].z = "_(R$* #,##0.00_);_(R$* (#,##0.00);_(R$* \"-\"??_);_(@_)"
         }
