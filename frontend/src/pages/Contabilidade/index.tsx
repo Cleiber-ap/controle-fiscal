@@ -800,7 +800,7 @@ export default function Contabilidade() {
                             const condMesAnt = dtContb ? (mmC === mesAntIdx + 1 && aaC === anoAnt) : (mmP === mesAntIdx + 1 && aaP === anoAnt)
                             const condMesAtual = dtContb ? (mmC === mesCont && aaC === anoCont) : (mmP === mesCont && aaP === anoCont)
                             if ((condMesAnt || condMesAtual) && primeiroPagamento > 0) {
-                              return <span style={{ color: '#FBBF24', fontWeight: 600 }}>{fmtR(primeiroPagamento * aliqEfetivaCont)}</span>
+                              return <span style={{ color: dtContb ? '#4F8EF7' : '#FBBF24', fontWeight: 600 }}>{fmtR(primeiroPagamento * aliqEfetivaCont)}</span>
                             }
                             return <span style={{ color: '#4A5070' }}>—</span>
                           })()}
@@ -971,7 +971,7 @@ export default function Contabilidade() {
                                   const condMesAntPg = dtContbPg ? (mmCPg === mesAntIdx + 1 && aaCPg === anoAnt) : (mmPPg === mesAntIdx + 1 && aaPPg === anoAnt)
                                   const condMesAtualPg = dtContbPg ? (mmCPg === mesContPg && aaCPg === anoContPg) : (mmPPg === mesContPg && aaPPg === anoContPg)
                                   if ((condMesAntPg || condMesAtualPg) && pg.valor_pago > 0) {
-                                    return <span style={{ color: '#FBBF24', fontWeight: 600 }}>{fmtR(parseFloat(pg.valor_pago) * aliqEfetivaCont)}</span>
+                                    return <span style={{ color: dtContbPg ? '#4F8EF7' : '#FBBF24', fontWeight: 600 }}>{fmtR(parseFloat(pg.valor_pago) * aliqEfetivaCont)}</span>
                                   }
                                   return <span style={{ color: '#4A5070' }}>—</span>
                                 })()}
