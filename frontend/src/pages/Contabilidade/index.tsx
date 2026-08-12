@@ -697,7 +697,7 @@ export default function Contabilidade() {
                   const nat = (r.nat_operacao || r.status || '').toLowerCase()
                   const isVenda = ((nat.includes('venda') && !nat.includes('devolu')) || nat.includes('complemento de frete') || nat.includes('complementar')) && !foiCancelada
                   const stStyle = foiCancelada && (r.nat_operacao || r.status || '').toLowerCase().includes('venda')
-                    ? { bg: 'rgba(248,113,113,0.15)', cor: '#FCA5A5' }
+                    ? (nfsCanReal.has(r.numero_nf) ? { bg: 'rgba(248,113,113,0.15)', cor: '#FCA5A5' } : { bg: 'rgba(251,191,36,0.15)', cor: '#FBBF24' })
                     : statusStyle(r.nat_operacao || r.status)
                   const isEdit = editando === r.numero_nf
                   const isSaldoEdit = editando === r.numero_nf + '-saldo'
