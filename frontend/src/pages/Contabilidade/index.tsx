@@ -229,6 +229,7 @@ export default function Contabilidade() {
   const creditosAtivos = creditos.filter(cr => cr.status === 'pendente' || cr.status === 'autorizado')
   const totalCredito = creditosAtivos.reduce((s: number, cr: any) => s + cr.valor_nf_original * aliqEfetivaCont, 0)
   const nfsCanceladas = new Set([...notas.filter(r => r.numero_nf?.endsWith('-CAN')).map(r => r.numero_nf.replace('-CAN', '')), ...ajustes.filter((aj: any) => aj.nf_referenciada).map((aj: any) => aj.nf_referenciada)])
+  const nfsCanReal = new Set(notas.filter(r => r.numero_nf?.endsWith('-CAN')).map(r => r.numero_nf.replace('-CAN', '')))
 
   const parseDate = (d: string) => {
     if (!d) return null
@@ -819,7 +820,7 @@ export default function Contabilidade() {
                         <td style={tdBase()}>
                           <span style={{ padding: '3px 8px', borderRadius: '12px', fontSize: '10px', fontWeight: 600, background: stStyle.bg, color: stStyle.cor, display: 'inline-flex', alignItems: 'center', gap: '4px', maxWidth: '180px' }}>
                             <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: stStyle.cor }} />
-                            {foiCancelada ? (r.nat_operacao || r.status || 'Sem status') + '/Cancelada' : (r.nat_operacao || r.status || 'Sem status')}
+                            {foiCancelada ? (r.nat_operacao || r.status || 'Sem status') + (nfsCanReal.has(r.numero_nf) ? '/Cancelada' : '/Entrada') : (r.nat_operacao || r.status || 'Sem status')}
                           </span>
                         </td>
                         <td style={tdBase({ textAlign: 'center', whiteSpace: 'nowrap' })}>
