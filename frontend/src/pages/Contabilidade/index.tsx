@@ -1034,8 +1034,8 @@ export default function Contabilidade() {
                               </span>
                             </td>
                             <td style={tdSm({ textAlign: 'center' })}>
-                              <button onClick={() => { setEditando(isSaldoEdit ? null : r.numero_nf + '-saldo'); setEditVPg(''); setEditDtp('') }}
-                                style={{ padding: '3px 9px', background: '#1A1D2A', border: '1px solid #252836', borderRadius: '5px', color: '#7B82A0', fontSize: '11px', cursor: 'pointer' }}>✏️</button>
+                              {temPermissao('contab', 'editar') && <button onClick={() => { setEditando(isSaldoEdit ? null : r.numero_nf + '-saldo'); setEditVPg(''); setEditDtp('') }}
+                                style={{ padding: '3px 9px', background: '#1A1D2A', border: '1px solid #252836', borderRadius: '5px', color: '#7B82A0', fontSize: '11px', cursor: 'pointer' }}>✏️</button>}
                             </td>
                           </tr>
                           {isSaldoEdit && (
