@@ -224,6 +224,12 @@ export default function Layout({ children, showNovaNF, onNovaNF }: LayoutProps) 
                 + Nova NF
               </button>
             )}
+            {usuarioLogado?.nome && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#7B82A0', fontSize: '12px' }}>
+                <span style={{ fontSize: '15px' }}>👤</span>
+                <span style={{ fontWeight: 600, textTransform: 'uppercase' as const, letterSpacing: '0.5px' }}>{usuarioLogado.nome}</span>
+              </div>
+            )}
             <div
               onClick={logout}
               title="Sair"
