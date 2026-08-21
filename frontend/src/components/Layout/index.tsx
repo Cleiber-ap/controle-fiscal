@@ -1,5 +1,6 @@
 ﻿import { useNavigate, useLocation } from 'react-router-dom'
 import { useState, useEffect } from 'react'
+import { temPermissao } from '../../utils/permissoes'
 
 interface LayoutProps {
   children: React.ReactNode
@@ -162,7 +163,7 @@ export default function Layout({ children, showNovaNF, onNovaNF }: LayoutProps) 
         {/* Configurações */}
         <div style={{ padding: '4px 10px' }}>
           <div style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1.2px', color: '#4A5070', padding: '0 8px', marginBottom: '4px' }}>Configurações</div>
-          {NavItem({ path: "/xml", icon: "📥", label: "Importar XML" })}
+          {temPermissao('xml', 'visualizar') && NavItem({ path: "/xml", icon: "📥", label: "Importar XML" })}
           {NavItem({ path: "/relatorios", icon: "📈", label: "Relatórios", cor: "purple" })}
           {NavItem({ path: "/usuarios", icon: "👤", label: "Usuários" })}
           {NavItem({ path: "/empresas", icon: "🏢", label: "Empresas" })}
