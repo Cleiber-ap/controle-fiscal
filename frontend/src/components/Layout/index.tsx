@@ -223,10 +223,10 @@ export default function Layout({ children, showNovaNF, onNovaNF }: LayoutProps) 
             <div
               onClick={logout}
               title="Sair"
-              style={{ cursor: 'pointer', color: '#7B82A0', padding: '4px', fontSize: '16px' }}
+              style={{ cursor: 'pointer', color: '#7B82A0', padding: '4px 8px', fontSize: '16px', display: 'flex', alignItems: 'center', gap: '4px', borderRadius: '6px', transition: 'color 0.15s' }}
               onMouseEnter={e => (e.currentTarget as HTMLDivElement).style.color = '#F87171'}
               onMouseLeave={e => (e.currentTarget as HTMLDivElement).style.color = '#7B82A0'}
-            ></div>
+            >⏻</div>
           </div>
         </div>
 
