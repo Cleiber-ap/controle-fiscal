@@ -208,10 +208,24 @@ export default function ExportarExcel() {
         const pgtos=pagamentos[n.numero_nf]||[]
         const dtEm=parseDate(n.data_emissao)
         const pgtosMes = pgtos.filter((p:any)=>{ const dt=p.data_contabilizacao; if(!dt) return false; const parts=dt.includes("-")?dt.split("-"):dt.split("/").reverse(); const m=parseInt(parts[1]); const a=parseInt(parts[0]); return (m===mesAntIdx+1&&a===anoAnt)||(m===mesAtualIdx2+1&&a===anoAtual2) })
+        const statusTxt = (n.nat_operacao||n.status||"")+(nfsCan.has(n.numero_nf)?(nfsCanReal.has(n.numero_nf)?"/Cancelada":"/Entrada"):"")
+        const isPagoRefLocal = (mes: number, ano: number) => (mes===mesAntIdx+1&&ano===anoAnt) || (mes===mesAtualIdx2+1&&ano===anoAtual2)
         if(pgtosMes.length>0){
-          pgtosMes.forEach((p:any)=>rows.push([n.numero_nf||"",emp,n.cnpj_dest||"",n.destinatario||"",parseFloat(n.valor_nf)||0,dtEm,parseFloat(p.valor_pago)||0,parseDate(p.data_contabilizacao),(n.nat_operacao||n.status||"")+(nfsCan.has(n.numero_nf)?(nfsCanReal.has(n.numero_nf)?"/Cancelada":"/Entrada"):"")]))
+          pgtosMes.forEach((p:any)=>rows.push([n.numero_nf||"",emp,n.cnpj_dest||"",n.destinatario||"",parseFloat(n.valor_nf)||0,dtEm,parseFloat(p.valor_pago)||0,parseDate(p.data_contabilizacao),statusTxt]))
+        } else if (pgtos.length === 0) {
+          const dtC = n.data_contabilizacao
+          let valorOk: number | null = null
+          let dtOk: Date | null = null
+          if (dtC) {
+            const parts = dtC.includes("-")?dtC.split("-"):dtC.split("/").reverse()
+            if (isPagoRefLocal(parseInt(parts[1]), parseInt(parts[0]))) {
+              valorOk = n.valor_pago ? parseFloat(n.valor_pago) : null
+              dtOk = parseDate(dtC)
+            }
+          }
+          rows.push([n.numero_nf||"",emp,n.cnpj_dest||"",n.destinatario||"",parseFloat(n.valor_nf)||0,dtEm,valorOk,dtOk,statusTxt])
         } else {
-          rows.push([n.numero_nf||"",emp,n.cnpj_dest||"",n.destinatario||"",parseFloat(n.valor_nf)||0,dtEm,n.valor_pago?parseFloat(n.valor_pago):null,parseDate(n.data_contabilizacao),(n.nat_operacao||n.status||"")+(nfsCan.has(n.numero_nf)?(nfsCanReal.has(n.numero_nf)?"/Cancelada":"/Entrada"):"")])
+          rows.push([n.numero_nf||"",emp,n.cnpj_dest||"",n.destinatario||"",parseFloat(n.valor_nf)||0,dtEm,null,null,statusTxt])
         }
       }
       const nRows = rows.length
