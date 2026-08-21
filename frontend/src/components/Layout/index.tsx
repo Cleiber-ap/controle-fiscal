@@ -60,6 +60,9 @@ export default function Layout({ children, showNovaNF, onNovaNF }: LayoutProps) 
     localStorage.removeItem('usuario')
     navigate('/login')
   }
+  const usuarioLogado = (() => {
+    try { return JSON.parse(localStorage.getItem('usuario') || 'null') } catch { return null }
+  })()
 
   function NavItem({ path, icon, label, badge, cor }: {
     path: string; icon: string; label: string; badge?: number; cor?: 'purple'
