@@ -381,6 +381,14 @@ export default function ImportarXML() {
     setImportando(true)
     try {
       let importadas = 0
+      const errosAjuste: string[] = []
+      const notasDbPorEmpresa: Record<number, any[]> = {}
+      const getNotasDb = async (empId: number) => {
+        if (!notasDbPorEmpresa[empId]) {
+          notasDbPorEmpresa[empId] = await api.get('/notas/' + empId).then((r: any) => r.data).catch(() => [])
+        }
+        return notasDbPorEmpresa[empId]
+      }
       for (const nota of notas) {
         // Se for CAN ou CCE, buscar destinatario/cnpj da nota original
         const empIdDetectado = (nota as any).empresaDetectada === 'six' ? 1 : 2
@@ -407,20 +415,35 @@ export default function ImportarXML() {
         }
         await api.post('/notas/importar', notaFinal)
         importadas++
-        // Se for devolucao com refNFe: registrar ajuste para subtrair do RBT12
-        const isDev = (notaFinal.nat_op || '').toLowerCase().includes('devolu')
+        // Nota de entrada com refNFe: anula a venda referenciada apenas para fins fiscais (RBT12/DAS).
+        // A venda original continua somando normalmente no historico (aba Faturamentos).
+        const isDev = (notaFinal.tipo || 'saida') === 'entrada'
         if (isDev && notaFinal.refNFe && notaFinal.refNFe.length >= 25) {
           const chave = notaFinal.refNFe
-          const anoOrig = parseInt('20' + chave.substring(2, 4))
-          const mesOrig = parseInt(chave.substring(4, 6))
+          // A devolucao reduz a receita bruta do periodo em que ELA ocorreu (mes da nota de
+          // entrada), nao do mes da venda original. Cai para a chave se faltar a data.
+          const anoDev = (notaFinal as any).anoEmissao || parseInt('20' + chave.substring(2, 4))
+          const mesDev = (notaFinal as any).mesEmissao || parseInt(chave.substring(4, 6))
           const nfOrig = chave.substring(25, 34).replace(/^0+/, '')
+          // Nao existe devolucao parcial: a entrada sempre espelha a venda referenciada,
+          // entao o valor da entrada JA e a anulacao integral. A busca abaixo nao muda o
+          // valor gravado, so denuncia divergencia (sinal de refNFe apontando pra NF errada).
+          const notasDb = await getNotasDb(empIdDetectado)
+          const vendaOrig = notas.find((n: any) => n.numero_nf === nfOrig)
+            || notasDb.find((n: any) => n.numero_nf === nfOrig)
+          if (vendaOrig && Math.abs((parseFloat(vendaOrig.valor_nf) || 0) - notaFinal.valor_nf) >= 0.01) {
+            errosAjuste.push(`NF ${notaFinal.numero_nf} — a entrada (R$ ${notaFinal.valor_nf.toFixed(2)}) não bate com a venda NF ${nfOrig} (R$ ${(parseFloat(vendaOrig.valor_nf) || 0).toFixed(2)}). Confira a referência do XML: o ajuste foi gravado com o valor da entrada.`)
+          }
           try {
             await api.post('/notas/ajustes', {
-              empresa_id: empIdDetectado, ano: anoOrig, mes: mesOrig,
+              empresa_id: empIdDetectado, ano: anoDev, mes: mesDev,
               valor: notaFinal.valor_nf, nf_devolucao: notaFinal.numero_nf,
               nf_referenciada: nfOrig, chave_ref: chave
             })
-            } catch(e) { console.warn('Ajuste devolucao nao registrado', e) }
+            } catch (e: any) {
+            errosAjuste.push(`NF ${notaFinal.numero_nf} — ajuste de devolução NÃO registrado: a NF ${nfOrig} vai continuar somando no RBT12. ${e?.response?.data?.detail || e?.message || 'erro desconhecido'}`)
+            console.warn('Ajuste devolucao nao registrado', e)
+          }
         }
       }
       // Recalcular historico a partir das notas ja salvas no banco
@@ -428,8 +451,20 @@ export default function ImportarXML() {
       for (const emp of empresasImportadas) {
         const todasNotas = await api.get('/notas/' + emp).then((r: any) => r.data).catch(() => [])
         const canceladasRecalc = new Set(todasNotas.filter((n: any) => n.numero_nf?.endsWith('-CAN')).map((n: any) => n.numero_nf.replace('-CAN', '')))
+        // Meses afetados por esta leva. So eles sao regravados: regravar todos os meses
+        // sobrescreveria historico semeado manualmente cujos XMLs nao estao todos no banco.
+        const mesesAlvo = new Set<string>()
+        const addMes = (dt?: string) => { if (dt && dt.includes('/')) { const [, m, a] = dt.split('/'); mesesAlvo.add(`${a}-${m}`) } }
+        for (const n of notas.filter((x: any) => ((x as any).empresaDetectada === 'six' ? 1 : 2) === emp)) {
+          addMes(n.data_emissao)
+          // A nota referenciada (devolucao/entrada) ou cancelada muda de mes tambem
+          const ref = (n as any).refNFe
+          const base = ref && ref.length >= 34 ? ref.substring(25, 34).replace(/^0+/, '') : n.numero_nf.replace('-CAN', '').replace('-CCE', '')
+          const orig = todasNotas.find((o: any) => o.numero_nf === base)
+          if (orig) addMes(orig.data_emissao)
+        }
         const porMesRecalc: Record<string, number> = {}
-        todasNotas.filter((n: any) => { if (canceladasRecalc.has(n.numero_nf)) return false; const st = (n.nat_operacao || n.status || '').toLowerCase(); return (st.includes('venda') && !st.includes('devolu')) || st.includes('complemento de frete') || st.includes('complementar') }).forEach((n: any) => {
+        todasNotas.filter((n: any) => { if (canceladasRecalc.has(n.numero_nf)) return false; if ((n.tipo || 'saida') === 'entrada') return false; const st = (n.nat_operacao || n.status || '').toLowerCase(); return (st.includes('venda') && !st.includes('devolu')) || st.includes('complemento de frete') || st.includes('complementar') }).forEach((n: any) => {
           if (n.data_emissao) {
             const [, m, a] = n.data_emissao.split('/')
             const key = `${a}-${m}`
@@ -437,10 +472,12 @@ export default function ImportarXML() {
           }
         })
         for (const key of Object.keys(porMesRecalc)) {
+          if (!mesesAlvo.has(key)) continue
           const [a, m] = key.split('-')
           await historicoAPI.upsert({ empresa_id: emp, ano: +a, mes: +m, valor: porMesRecalc[key] })
         }
       }
+      if (errosAjuste.length > 0) setErros(prev => [...prev, ...errosAjuste])
       setResultado(`✅ ${importadas} nota${importadas !== 1 ? 's' : ''} importada${importadas !== 1 ? 's' : ''} com sucesso!${notasVenda.length > 0 ? ` · Planilha_2 atualizada` : ''}`)
       await registrarLog({ acao: 'IMPORTAR', modulo: 'notas', descricao: `${importadas} nota${importadas !== 1 ? 's' : ''} importada${importadas !== 1 ? 's' : ''} via XML · ${notasVenda.length} Venda`, valorDepois: { total: importadas, vendas: notasVenda.length, notas: notas.map(n => n.numero_nf) } })
       setNotas([])

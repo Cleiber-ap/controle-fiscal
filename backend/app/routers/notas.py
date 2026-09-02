@@ -307,6 +307,14 @@ def criar_ajuste(dados: dict, db: Session = Depends(get_db), usuario=Depends(get
             AjusteDevolucao.chave_ref == chave_ref
         ).first()
         if existente:
+            # Reimportar o XML corrige um registro ja gravado (ex.: mes lancado errado)
+            existente.ano = dados["ano"]
+            existente.mes = dados["mes"]
+            existente.valor = dados["valor"]
+            existente.nf_devolucao = dados.get("nf_devolucao")
+            existente.nf_referenciada = dados.get("nf_referenciada")
+            db.commit()
+            db.refresh(existente)
             return existente
     aj = AjusteDevolucao(
         empresa_id=empresa_id,
