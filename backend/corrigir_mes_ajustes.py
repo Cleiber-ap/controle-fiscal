@@ -79,7 +79,9 @@ try:
             ja_certos += 1
             continue
 
-        corrigidos.append((aj, ano, mes, nota.dt_emissao))
+        # Guarda a origem ANTES de mutar, senao o relatorio do --apply mostraria
+        # o mes novo nos dois lados da seta.
+        corrigidos.append((aj, aj.ano, aj.mes, ano, mes, nota.dt_emissao))
         if APLICAR:
             aj.ano = ano
             aj.mes = mes
@@ -93,12 +95,12 @@ try:
 
     if corrigidos:
         print('A REALOCAR (%d):' % len(corrigidos))
-        for aj, ano, mes, dt in corrigidos:
+        for aj, ano_de, mes_de, ano, mes, dt in corrigidos:
             print(
                 '  empresa %d · NF devolucao %-10s (emitida %s) · ref NF %-10s · R$ %12.2f'
                 % (aj.empresa_id, aj.nf_devolucao, dt, aj.nf_referenciada or '?', aj.valor or 0)
             )
-            print('      %02d/%d  ->  %02d/%d' % (aj.mes, aj.ano, mes, ano))
+            print('      %02d/%d  ->  %02d/%d' % (mes_de, ano_de, mes, ano))
     else:
         print('Nenhum ajuste precisa ser realocado.')
 
