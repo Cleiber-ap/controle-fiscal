@@ -120,6 +120,8 @@ def ler_xml(caminho):
         'nat_op': tag('natOp'),
         'tipo': 'entrada' if (tp and tp.group(1) == '0') else 'saida',
         'refNFe': tag('refNFe'),
+        'finNFe': tag('finNFe'),
+        'cfops': sorted(set(re.findall(r'<CFOP>(\d+)</CFOP>', txt))),
     }
 
 
@@ -325,11 +327,66 @@ def conferir_xml(db, pastas):
                 mes_errado.append('  %s NF %s emitida %s · ajuste em %02d/%d'
                                   % (NOME_EMPRESA[emp], x['numero_nf'], x['data'], aj.mes, aj.ano))
 
+    conferir_classificacao(xmls)
+
     apontar('XML com CNPJ emitente nao reconhecido', desconhecidos)
     apontar('XML no disco que nao esta no banco', ausentes)
     apontar('Divergencia entre XML e banco', divergentes)
     apontar('Devolucao no XML sem ajuste no banco', dev_sem_ajuste)
     apontar('Ajuste em mes diferente da emissao do XML', mes_errado)
+
+
+def classifica_por_texto(x):
+    """Replica a regra de producao, que le a frase da natureza."""
+    if x['tipo'] == 'entrada':
+        return 'nao-faturamento'
+    st = (x['nat_op'] or '').lower()
+    if ('venda' in st and 'devolu' not in st) or 'complemento de frete' in st or 'complementar' in st:
+        return 'faturamento'
+    return 'nao-faturamento'
+
+
+def classifica_por_estrutura(x):
+    """
+    Usa apenas campos estruturados da NF-e:
+      finNFe  1 normal · 2 complementar · 3 ajuste · 4 devolucao
+      tpNF    0 entrada · 1 saida
+      CFOP    2o digito: 1 = venda · 2 = devolucao · 9 = remessa/outras
+    """
+    if x['finNFe'] == '4':
+        return 'nao-faturamento'   # devolucao
+    if x['tipo'] == 'entrada':
+        return 'nao-faturamento'
+    if x['finNFe'] == '2':
+        return 'faturamento'       # complementar acompanha a operacao original
+    grupos = {c[1] for c in x['cfops'] if len(c) >= 2}
+    if '1' in grupos:
+        return 'faturamento'       # venda
+    return 'nao-faturamento'       # remessa, bonificacao, demonstracao...
+
+
+def conferir_classificacao(xmls):
+    """
+    Compara a regra que le texto com a que le campos estruturados. Divergir
+    significa que a frase da natureza esta decidindo algo que os codigos da NF-e
+    contradizem — exatamente o risco de classificar por texto livre.
+    """
+    titulo('MODO XML — classificacao por texto x campos estruturados')
+    divergentes, sem_cfop = [], []
+    normais = [x for x in xmls if x['evento'] is None]
+    for x in normais:
+        if not x['cfops']:
+            sem_cfop.append('  NF %s · %s' % (x['numero_nf'], x['arquivo']))
+            continue
+        t, e = classifica_por_texto(x), classifica_por_estrutura(x)
+        if t != e:
+            divergentes.append(
+                '  NF %-8s "%s" · tpNF=%s finNFe=%s CFOP=%s · texto diz %s, estrutura diz %s'
+                % (x['numero_nf'], (x['nat_op'] or '')[:34], '0' if x['tipo'] == 'entrada' else '1',
+                   x['finNFe'] or '?', ','.join(x['cfops']), t, e))
+    print('  %d nota(s) avaliada(s) · %d divergencia(s)' % (len(normais), len(divergentes)))
+    apontar('Texto e campos estruturados discordam sobre ser faturamento', divergentes)
+    apontar('XML sem CFOP legivel', sem_cfop)
 
 
 # ───────────────────────────────────────────────────────────────────── main ──
