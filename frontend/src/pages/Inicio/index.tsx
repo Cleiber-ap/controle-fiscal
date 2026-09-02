@@ -5,6 +5,7 @@ const api = axios.create({ baseURL: import.meta.env.VITE_API_URL || 'https://dil
 api.interceptors.request.use((c: any) => { const t = localStorage.getItem('access_token'); if (t) c.headers.Authorization = 'Bearer ' + t; return c })
 import { registrarLog } from '../../api/auditoria'
 import { temPermissao } from '../../utils/permissoes'
+import { FAIXAS_SIMPLES, faixaDoRbt12, calcRbt12, aliquotaEfetiva, icmsAproveitavel } from '../../utils/simples'
 
 const MESES = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez']
 
@@ -12,14 +13,6 @@ function fmtR(v: number) {
   return 'R$ ' + v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 }
 
-const FAIXAS_SIMPLES = [
-  { min: 0, max: 180000, aliq: 0.04, ded: 0, faixa: '1ª', icms: 0.34 },
-  { min: 180000.01, max: 360000, aliq: 0.073, ded: 5940, faixa: '2ª', icms: 0.34 },
-  { min: 360000.01, max: 720000, aliq: 0.095, ded: 13860, faixa: '3ª', icms: 0.335 },
-  { min: 720000.01, max: 1800000, aliq: 0.107, ded: 22500, faixa: '4ª', icms: 0.335 },
-  { min: 1800000.01, max: 3600000, aliq: 0.143, ded: 87300, faixa: '5ª', icms: 0.335 },
-  { min: 3600000.01, max: 4800000, aliq: 0.19, ded: 378000, faixa: '6ª', icms: 0 },
-]
 
 function ContadorAnimado({ valor, cor, formatador }: { valor: number, cor: string, formatador: (n: number) => string }) {
   const [exibido, setExibido] = useState(0)
@@ -61,6 +54,8 @@ export default function Inicio() {
   const [ajustesEnova, setAjustesEnova] = useState<any[]>([])
   const [creditosSix, setCreditosSix] = useState<any[]>([])
   const [creditosEnova, setCreditosEnova] = useState<any[]>([])
+  const [falhasCarga, setFalhasCarga] = useState<string[]>([])
+  const [erroOp, setErroOp] = useState('')
 
   const now = new Date()
   const mesAntIdx = now.getMonth() === 0 ? 11 : now.getMonth() - 1
@@ -71,20 +66,27 @@ export default function Inicio() {
   const mesAtualNome = MESES[mesAtualIdx]
 
   useEffect(() => {
+    // Cada carga que falha era substituida por vazio em silencio. Num calculo
+    // fiscal isso e pior que erro: sem os ajustes, por exemplo, o RBT12 sobe e
+    // a tela mostra um numero errado sem nenhum aviso. Agora a falha e listada.
+    const falhas: string[] = []
+    const carregar = (pr: Promise<any>, nome: string, vazio: any) =>
+      pr.then((r: any) => r.data).catch(() => { falhas.push(nome); return vazio })
+
     Promise.all([
-      historicoAPI.listar(1).then(r => r.data),
-      historicoAPI.listar(2).then(r => r.data),
-      dasAPI.listar(1).then(r => r.data),
-      dasAPI.listar(2).then(r => r.data),
-      empresasAPI.listar().then(r => r.data),
-      api.get('/notas/pagamentos/1').then(r => r.data).catch(() => ({})),
-      api.get('/notas/pagamentos/2').then(r => r.data).catch(() => ({})),
-      api.get('/notas/1').then(r => r.data).catch(() => []),
-      api.get('/notas/2').then(r => r.data).catch(() => []),
-      api.get('/notas/ajustes/1').then(r => r.data).catch(() => []),
-      api.get('/notas/ajustes/2').then(r => r.data).catch(() => []),
-      api.get('/notas/creditos/1').then(r => r.data).catch(() => []),
-      api.get('/notas/creditos/2').then(r => r.data).catch(() => []),
+      carregar(historicoAPI.listar(1), 'faturamento SIX', []),
+      carregar(historicoAPI.listar(2), 'faturamento ENOVA', []),
+      carregar(dasAPI.listar(1), 'DAS SIX', []),
+      carregar(dasAPI.listar(2), 'DAS ENOVA', []),
+      carregar(empresasAPI.listar(), 'cadastro de empresas', []),
+      carregar(api.get('/notas/pagamentos/1'), 'pagamentos SIX', {}),
+      carregar(api.get('/notas/pagamentos/2'), 'pagamentos ENOVA', {}),
+      carregar(api.get('/notas/1'), 'notas SIX', []),
+      carregar(api.get('/notas/2'), 'notas ENOVA', []),
+      carregar(api.get('/notas/ajustes/1'), 'devolucoes SIX', []),
+      carregar(api.get('/notas/ajustes/2'), 'devolucoes ENOVA', []),
+      carregar(api.get('/notas/creditos/1'), 'creditos SIX', []),
+      carregar(api.get('/notas/creditos/2'), 'creditos ENOVA', []),
     ]).then(([h1, h2, d1, d2, emp, pg1, pg2, n1, n2, aj1, aj2, cr1, cr2]) => {
       setPgtosSix(pg1)
       setPgtosEnova(pg2)
@@ -99,6 +101,7 @@ export default function Inicio() {
       setDasSix(d1)
       setDasEnova(d2)
       setEmpresas(emp)
+      setFalhasCarga(falhas)
       const empSix = emp.find((e: any) => e.nome === 'SIX') || { aliquota_das: 0.088324 }
       const empEnova = emp.find((e: any) => e.nome === 'ENOVA') || { aliquota_das: 0.093254 }
       const vSix = h1.find((r: any) => r.ano === anoAnt && r.mes === mesAntIdx + 1)?.valor || 0
@@ -144,15 +147,14 @@ export default function Inicio() {
 
   const baseSixMLcto = calcBaseMLcto(pgtosSix, notasSix)
   const baseEnovaMLcto = calcBaseMLcto(pgtosEnova, notasEnova)
-  const calcRbt12 = (hist: any[], ajustes: any[] = []) => { let sum = 0; for (let i=1;i<13;i++){const d=new Date(now.getFullYear(),now.getMonth()-i-1,1);const m=d.getMonth()+1;const a=d.getFullYear();const fat=(hist.find((r:any)=>r.ano===a&&r.mes===m)?.valor||0);const dev=ajustes.filter((aj:any)=>aj.ano===a&&aj.mes===m).reduce((s:number,aj:any)=>s+aj.valor,0);sum+=fat-dev} return sum }
-  const rbt12Six = calcRbt12(histSix, ajustesSix)
-  const rbt12Enova = calcRbt12(histEnova, ajustesEnova)
-  const faixaSix = FAIXAS_SIMPLES.find(f=>rbt12Six>=f.min&&rbt12Six<=f.max)||FAIXAS_SIMPLES[FAIXAS_SIMPLES.length-1]
-  const faixaEnova = FAIXAS_SIMPLES.find(f=>rbt12Enova>=f.min&&rbt12Enova<=f.max)||FAIXAS_SIMPLES[FAIXAS_SIMPLES.length-1]
-  const aliqEfetivaSix = rbt12Six>0?(rbt12Six*faixaSix.aliq-faixaSix.ded)/rbt12Six:0
-  const aliqEfetivaEnova = rbt12Enova>0?(rbt12Enova*faixaEnova.aliq-faixaEnova.ded)/rbt12Enova:0
-  const icmsAproveitavelSix = aliqEfetivaSix*faixaSix.icms
-  const icmsAproveitavelEnova = aliqEfetivaEnova*faixaEnova.icms
+  const rbt12Six = calcRbt12(histSix, ajustesSix, now)
+  const rbt12Enova = calcRbt12(histEnova, ajustesEnova, now)
+  const faixaSix = faixaDoRbt12(rbt12Six)
+  const faixaEnova = faixaDoRbt12(rbt12Enova)
+  const aliqEfetivaSix = aliquotaEfetiva(rbt12Six, faixaSix)
+  const aliqEfetivaEnova = aliquotaEfetiva(rbt12Enova, faixaEnova)
+  const icmsAproveitavelSix = icmsAproveitavel(aliqEfetivaSix, faixaSix)
+  const icmsAproveitavelEnova = icmsAproveitavel(aliqEfetivaEnova, faixaEnova)
   const creditoAutSix = creditosSix.filter(cr=>cr.status==='autorizado').reduce((s:number,cr:any)=>s+(cr.valor_nf_original*aliqEfetivaSix),0)
   const creditoAutEnova = creditosEnova.filter(cr=>cr.status==='autorizado').reduce((s:number,cr:any)=>s+(cr.valor_nf_original*aliqEfetivaEnova),0)
   const impSix = baseSixMLcto * aliqEfetivaSix
@@ -171,6 +173,15 @@ export default function Inicio() {
 
   return (
     <div>
+      {(falhasCarga.length > 0 || erroOp) && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(248,113,113,0.10)', border: '1px solid rgba(248,113,113,0.35)', borderRadius: 8, padding: '10px 14px', marginBottom: 12 }}>
+          <span style={{ fontSize: 14 }}>⚠️</span>
+          <span style={{ flex: 1, fontSize: 12, color: '#F87171' }}>
+            {erroOp || `Não foi possível carregar: ${falhasCarga.join(', ')}. Os valores abaixo podem estar incorretos — recarregue a página.`}
+          </span>
+          <button onClick={() => { setErroOp(''); setFalhasCarga([]) }} style={{ background: 'transparent', border: 'none', color: '#F87171', fontSize: 16, cursor: 'pointer', lineHeight: 1 }}>×</button>
+        </div>
+      )}
       {/* ── SEÇÃO DAS ── */}
       <div style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1.2px', color: '#4A5070', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '8px' }}>
         Fiscal — DAS / Simples Nacional (base: NFs de Venda {mesAntNome}/{anoAnt})
@@ -257,11 +268,14 @@ export default function Inicio() {
                         setSalvando(e.key)
                         try {
                           const val = parseFloat(e.val.replace(',', '.')) || 0
-                          await fetch(`https://diligent-integrity-production-3f98.up.railway.app/dados/das/${e.key === 'six' ? 1 : 2}`, {
+                          const resDas = await fetch(`https://diligent-integrity-production-3f98.up.railway.app/dados/das/${e.key === 'six' ? 1 : 2}`, {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('access_token')}` },
                             body: JSON.stringify({ empresa_id: e.key === 'six' ? 1 : 2, ano: anoAtual, mes: mesAtualIdx + 1, valor: val }),
                           })
+                          // fetch so rejeita em falha de rede: sem esta checagem um 500
+                          // passava batido e a tela recarregava como se tivesse salvo.
+                          if (!resDas.ok) throw new Error('HTTP ' + resDas.status + ' ao gravar o DAS')
                           await registrarLog({ acao: 'CONFIRMAR', modulo: 'das', descricao: `DAS confirmado: ${e.label} · ${MESES[mesAntIdx]}/${anoAnt} · R$ ${val.toFixed(2).replace('.', ',')}`, valorDepois: { empresa: e.label, ano: anoAtual, mes: mesAtualIdx + 1, valor: val } })
                           // Marcar creditos autorizados como utilizados
                           const crs = e.key==='six'?creditosSix:creditosEnova
@@ -269,7 +283,11 @@ export default function Inicio() {
                             await fetch('https://diligent-integrity-production-3f98.up.railway.app/notas/creditos/'+cr.id,{method:'PUT',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('access_token')},body:JSON.stringify({status:'utilizado'})})
                           }
                           window.location.reload()
-                        } catch { setSalvando('') }
+                        } catch (err: any) {
+                          console.error('Confirmar DAS', err)
+                          setErroOp(`Falha ao confirmar o DAS da ${e.label}: ${err?.message || 'erro desconhecido'}. Nada foi gravado.`)
+                          setSalvando('')
+                        }
                       }}
                       style={{ padding: '6px 14px', background: '#2E1F06', border: '1px solid rgba(251,191,36,0.3)', borderRadius: '6px', color: '#FBBF24', fontSize: '11px', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap', fontFamily: 'inherit' }}
                     >

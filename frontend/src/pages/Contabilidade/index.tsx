@@ -1,6 +1,7 @@
 ﻿import React, { useEffect, useRef, useState } from 'react'
 import { historicoAPI, empresasAPI } from '../../api/endpoints'
 import { temPermissao } from '../../utils/permissoes'
+import { faixaDoRbt12, calcRbt12, aliquotaEfetiva, icmsAproveitavel } from '../../utils/simples'
 import api from '../../api/endpoints'
 
 const MESES = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez']
@@ -23,14 +24,6 @@ function statusStyle(s: string) {
   return { bg: 'rgba(167,139,250,0.12)', cor: '#A78BFA' }
 }
 
-const FAIXAS_CONT = [
-  { min: 0, max: 180000, aliq: 0.04, ded: 0, icms: 0.34 },
-  { min: 180000.01, max: 360000, aliq: 0.073, ded: 5940, icms: 0.34 },
-  { min: 360000.01, max: 720000, aliq: 0.095, ded: 13860, icms: 0.335 },
-  { min: 720000.01, max: 1800000, aliq: 0.107, ded: 22500, icms: 0.335 },
-  { min: 1800000.01, max: 3600000, aliq: 0.143, ded: 87300, icms: 0.335 },
-  { min: 3600000.01, max: 4800000, aliq: 0.19, ded: 378000, icms: 0 },
-]
 
 function ContadorAnimado({ valor, cor, formatador }: { valor: number, cor: string, formatador: (n: number) => string }) {
   const [exibido, setExibido] = useState(0)
@@ -83,6 +76,7 @@ export default function Contabilidade() {
   const [pulsando, setPulsando] = useState<Set<string>>(new Set())
   const [voando, setVoando] = useState<Set<string>>(new Set())
   const [salvando, setSalvando] = useState(false)
+  const [erroOp, setErroOp] = useState('')
   const [ajustadosPg, setAjustadosPg] = useState<Record<number,boolean>>({})
   useEffect(() => {
     const upd: Record<number, boolean> = {}
@@ -201,20 +195,10 @@ export default function Contabilidade() {
   }, [scrollParaAguardando, loading])
 
   const empDados = empresas.find(e => e.nome === (empresa === 'six' ? 'SIX' : 'ENOVA')) || { aliquota_das: empresa === 'six' ? 0.088324 : 0.093254, credito_icms: empresa === 'six' ? 0.029614 : 0.031256 }
-  const rbt12Cont = (() => {
-    let sum = 0
-    for (let i = 1; i < 13; i++) {
-      const d = new Date(now.getFullYear(), now.getMonth() - i - 1, 1)
-      const m = d.getMonth() + 1; const a = d.getFullYear()
-      const fat = (hist.find((r:any) => r.ano === a && r.mes === m)?.valor || 0)
-      const dev = ajustes.filter((aj:any) => aj.ano === a && aj.mes === m).reduce((s:number, aj:any) => s + aj.valor, 0)
-      sum += fat - dev
-    }
-    return sum
-  })()
-  const faixaCont = FAIXAS_CONT.find(f => rbt12Cont >= f.min && rbt12Cont <= f.max) || FAIXAS_CONT[FAIXAS_CONT.length - 1]
-  const aliqEfetivaCont = rbt12Cont > 0 ? (rbt12Cont * faixaCont.aliq - faixaCont.ded) / rbt12Cont : empDados.aliquota_das
-  const icmsAproveitavelCont = aliqEfetivaCont * (faixaCont as any).icms
+  const rbt12Cont = calcRbt12(hist as any, ajustes as any, now)
+  const faixaCont = faixaDoRbt12(rbt12Cont)
+  const aliqEfetivaCont = aliquotaEfetiva(rbt12Cont, faixaCont, empDados.aliquota_das)
+  const icmsAproveitavelCont = icmsAproveitavel(aliqEfetivaCont, faixaCont)
   const devElegiveis = ajustes.filter((aj: any) => {
     if (ignorados.has(aj.id)) return false
     const jaTemCredito = creditos.some((cr: any) => cr.nf_devolucao === aj.nf_devolucao)
@@ -387,7 +371,7 @@ export default function Contabilidade() {
       await carregarTudo()
       setScrollParaAguardando(true)
       setEditando(null); setEditVPg(''); setEditDtp(''); setEditMesLct('')
-    } catch(e) { console.error(e) } finally { setSalvando(false) }
+    } catch(e) { falhou('Falha ao salvar o pagamento da NF ' + nf, e) } finally { setSalvando(false) }
   }
 
   async function salvarPagamentoSaldo(nf: string) {
@@ -403,7 +387,14 @@ export default function Contabilidade() {
       await carregarTudo()
       setScrollParaAguardando(true)
       setEditando(null); setEditVPg(''); setEditDtp('')
-    } catch(e) { console.error(e) } finally { setSalvando(false) }
+    } catch(e) { falhou('Falha ao salvar o saldo da NF ' + nf, e) } finally { setSalvando(false) }
+  }
+
+  // Falha em escrita precisa aparecer: antes so ia para o console e a tela
+  // ficava igual, o que se parece com sucesso.
+  const falhou = (acao: string, e: any) => {
+    console.error(acao, e)
+    setErroOp(`${acao} — ${e?.response?.data?.detail || e?.message || 'erro desconhecido'}. Nada foi gravado.`)
   }
 
   const editandoRef = useRef(false)
@@ -441,7 +432,7 @@ export default function Contabilidade() {
     try {
       await api.delete('/notas/pagamento/' + pgtoId + '?empresa_id=' + empId)
       await carregarTudo()
-    } catch(e) { console.error(e) } finally { setSalvando(false) }
+    } catch(e) { falhou('Falha ao excluir o pagamento', e) } finally { setSalvando(false) }
   }
 
   async function limparPagamento(nf: string) {
@@ -450,7 +441,7 @@ export default function Contabilidade() {
     try {
       await api.delete('/notas/pagamento/nota/' + nf + '?empresa_id=' + empId)
       await carregarTudo()
-    } catch(e) { console.error(e) } finally { setSalvando(false) }
+    } catch(e) { falhou('Falha ao remover o pagamento da NF ' + nf, e) } finally { setSalvando(false) }
   }
   const isSix = empresa === 'six'
   const corEmp = isSix ? '#4F8EF7' : '#34D399'
@@ -461,6 +452,13 @@ export default function Contabilidade() {
 
   return (
     <div style={{ padding: isMobile ? '12px' : '16px 24px' }}>
+      {erroOp && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(248,113,113,0.10)', border: '1px solid rgba(248,113,113,0.35)', borderRadius: 8, padding: '10px 14px', marginBottom: 12 }}>
+          <span style={{ fontSize: 14 }}>⚠️</span>
+          <span style={{ flex: 1, fontSize: 12, color: '#F87171' }}>{erroOp}</span>
+          <button onClick={() => setErroOp('')} style={{ background: 'transparent', border: 'none', color: '#F87171', fontSize: 16, cursor: 'pointer', lineHeight: 1 }}>×</button>
+        </div>
+      )}
       <div style={{ display: 'flex', gap: '8px', marginBottom: '16px', alignItems: isMobile ? 'flex-start' : 'center', flexWrap: isMobile ? 'wrap' as const : 'nowrap' as const, flexDirection: isMobile ? 'column' as const : 'row' as const }}>
         <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' as const }}>
           <span style={{ fontSize: '11px', color: '#7B82A0', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1px' }}>Empresa Ativa</span>
