@@ -1,11 +1,12 @@
 import { useState, useEffect, useRef } from 'react'
 import { registrarLog } from '../../api/auditoria'
 import { temPermissao } from '../../utils/permissoes'
+import ContadorAnimado from '../../components/ContadorAnimado'
+import { MESES_FULL as MESES } from '../../utils/meses'
 
 const API = 'https://diligent-integrity-production-3f98.up.railway.app'
 const token = () => localStorage.getItem('access_token')
 const hdr = () => ({ 'Authorization': 'Bearer ' + token(), 'Content-Type': 'application/json' })
-const MESES = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro']
 const fmtR = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 
 function calcINSS(salario: number): number {
@@ -94,27 +95,6 @@ function calcCalendario(mes: number, ano: number, feriadosExtra: Array<{dia: num
   return { diasUteis, diasSegSab, domingosFeriados, diasVT }
 }
 
-function ContadorAnimado({ valor, cor, formatador }: { valor: number, cor: string, formatador: (n: number) => string }) {
-  const [exibido, setExibido] = useState(0)
-  const anterior = useRef(0)
-  useEffect(() => {
-    const inicio = anterior.current
-    const fim = valor
-    const duracao = 600
-    const t0 = performance.now()
-    let frameId: number
-    const passo = (t: number) => {
-      const p = Math.min(1, (t - t0) / duracao)
-      const ease = 1 - Math.pow(1 - p, 3)
-      setExibido(inicio + (fim - inicio) * ease)
-      if (p < 1) frameId = requestAnimationFrame(passo)
-      else anterior.current = fim
-    }
-    frameId = requestAnimationFrame(passo)
-    return () => cancelAnimationFrame(frameId)
-  }, [valor])
-  return <span style={{ color: cor }}>{formatador(exibido)}</span>
-}
 
 export default function Encargos() {
   const [funcionarios, setFuncionarios] = useState<any[]>([])

@@ -251,7 +251,13 @@ export default function ImportarXML() {
       for (const nfNum of nfsLinha) {
         const nota = todasNotas.find((n: any) => {
           const numMatch = n.numero_nf === nfNum
-          const nat = (n.nat_operacao || n.status || '').toLowerCase(); const isVenda = nat.includes('venda') || nat.includes('complemento de frete') || nat.includes('complementar')
+          // Mesmas guardas dos demais pontos: entrada nunca recebe pagamento, e
+          // devolucao nao e venda. Sem isso, uma linha do CSV citando uma nota de
+          // devolucao lancaria pagamento nela, inflando a base do DAS.
+          const nat = (n.nat_operacao || n.status || '').toLowerCase()
+          const isVenda = (n.tipo || 'saida') !== 'entrada'
+            && ((nat.includes('venda') && !nat.includes('devolu'))
+                || nat.includes('complemento de frete') || nat.includes('complementar'))
           // Filtrar por unidade se disponível
           if (unidade && unidade.includes('six') && n.empresa_id !== 1) return false
           if (unidade && unidade.includes('enova') && n.empresa_id !== 2) return false

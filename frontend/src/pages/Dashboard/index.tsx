@@ -1,11 +1,10 @@
 ﻿import { useEffect, useRef, useState } from 'react'
 import { historicoAPI, dasAPI, empresasAPI } from '../../api/endpoints'
+import { MESES, MESES_FULL } from '../../utils/meses'
 
 interface HistoricoItem { id: number; empresa_id: number; ano: number; mes: number; valor: number }
 interface DasItem { id: number; empresa_id: number; ano: number; mes: number; valor: number }
 
-const MESES = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez']
-const MESES_FULL = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro']
 const PAL = ['#4F8EF7','#A78BFA','#FBBF24','#34D399','#FB923C','#F87171']
 
 function fmtK(v: number) {

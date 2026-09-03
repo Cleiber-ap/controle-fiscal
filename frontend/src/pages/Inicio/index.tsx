@@ -6,35 +6,15 @@ api.interceptors.request.use((c: any) => { const t = localStorage.getItem('acces
 import { registrarLog } from '../../api/auditoria'
 import { temPermissao } from '../../utils/permissoes'
 import { FAIXAS_SIMPLES, faixaDoRbt12, calcRbt12, aliquotaEfetiva, icmsAproveitavel } from '../../utils/simples'
+import ContadorAnimado from '../../components/ContadorAnimado'
+import { MESES } from '../../utils/meses'
 
-const MESES = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez']
 
 function fmtR(v: number) {
   return 'R$ ' + v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 }
 
 
-function ContadorAnimado({ valor, cor, formatador }: { valor: number, cor: string, formatador: (n: number) => string }) {
-  const [exibido, setExibido] = useState(0)
-  const anterior = useRef(0)
-  useEffect(() => {
-    const inicio = anterior.current
-    const fim = valor
-    const duracao = 600
-    const t0 = performance.now()
-    let frameId: number
-    const passo = (t: number) => {
-      const p = Math.min(1, (t - t0) / duracao)
-      const ease = 1 - Math.pow(1 - p, 3)
-      setExibido(inicio + (fim - inicio) * ease)
-      if (p < 1) frameId = requestAnimationFrame(passo)
-      else anterior.current = fim
-    }
-    frameId = requestAnimationFrame(passo)
-    return () => cancelAnimationFrame(frameId)
-  }, [valor])
-  return <span style={{ color: cor }}>{formatador(exibido)}</span>
-}
 
 export default function Inicio() {
   const [histSix, setHistSix] = useState<any[]>([])
@@ -102,12 +82,6 @@ export default function Inicio() {
       setDasEnova(d2)
       setEmpresas(emp)
       setFalhasCarga(falhas)
-      const empSix = emp.find((e: any) => e.nome === 'SIX') || { aliquota_das: 0.088324 }
-      const empEnova = emp.find((e: any) => e.nome === 'ENOVA') || { aliquota_das: 0.093254 }
-      const vSix = h1.find((r: any) => r.ano === anoAnt && r.mes === mesAntIdx + 1)?.valor || 0
-      const vEnova = h2.find((r: any) => r.ano === anoAnt && r.mes === mesAntIdx + 1)?.valor || 0
-      
-      
     }).finally(() => setLoading(false))
   }, [])
 

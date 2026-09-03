@@ -1,7 +1,7 @@
 ﻿import { useEffect, useRef, useState } from 'react'
 import { historicoAPI, dasAPI, empresasAPI } from '../../api/endpoints'
+import { MESES } from '../../utils/meses'
 
-const MESES = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez']
 
 function fmtR(v: number) {
   return 'R$ ' + v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })

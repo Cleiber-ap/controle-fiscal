@@ -1,8 +1,8 @@
 ﻿import { useEffect, useRef, useState } from 'react'
 import { dasAPI } from '../../api/endpoints'
+import { MESES } from '../../utils/meses'
 
 interface DasItem { id: number; empresa_id: number; ano: number; mes: number; valor: number }
-const MESES = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez']
 function fmtR(v: number) { return 'R$ ' + v.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) }
 
 export default function ImpostosPagos() {
