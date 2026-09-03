@@ -5,15 +5,8 @@ import { faixaDoRbt12, calcRbt12, aliquotaEfetiva, icmsAproveitavel } from '../.
 import api from '../../api/endpoints'
 import ContadorAnimado from '../../components/ContadorAnimado'
 import { MESES } from '../../utils/meses'
-import { fmtR } from '../../utils/formato'
+import { fmtR, fmtCNPJ } from '../../utils/formato'
 
-function fmtCNPJ(v: string) {
-  if (!v) return '—'
-  const n = v.replace(/\D/g, '')
-  if (n.length === 14) return n.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5')
-  if (n.length === 11) return n.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4')
-  return v
-}
 const mono = { fontFamily: 'monospace' }
 function statusStyle(s: string) {
   const sl = (s || '').toLowerCase()

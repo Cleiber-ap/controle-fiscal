@@ -12,3 +12,19 @@ export function fmtR(v: number) {
     maximumFractionDigits: 2,
   })
 }
+
+/**
+ * Formata CNPJ (14 digitos) ou CPF (11 digitos). Devolve o valor original se
+ * nao tiver nenhum dos dois tamanhos, e um travessao quando vazio.
+ *
+ * Existia em duas versoes: a da Contabilidade tratava CPF, a do Importar XML
+ * mostrava o numero cru nesse caso. Ficou a completa — ha notas emitidas para
+ * pessoa fisica.
+ */
+export function fmtCNPJ(v: string) {
+  if (!v) return '—'
+  const n = v.replace(/\D/g, '')
+  if (n.length === 14) return n.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5')
+  if (n.length === 11) return n.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4')
+  return v
+}
