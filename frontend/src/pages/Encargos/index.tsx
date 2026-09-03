@@ -3,11 +3,11 @@ import { registrarLog } from '../../api/auditoria'
 import { temPermissao } from '../../utils/permissoes'
 import ContadorAnimado from '../../components/ContadorAnimado'
 import { MESES_FULL as MESES } from '../../utils/meses'
+import { fmtR } from '../../utils/formato'
 
 const API = 'https://diligent-integrity-production-3f98.up.railway.app'
 const token = () => localStorage.getItem('access_token')
 const hdr = () => ({ 'Authorization': 'Bearer ' + token(), 'Content-Type': 'application/json' })
-const fmtR = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 
 function calcINSS(salario: number): number {
   const faixas = [{ ate: 1412, aliq: 0.075 }, { ate: 2666.68, aliq: 0.09 }, { ate: 4000.03, aliq: 0.12 }, { ate: 7786.02, aliq: 0.14 }]
