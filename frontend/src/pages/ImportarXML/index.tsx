@@ -1,6 +1,7 @@
 ﻿import { useState, useRef } from 'react'
 import { registrarLog } from '../../api/auditoria'
 import api, { historicoAPI } from '../../api/endpoints'
+import { fmtR } from '../../utils/formato'
 
 
 const CNPJ_EMPRESAS: Record<string, string> = {
@@ -501,9 +502,6 @@ export default function ImportarXML() {
   const notasVenda = notas.filter(n => n.status === 'Venda')
   const totalVenda = notasVenda.reduce((s, n) => s + n.valor_nf, 0)
 
-  function fmtR(v: number) {
-    return 'R$ ' + v.toLocaleString('pt-BR', { minimumFractionDigits: 2 })
-  }
   function fmtCNPJ(v: string) {
     if (!v) return '—'
     const n = v.replace(/\D/g, '')

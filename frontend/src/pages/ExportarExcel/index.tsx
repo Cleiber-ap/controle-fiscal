@@ -5,14 +5,12 @@ import { historicoAPI, dasAPI, empresasAPI } from '../../api/endpoints'
 import axios from 'axios'
 import { registrarLog } from '../../api/auditoria'
 import { MESES } from '../../utils/meses'
+import { fmtR } from '../../utils/formato'
 
 const api = axios.create({ baseURL: import.meta.env.VITE_API_URL || 'https://diligent-integrity-production-3f98.up.railway.app' })
 api.interceptors.request.use(c => { const t = localStorage.getItem('access_token'); if (t) c.headers.Authorization = `Bearer ${t}`; return c })
 
 
-function fmtR(v: number) {
-  return 'R$ ' + v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-}
 
 export default function ExportarExcel() {
   const [histSix, setHistSix] = useState<any[]>([])

@@ -8,11 +8,9 @@ import { temPermissao } from '../../utils/permissoes'
 import { FAIXAS_SIMPLES, faixaDoRbt12, calcRbt12, aliquotaEfetiva, icmsAproveitavel } from '../../utils/simples'
 import ContadorAnimado from '../../components/ContadorAnimado'
 import { MESES } from '../../utils/meses'
+import { fmtR } from '../../utils/formato'
 
 
-function fmtR(v: number) {
-  return 'R$ ' + v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-}
 
 
 

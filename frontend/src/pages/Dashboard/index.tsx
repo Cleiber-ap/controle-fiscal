@@ -1,6 +1,7 @@
 ﻿import { useEffect, useRef, useState } from 'react'
 import { historicoAPI, dasAPI, empresasAPI } from '../../api/endpoints'
 import { MESES, MESES_FULL } from '../../utils/meses'
+import { fmtR } from '../../utils/formato'
 
 interface HistoricoItem { id: number; empresa_id: number; ano: number; mes: number; valor: number }
 interface DasItem { id: number; empresa_id: number; ano: number; mes: number; valor: number }
@@ -11,9 +12,6 @@ function fmtK(v: number) {
   if (v >= 1000000) return 'R$' + (v / 1000000).toFixed(1) + 'M'
   if (v >= 1000) return 'R$' + (v / 1000).toFixed(0) + 'K'
   return 'R$' + v.toFixed(0)
-}
-function fmtR(v: number) {
-  return 'R$ ' + v.toLocaleString('pt-BR', { minimumFractionDigits: 2 })
 }
 
 export default function Dashboard() {

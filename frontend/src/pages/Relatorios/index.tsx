@@ -1,11 +1,9 @@
 ﻿import { useEffect, useRef, useState } from 'react'
 import { historicoAPI, dasAPI, empresasAPI } from '../../api/endpoints'
 import { MESES } from '../../utils/meses'
+import { fmtR } from '../../utils/formato'
 
 
-function fmtR(v: number) {
-  return 'R$ ' + v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-}
 function fmtK(v: number) {
   if (v >= 1000000) return 'R$' + (v / 1000000).toFixed(2) + 'M'
   if (v >= 1000) return 'R$' + (v / 1000).toFixed(1) + 'K'

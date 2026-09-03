@@ -2,11 +2,9 @@
 import { historicoAPI } from '../../api/endpoints'
 import ContadorAnimado from '../../components/ContadorAnimado'
 import { MESES } from '../../utils/meses'
+import { fmtR } from '../../utils/formato'
 
 
-function fmtR(v: number) {
-  return 'R$ ' + v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-}
 function fmtM(v: number) {
   if (v >= 1000000) return 'R$' + (v / 1000000).toFixed(1) + 'M'
   if (v >= 1000) return 'R$' + (v / 1000).toFixed(0) + 'K'
