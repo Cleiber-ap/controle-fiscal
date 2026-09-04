@@ -5,7 +5,7 @@ import ContadorAnimado from '../../components/ContadorAnimado'
 import { MESES_FULL as MESES } from '../../utils/meses'
 import { fmtR } from '../../utils/formato'
 import { calcEncargos, calcCalendario, getFeriadosFixos, getTodosOsFeriados } from '../../utils/encargos'
-import { VIGENCIA_INSS } from '../../utils/inss'
+import { tabelaINSS } from '../../utils/inss'
 
 const API = 'https://diligent-integrity-production-3f98.up.railway.app'
 const token = () => localStorage.getItem('access_token')
@@ -210,6 +210,7 @@ export default function Encargos() {
       diasVT: calDoMes.diasVT,
       multHE: pctHE[f.id] || 1.5,
       faltas: faltasAtrasos[f.id] || 0,
+      ano: mesRef.ano,
     }),
   }))
   const calcGeral = calculos.reduce((s, f) => s + f.calc.totalEmpresa, 0)
@@ -247,7 +248,7 @@ export default function Encargos() {
           // algo mudou sob um mes fechado, comparando dados — sem reimplementar
           // o calculo fora daqui.
           detalhe: {
-            inss_vigencia: VIGENCIA_INSS,
+            inss_vigencia: String(tabelaINSS(mesRef.ano).ano),
             calendario: { diasUteis, diasSegSab, domingosFeriados, diasVT },
             funcionarios: funcionarios.filter(estavaNaEmpresa).map(remuneracaoNoMes).map((f: any) => ({
               funcionario_id: f.id,

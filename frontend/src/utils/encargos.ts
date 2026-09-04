@@ -24,6 +24,8 @@ export interface OpcoesEncargos {
   diasVT?: number
   /** Desconto de faltas e atrasos, em reais. */
   faltas?: number
+  /** Ano do mes calculado: escolhe a tabela do INSS vigente nele. */
+  ano?: number
 }
 
 export function calcEncargos(func: any, horasExtras: number, opcoes: OpcoesEncargos = {}) {
@@ -33,6 +35,7 @@ export function calcEncargos(func: any, horasExtras: number, opcoes: OpcoesEncar
     diasSegSab = 25,
     diasVT = 20,
     faltas = 0,
+    ano,
   } = opcoes
   const sal = parseFloat(func.salario_base) || 0
   const va = parseFloat(func.vale_alimentacao) || 0
@@ -49,7 +52,7 @@ export function calcEncargos(func: any, horasExtras: number, opcoes: OpcoesEncar
   const vtValor = usaVT ? Math.max(0, vtUnitario * diasVT * 1.06 - vtDesconto) : 0
   // O DSR reflexo das horas extras integra o salario de contribuicao, junto com
   // as proprias horas extras.
-  const inss = calcINSS(sal + heValor + heDsr)
+  const inss = calcINSS(sal + heValor + heDsr, ano)
   const vale = sal * 0.40
   const desVT = vtDesconto
   const totalEncargos = ferias13 + fgts + multaFgts + heValor + heDsr + vtValor + va + dinheiro
