@@ -211,6 +211,16 @@ def conferir_ajustes(db):
     ajustes = db.query(AjusteDevolucao).all()
     print('  %d ajuste(s) no banco' % len(ajustes))
 
+    # Meses cujas VENDAS estao no banco. Antes de 2026 o faturamento veio do
+    # seed e os XMLs nunca foram importados, entao a venda referenciada por uma
+    # devolucao antiga simplesmente nao existe como registro — isso e esperado,
+    # nao defeito, e apontar sempre so treinaria o leitor a ignorar o relatorio.
+    meses_com_venda = set()
+    for n in db.query(NotaFiscal).filter(NotaFiscal.tipo != 'entrada').all():
+        ma = mes_ano(n.dt_emissao)
+        if ma:
+            meses_com_venda.add((n.empresa_id, ma[0], ma[1]))
+
     por_dev = defaultdict(list)
     por_chave = defaultdict(list)
     for aj in ajustes:
@@ -226,7 +236,7 @@ def conferir_ajustes(db):
             ['  chave %s · ids %s' % (k, [a.id for a in v])
              for k, v in sorted(por_chave.items()) if len(v) > 1])
 
-    mes_errado, orfaos, sem_venda, valor_dif = [], [], [], []
+    mes_errado, orfaos, sem_venda, valor_dif, fora_do_periodo = [], [], [], [], []
     for aj in ajustes:
         nota = db.query(NotaFiscal).filter(
             NotaFiscal.numero_nf == aj.nf_devolucao,
@@ -250,8 +260,16 @@ def conferir_ajustes(db):
                 NotaFiscal.numero_nf == aj.nf_referenciada,
                 NotaFiscal.empresa_id == aj.empresa_id).first()
             if not venda:
-                sem_venda.append('  id %d · emp%d · venda referenciada NF %s nao existe'
-                                 % (aj.id, aj.empresa_id, aj.nf_referenciada))
+                # So aponta se o mes daquele ajuste tem vendas no banco; se nao
+                # tem, o periodo e anterior a importacao de XML e a ausencia e
+                # esperada.
+                if (aj.empresa_id, aj.ano, aj.mes) in meses_com_venda:
+                    sem_venda.append('  id %d · emp%d · venda referenciada NF %s nao existe'
+                                     % (aj.id, aj.empresa_id, aj.nf_referenciada))
+                else:
+                    fora_do_periodo.append(
+                        '  id %d · emp%d · NF %s · %02d/%d — periodo sem XML importado'
+                        % (aj.id, aj.empresa_id, aj.nf_referenciada, aj.mes, aj.ano))
             elif abs(float(venda.valor_nf or 0) - float(aj.valor or 0)) >= 0.01:
                 valor_dif.append('  id %d · emp%d · venda NF %s vale R$ %.2f · ajuste R$ %.2f'
                                  % (aj.id, aj.empresa_id, aj.nf_referenciada,
@@ -260,6 +278,11 @@ def conferir_ajustes(db):
     apontar('Ajuste no mes errado (deve ser o mes da nota de entrada)', mes_errado)
     apontar('Ajuste orfao (nota de devolucao ausente)', orfaos)
     apontar('Ajuste apontando para venda inexistente', sem_venda)
+    if fora_do_periodo:
+        print()
+        print('  Informativo — venda referenciada fora do periodo com XML (%d):' % len(fora_do_periodo))
+        for l in fora_do_periodo:
+            print(l)
     apontar('Valor do ajuste diferente da nota', valor_dif)
 
     # Devolucao sem ajuste: o caso que passou despercebido antes
