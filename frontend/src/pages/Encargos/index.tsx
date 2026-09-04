@@ -41,10 +41,8 @@ export default function Encargos() {
   const [fechando, setFechando] = useState(false)
   const [fechamentos, setFechamentos] = useState<any[]>([])
   // Intervalo do comparativo. Comeca no ano corrente inteiro; o usuario ajusta.
-  const [periodo, setPeriodo] = useState(() => {
-    const d = new Date()
-    return { deMes: 1, deAno: d.getFullYear(), ateMes: d.getMonth() + 1, ateAno: d.getFullYear() }
-  })
+  const periodoPadrao = () => ({ deMes: 1, deAno: HOJE.ano, ateMes: HOJE.mes, ateAno: HOJE.ano })
+  const [periodo, setPeriodo] = useState(periodoPadrao)
   const showNotif = (msg: string, ok = true) => { setNotif({ msg, ok }); setTimeout(() => setNotif(null), 3500) }
   const carregar = async () => {
     const [fs2, hs, frs, fech, sals, emps, fechs] = await Promise.all([
@@ -622,6 +620,10 @@ export default function Encargos() {
                   onClick={() => { const p = fechamentos[0], u = fechamentos[fechamentos.length - 1]
                     if (p && u) setPeriodo({ deMes: p.mes, deAno: p.ano, ateMes: u.mes, ateAno: u.ano }) }}
                   style={{ ...st.btn('#1A1D2A'), padding: '5px 12px', fontSize: 11 }}>Tudo</button>
+                <button
+                  onClick={() => setPeriodo(periodoPadrao())}
+                  title={`Volta ao padrão: janeiro a ${MESES[HOJE.mes - 1].toLowerCase()} de ${HOJE.ano}`}
+                  style={{ ...st.btn('#1A1D2A'), padding: '5px 12px', fontSize: 11 }}>Limpar</button>
               </div>
             </div>
             {invertido ? (
