@@ -489,39 +489,6 @@ export default function Encargos() {
       )}
       {aba === 'funcionarios' && (
         <div>
-          <div style={{ ...st.card, marginBottom: 16 }}>
-            <div style={{ fontSize: 12, fontWeight: 700, color: '#A78BFA', marginBottom: 4 }}>💰 Histórico de remuneração</div>
-            <div style={{ fontSize: 11, color: '#7B82A0', marginBottom: 12 }}>
-              Cada mês é calculado com a vigência que valia nele. Ao editar um funcionário, informe a data em que o novo valor passa a valer.
-            </div>
-            {salarios.length === 0 ? (
-              <div style={{ fontSize: 12, color: '#7B82A0' }}>Nenhuma vigência registrada.</div>
-            ) : (
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 11 }}>
-                <thead><tr>
-                  {['Funcionário', 'A partir de', 'Cargo', 'Salário', 'V. Alim.', 'Dinheiro', 'VT/dia'].map((h, i) => (
-                    <th key={h} style={{ ...st.th, textAlign: i <= 2 ? 'left' as any : 'right' as any }}>{h}</th>
-                  ))}
-                </tr></thead>
-                <tbody>
-                  {[...salarios].sort((a, b) => a.funcionario_id - b.funcionario_id || (a.vigencia < b.vigencia ? -1 : 1)).map(v => {
-                    const f = funcionarios.find(x => x.id === v.funcionario_id)
-                    return (
-                      <tr key={v.id}>
-                        <td style={st.td}>{f?.nome || 'id ' + v.funcionario_id}</td>
-                        <td style={st.td}>{v.vigencia.split('-').reverse().join('/')}</td>
-                        <td style={{ ...st.td, color: '#7B82A0' }}>{v.cargo || '—'}</td>
-                        <td style={{ ...st.td, textAlign: 'right' as any }}>{fmtR(v.salario_base)}</td>
-                        <td style={{ ...st.td, textAlign: 'right' as any }}>{fmtR(v.vale_alimentacao)}</td>
-                        <td style={{ ...st.td, textAlign: 'right' as any }}>{v.salario_dinheiro ? fmtR(v.salario_dinheiro) : '—'}</td>
-                        <td style={{ ...st.td, textAlign: 'right' as any }}>{v.vale_transporte ? fmtR(v.vale_transporte_valor) : '—'}</td>
-                      </tr>
-                    )
-                  })}
-                </tbody>
-              </table>
-            )}
-          </div>
           <div style={{display:'flex',justifyContent:'flex-end',marginBottom:12}}>
             {temPermissao('encargos', 'incluir') && <button style={st.btn('#34D399')} onClick={()=>{setEditando('novo');setForm({empresa_id:1,vale_alimentacao:250,vale_transporte:true,salario_dinheiro:0})}}>+ Novo Funcionário</button>}
           </div>
@@ -571,6 +538,39 @@ export default function Encargos() {
                 ))}
               </tbody>
             </table>
+          </div>
+          <div style={{ ...st.card, marginTop: 16, marginBottom: 0 }}>
+            <div style={{ fontSize: 12, fontWeight: 700, color: '#A78BFA', marginBottom: 4 }}>💰 Histórico de remuneração</div>
+            <div style={{ fontSize: 11, color: '#7B82A0', marginBottom: 12 }}>
+              Cada mês é calculado com a vigência que valia nele. Ao editar um funcionário, informe a data em que o novo valor passa a valer.
+            </div>
+            {salarios.length === 0 ? (
+              <div style={{ fontSize: 12, color: '#7B82A0' }}>Nenhuma vigência registrada.</div>
+            ) : (
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 11 }}>
+                <thead><tr>
+                  {['Funcionário', 'A partir de', 'Cargo', 'Salário', 'V. Alim.', 'Dinheiro', 'VT/dia'].map((h, i) => (
+                    <th key={h} style={{ ...st.th, textAlign: i <= 2 ? 'left' as any : 'right' as any }}>{h}</th>
+                  ))}
+                </tr></thead>
+                <tbody>
+                  {[...salarios].sort((a, b) => a.funcionario_id - b.funcionario_id || (a.vigencia < b.vigencia ? -1 : 1)).map(v => {
+                    const f = funcionarios.find(x => x.id === v.funcionario_id)
+                    return (
+                      <tr key={v.id}>
+                        <td style={st.td}>{f?.nome || 'id ' + v.funcionario_id}</td>
+                        <td style={st.td}>{v.vigencia.split('-').reverse().join('/')}</td>
+                        <td style={{ ...st.td, color: '#7B82A0' }}>{v.cargo || '—'}</td>
+                        <td style={{ ...st.td, textAlign: 'right' as any }}>{fmtR(v.salario_base)}</td>
+                        <td style={{ ...st.td, textAlign: 'right' as any }}>{fmtR(v.vale_alimentacao)}</td>
+                        <td style={{ ...st.td, textAlign: 'right' as any }}>{v.salario_dinheiro ? fmtR(v.salario_dinheiro) : '—'}</td>
+                        <td style={{ ...st.td, textAlign: 'right' as any }}>{v.vale_transporte ? fmtR(v.vale_transporte_valor) : '—'}</td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            )}
           </div>
         </div>
       )}
