@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import { registrarLog } from '../../api/auditoria'
 import { temPermissao } from '../../utils/permissoes'
 import ContadorAnimado from '../../components/ContadorAnimado'
@@ -22,6 +22,11 @@ export default function Encargos() {
   const [domingosFeriados, setDomingosFeriados] = useState(6)
   const [diasSegSab, setDiasSegSab] = useState(25)
   const [diasVT, setDiasVT] = useState(20)
+  // Cabecalho: dias uteis do mes corrente e do seguinte. Ficam presos a data de
+  // hoje de proposito — nao acompanham o mes que estiver sendo consultado.
+  const HOJE = useMemo(() => { const d = new Date(); return { mes: d.getMonth() + 1, ano: d.getFullYear() } }, [])
+  const PROX = HOJE.mes === 12 ? { mes: 1, ano: HOJE.ano + 1 } : { mes: HOJE.mes + 1, ano: HOJE.ano }
+  const [diasUteisAtual, setDiasUteisAtual] = useState(0)
   const [diasUteisProx, setDiasUteisProx] = useState(0)
   const [editando, setEditando] = useState<any | null>(null)
   const [form, setForm] = useState<any>({})
@@ -69,10 +74,9 @@ export default function Encargos() {
     setDomingosFeriados(cal.domingosFeriados)
     setDiasSegSab(cal.diasSegSab)
     setDiasVT(cal.diasVT)
-    const proxMes = mesRef.mes === 12 ? 1 : mesRef.mes + 1
-    const proxAno = mesRef.mes === 12 ? mesRef.ano + 1 : mesRef.ano
-    const calProx = calcCalendario(proxMes, proxAno, getTodosOsFeriados(proxAno, feriadosLista))
-    setDiasUteisProx(calProx.diasUteis)
+    // Independentes do mes consultado.
+    setDiasUteisAtual(calcCalendario(HOJE.mes, HOJE.ano, getTodosOsFeriados(HOJE.ano, feriadosLista)).diasUteis)
+    setDiasUteisProx(calcCalendario(PROX.mes, PROX.ano, getTodosOsFeriados(PROX.ano, feriadosLista)).diasUteis)
   }
   useEffect(() => { carregar() }, [mesRef])
   /** Grava um lancamento do mes. Campo omitido mantem o valor ja gravado. */
@@ -166,6 +170,14 @@ export default function Encargos() {
   const totalDeposito = mesFechado ? fechamento.total_deposito : calcDeposito
   const podeEditar = temPermissao('encargos', 'editar') && !mesFechado
 
+  const irParaMes = (delta: number) => setMesRef(r => {
+    const m = r.mes + delta
+    if (m < 1) return { mes: 12, ano: r.ano - 1 }
+    if (m > 12) return { mes: 1, ano: r.ano + 1 }
+    return { mes: m, ano: r.ano }
+  })
+  const noMesAtual = mesRef.mes === HOJE.mes && mesRef.ano === HOJE.ano
+
   const fecharMes = async () => {
     if (!window.confirm(`Fechar ${MESES[mesRef.mes - 1]}/${mesRef.ano}? Os totais ficam congelados e os lancamentos travados ate voce reabrir.`)) return
     setFechando(true)
@@ -236,16 +248,29 @@ export default function Encargos() {
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
         <h2 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>⚙️ Encargos Trabalhistas</h2>
         <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-          <span style={{ fontSize: 13, color: '#E8EAF0', fontWeight: 600 }}>{MESES[mesRef.mes - 1]} {mesRef.ano}</span>
-          <span style={{ fontSize: 12, color: '#7B82A0', marginLeft: 8 }}>Dias Úteis: <b style={{ color: '#E8EAF0' }}>{diasUteis}</b></span>
+          <span style={{ fontSize: 13, color: '#E8EAF0', fontWeight: 600 }}>{MESES[HOJE.mes - 1]} {HOJE.ano}</span>
+          <span style={{ fontSize: 12, color: '#7B82A0', marginLeft: 8 }}>Dias Úteis: <b style={{ color: '#E8EAF0' }}>{diasUteisAtual}</b></span>
           <span style={{ fontSize: 12, color: '#7B82A0', marginLeft: 16, borderLeft: '1px solid #252836', paddingLeft: 16 }}>
-            {MESES[(mesRef.mes === 12 ? 0 : mesRef.mes)]} {mesRef.mes === 12 ? mesRef.ano + 1 : mesRef.ano}
+            {MESES[PROX.mes - 1]} {PROX.ano}
             <span style={{ marginLeft: 6 }}>Dias Úteis: <b style={{ color: '#E8EAF0' }}>{diasUteisProx}</b></span>
           </span>
         </div>
       </div>
       {notif && <div style={{ background: notif.ok ? '#0D3326' : '#2D1B1B', border: '1px solid ' + (notif.ok ? '#34D399' : '#F87171'), borderRadius: 8, padding: '10px 16px', marginBottom: 16, color: notif.ok ? '#34D399' : '#F87171', fontSize: 13 }}>{notif.msg}</div>}
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, background: mesFechado ? 'rgba(52,211,153,0.08)' : 'rgba(251,191,36,0.06)', border: '1px solid ' + (mesFechado ? 'rgba(52,211,153,0.3)' : 'rgba(251,191,36,0.25)'), borderRadius: 8, padding: '10px 16px', marginBottom: 16 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          <button onClick={() => irParaMes(-1)} title="Mês anterior"
+            style={{ background: 'transparent', border: '1px solid #2A2D3E', borderRadius: 6, color: '#7B82A0', cursor: 'pointer', padding: '3px 8px', fontSize: 13, lineHeight: 1 }}>‹</button>
+          <span style={{ fontSize: 12, fontWeight: 600, color: '#E8EAF0', minWidth: 108, textAlign: 'center' }}>
+            {MESES[mesRef.mes - 1]} {mesRef.ano}
+          </span>
+          <button onClick={() => irParaMes(1)} title="Próximo mês"
+            style={{ background: 'transparent', border: '1px solid #2A2D3E', borderRadius: 6, color: '#7B82A0', cursor: 'pointer', padding: '3px 8px', fontSize: 13, lineHeight: 1 }}>›</button>
+          {!noMesAtual && (
+            <button onClick={() => setMesRef(HOJE)} title="Voltar ao mês atual"
+              style={{ marginLeft: 6, background: 'transparent', border: '1px solid #2A2D3E', borderRadius: 6, color: '#7B82A0', cursor: 'pointer', padding: '3px 10px', fontSize: 11 }}>hoje</button>
+          )}
+        </div>
         <span style={{ fontSize: 15 }}>{mesFechado ? '🔒' : '✏️'}</span>
         <div style={{ flex: 1 }}>
           <div style={{ fontSize: 12, fontWeight: 600, color: mesFechado ? '#34D399' : '#FBBF24' }}>
