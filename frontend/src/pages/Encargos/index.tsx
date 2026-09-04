@@ -4,23 +4,11 @@ import { temPermissao } from '../../utils/permissoes'
 import ContadorAnimado from '../../components/ContadorAnimado'
 import { MESES_FULL as MESES } from '../../utils/meses'
 import { fmtR } from '../../utils/formato'
+import { calcINSS } from '../../utils/inss'
 
 const API = 'https://diligent-integrity-production-3f98.up.railway.app'
 const token = () => localStorage.getItem('access_token')
 const hdr = () => ({ 'Authorization': 'Bearer ' + token(), 'Content-Type': 'application/json' })
-
-function calcINSS(salario: number): number {
-  const faixas = [{ ate: 1412, aliq: 0.075 }, { ate: 2666.68, aliq: 0.09 }, { ate: 4000.03, aliq: 0.12 }, { ate: 7786.02, aliq: 0.14 }]
-  let inss = 0, base = 0
-  for (const f of faixas) {
-    if (salario <= base) break
-    const trib = Math.min(salario, f.ate) - base
-    inss += trib * f.aliq
-    base = f.ate
-    if (salario <= f.ate) break
-  }
-  return inss
-}
 
 /**
  * Parametros do calculo. Eram posicionais, e por isso quatro deles ficavam nos
