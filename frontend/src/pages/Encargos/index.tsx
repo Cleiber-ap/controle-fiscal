@@ -35,18 +35,21 @@ export default function Encargos() {
   const [editandoFeriado, setEditandoFeriado] = useState<number|null>(null)
   const [salvando, setSalvando] = useState(false)
   const [notif, setNotif] = useState<{ msg: string, ok: boolean } | null>(null)
+  const [empresas, setEmpresas] = useState<any[]>([])
   const [salarios, setSalarios] = useState<any[]>([])
   const [fechamento, setFechamento] = useState<any | null>(null)
   const [fechando, setFechando] = useState(false)
   const showNotif = (msg: string, ok = true) => { setNotif({ msg, ok }); setTimeout(() => setNotif(null), 3500) }
   const carregar = async () => {
-    const [fs2, hs, frs, fech, sals] = await Promise.all([
+    const [fs2, hs, frs, fech, sals, emps] = await Promise.all([
       fetch(API + '/funcionarios/', { headers: hdr() }).then(r => r.json()).catch(() => []),
       fetch(API + `/funcionarios/horas/${mesRef.ano}/${mesRef.mes}`, { headers: hdr() }).then(r => r.json()).catch(() => ({})),
       fetch(API + '/funcionarios/feriados/', { headers: hdr() }).then(r => r.json()).catch(() => []),
       fetch(API + `/funcionarios/fechamento/${mesRef.ano}/${mesRef.mes}`, { headers: hdr() }).then(r => r.json()).catch(() => null),
       fetch(API + '/funcionarios/salarios', { headers: hdr() }).then(r => r.json()).catch(() => []),
+      fetch(API + '/empresas/', { headers: hdr() }).then(r => r.json()).catch(() => []),
     ])
+    setEmpresas(Array.isArray(emps) ? emps : [])
     setSalarios(Array.isArray(sals) ? sals : [])
     setFechamento(fech && fech.ano ? fech : null)
     setFuncionarios(Array.isArray(fs2) ? fs2 : [])
@@ -526,9 +529,15 @@ export default function Encargos() {
             <div style={{...st.card,borderColor:'#4F8EF7',marginBottom:16}}>
               <div style={{fontSize:14,fontWeight:700,marginBottom:16}}>{form.id?'Editar':'Novo'} Funcionário</div>
               <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:12,marginBottom:16}}>
-                {[{k:'nome',l:'Nome',t:'text'},{k:'cargo',l:'Cargo',t:'text'},{k:'salario_base',l:'Salário Base (R$)',t:'text'},{k:'vale_alimentacao',l:'Vale Alimentação (R$)',t:'text'},{k:'salario_dinheiro',l:'Sal. em Dinheiro (R$)',t:'text'},{k:'empresa_id',l:'Empresa (1=SIX, 2=ENOVA)',t:'text'},{k:'vale_transporte_valor',l:'Valor Unitário VT (R$/dia)',t:'text'},{k:'data_admissao',l:'Admissão',t:'date'},{k:'data_demissao',l:'Demissão (vazio = ativo)',t:'date'},{k:'vigencia',l:'Vigência do reajuste (vazio = mês atual)',t:'date'}].map(({k,l,t})=>(
+                {[{k:'nome',l:'Nome',t:'text'},{k:'cargo',l:'Cargo',t:'text'},{k:'salario_base',l:'Salário Base (R$)',t:'text'},{k:'vale_alimentacao',l:'Vale Alimentação (R$)',t:'text'},{k:'salario_dinheiro',l:'Sal. em Dinheiro (R$)',t:'text'},{k:'vale_transporte_valor',l:'Valor Unitário VT (R$/dia)',t:'text'},{k:'data_admissao',l:'Admissão',t:'date'},{k:'data_demissao',l:'Demissão (vazio = ativo)',t:'date'},{k:'vigencia',l:'Vigência do reajuste (vazio = mês atual)',t:'date'}].map(({k,l,t})=>(
                   <div key={k}><div style={st.label}>{l}</div><input type={t} value={form[k]||''} onChange={e=>setForm((p:any)=>({...p,[k]:t==='number'?+e.target.value:e.target.value}))} style={st.input}/></div>
                 ))}
+                <div><div style={st.label}>Empresa</div>
+                  <select value={form.empresa_id || ''} onChange={e=>setForm((p:any)=>({...p,empresa_id:+e.target.value}))} style={st.input}>
+                    {!form.empresa_id && <option value=''>Selecione…</option>}
+                    {empresas.map((emp:any) => <option key={emp.id} value={emp.id}>{emp.nome}</option>)}
+                  </select>
+                </div>
                 <div><div style={st.label}>Vale Transporte</div>
                   <select value={form.vale_transporte?'sim':'nao'} onChange={e=>setForm((p:any)=>({...p,vale_transporte:e.target.value==='sim'}))} style={st.input}>
                     <option value="sim">Sim (desconta 6%)</option><option value="nao">Não</option>
@@ -549,7 +558,7 @@ export default function Encargos() {
                   <tr key={f.id} onMouseEnter={e=>(e.currentTarget.style.background='#1A1D2A')} onMouseLeave={e=>(e.currentTarget.style.background='transparent')}>
                     <td style={st.td}><b>{f.nome}</b></td>
                     <td style={{...st.td,color:'#7B82A0'}}>{f.cargo}</td>
-                    <td style={{...st.td,color:f.empresa_id===1?'#4F8EF7':'#34D399'}}>{f.empresa_id===1?'SIX':'ENOVA'}</td>
+                    <td style={{...st.td,color:f.empresa_id===1?'#4F8EF7':'#34D399'}}>{empresas.find((e:any)=>e.id===f.empresa_id)?.nome || '—'}</td>
                     <td style={st.td}>{fmtR(f.salario_base)}</td>
                     <td style={st.td}>{fmtR(f.vale_alimentacao)}</td>
                     <td style={{...st.td,color:f.vale_transporte?'#34D399':'#7B82A0'}}>{f.vale_transporte?'Sim':'Não'}</td>
