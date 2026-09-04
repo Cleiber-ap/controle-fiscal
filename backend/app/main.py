@@ -23,11 +23,14 @@ _COLUNAS_NOVAS = [
     # Primeira vigencia de cada funcionario: a remuneracao atual, valendo desde a
     # admissao. NOT EXISTS deixa a instrucao repetivel e nao mexe em quem ja tem
     # historico.
+    "ALTER TABLE funcionario_salarios ADD COLUMN IF NOT EXISTS cargo VARCHAR(100)",
+    "UPDATE funcionario_salarios s SET cargo = f.cargo FROM funcionarios f "
+    "WHERE s.funcionario_id = f.id AND s.cargo IS NULL",
     "INSERT INTO funcionario_salarios "
-    "(funcionario_id, vigencia, salario_base, vale_alimentacao, salario_dinheiro, "
+    "(funcionario_id, vigencia, cargo, salario_base, vale_alimentacao, salario_dinheiro, "
     " vale_transporte, vale_transporte_valor) "
     "SELECT f.id, COALESCE(f.data_admissao, TO_CHAR(f.created_at, 'YYYY-MM-DD'), '2000-01-01'), "
-    "       f.salario_base, f.vale_alimentacao, f.salario_dinheiro, "
+    "       f.cargo, f.salario_base, f.vale_alimentacao, f.salario_dinheiro, "
     "       f.vale_transporte, f.vale_transporte_valor "
     "FROM funcionarios f "
     "WHERE NOT EXISTS (SELECT 1 FROM funcionario_salarios s WHERE s.funcionario_id = f.id)",

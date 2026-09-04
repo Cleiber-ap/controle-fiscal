@@ -167,7 +167,7 @@ export default function Encargos() {
       .filter(v => v.funcionario_id === f.id && v.vigencia <= fim)
       .sort((a, b) => a.vigencia < b.vigencia ? -1 : 1)
       .pop()
-    return vig ? { ...f, ...vig, id: f.id, nome: f.nome, cargo: f.cargo } : f
+    return vig ? { ...f, ...vig, id: f.id, nome: f.nome, cargo: vig.cargo || f.cargo } : f
   }
 
   /** Funcionario estava na empresa no mes de referencia? */
@@ -252,7 +252,7 @@ export default function Encargos() {
             funcionarios: funcionarios.filter(estavaNaEmpresa).map(remuneracaoNoMes).map((f: any) => ({
               funcionario_id: f.id,
               nome: f.nome,
-              cargo: f.cargo || '',
+              cargo: f.cargo || '',   // ja e o cargo vigente no mes
               data_admissao: f.data_admissao || null,
               data_demissao: f.data_demissao || null,
               salario_base: parseFloat(f.salario_base) || 0,
@@ -467,8 +467,8 @@ export default function Encargos() {
             ) : (
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 11 }}>
                 <thead><tr>
-                  {['Funcionário', 'A partir de', 'Salário', 'V. Alim.', 'Dinheiro', 'VT/dia'].map((h, i) => (
-                    <th key={h} style={{ ...st.th, textAlign: i === 0 || i === 1 ? 'left' as any : 'right' as any }}>{h}</th>
+                  {['Funcionário', 'A partir de', 'Cargo', 'Salário', 'V. Alim.', 'Dinheiro', 'VT/dia'].map((h, i) => (
+                    <th key={h} style={{ ...st.th, textAlign: i <= 2 ? 'left' as any : 'right' as any }}>{h}</th>
                   ))}
                 </tr></thead>
                 <tbody>
@@ -478,6 +478,7 @@ export default function Encargos() {
                       <tr key={v.id}>
                         <td style={st.td}>{f?.nome || 'id ' + v.funcionario_id}</td>
                         <td style={st.td}>{v.vigencia.split('-').reverse().join('/')}</td>
+                        <td style={{ ...st.td, color: '#7B82A0' }}>{v.cargo || '—'}</td>
                         <td style={{ ...st.td, textAlign: 'right' as any }}>{fmtR(v.salario_base)}</td>
                         <td style={{ ...st.td, textAlign: 'right' as any }}>{fmtR(v.vale_alimentacao)}</td>
                         <td style={{ ...st.td, textAlign: 'right' as any }}>{v.salario_dinheiro ? fmtR(v.salario_dinheiro) : '—'}</td>

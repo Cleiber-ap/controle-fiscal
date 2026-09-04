@@ -62,6 +62,7 @@ class SalarioVigencia(Base):
     funcionario_id = Column(Integer, nullable=False, index=True)
     #  AAAA-MM-DD: primeiro dia em que estes valores valem.
     vigencia = Column(String(10), nullable=False)
+    cargo = Column(String(100))
     salario_base = Column(Float, default=0)
     vale_alimentacao = Column(Float, default=0)
     salario_dinheiro = Column(Float, default=0)
@@ -127,14 +128,17 @@ def criar(dados: dict, db: Session = Depends(get_db), current_user=Depends(get_c
     db.commit()
     return f
 
-CAMPOS_REMUNERACAO = ('salario_base', 'vale_alimentacao', 'salario_dinheiro',
+#  Mudanca em qualquer um destes abre uma nova vigencia. Cargo entra junto:
+#  promocao e reajuste costumam andar juntos e interessa saber o cargo de cada
+#  periodo, nao so o atual.
+CAMPOS_REMUNERACAO = ('cargo', 'salario_base', 'vale_alimentacao', 'salario_dinheiro',
                       'vale_transporte', 'vale_transporte_valor')
 
 
 def _salario_json(v):
     return {
         "id": v.id, "funcionario_id": v.funcionario_id, "vigencia": v.vigencia,
-        "salario_base": v.salario_base or 0, "vale_alimentacao": v.vale_alimentacao or 0,
+        "cargo": v.cargo, "salario_base": v.salario_base or 0, "vale_alimentacao": v.vale_alimentacao or 0,
         "salario_dinheiro": v.salario_dinheiro or 0,
         "vale_transporte": bool(v.vale_transporte),
         "vale_transporte_valor": v.vale_transporte_valor or 0,
