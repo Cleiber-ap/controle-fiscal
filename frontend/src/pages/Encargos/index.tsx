@@ -136,8 +136,36 @@ export default function Encargos() {
     await fetch(API + '/funcionarios/' + fid, { method: 'DELETE', headers: hdr() })
     showNotif(nome + ' desativado'); carregar()
   }
+  /**
+   * O cadastro guarda so dia e mes, sem ano, entao vale para todos os anos.
+   * Cadastrar um feriado movel — que muda de data a cada ano — cria feriado
+   * fantasma nos demais. Ja aconteceu: "Sexta feira Santa 18/04" e "Corpus
+   * Christi 04/06" tiravam um dia util de abril e junho de 2025.
+   *
+   * Confere a data digitada contra os moveis dos anos vizinhos e devolve o
+   * aviso, ou string vazia.
+   */
+  const avisoFeriadoMovel = (() => {
+    const dia = parseInt(formFeriado.dia), m = parseInt(formFeriado.mes)
+    if (!dia || !m) return ''
+    const MOVEIS = ['Carnaval (2ª)', 'Carnaval (3ª)', 'Sexta-Feira Santa', 'Corpus Christi']
+    const anos: number[] = []
+    for (let a = HOJE.ano - 2; a <= HOJE.ano + 2; a++) anos.push(a)
+    const coincide = anos.flatMap(a => getFeriadosFixos(a)
+      .filter(f => MOVEIS.includes(f.descricao) && f.dia === dia && f.mes === m)
+      .map(f => ({ ano: a, nome: f.descricao })))
+    if (!coincide.length) return ''
+    const nomes = [...new Set(coincide.map(c => c.nome))].join(' / ')
+    const anosCoincide = coincide.map(c => c.ano).join(', ')
+    const outros = anos.filter(a => !coincide.some(c => c.ano === a))
+    return `${dia}/${m} é ${nomes} em ${anosCoincide}, e o sistema já calcula isso sozinho. `
+      + `Como o cadastro não guarda o ano, esta data viraria feriado também em ${outros.join(', ')}, `
+      + `onde não é — tirando um dia útil do vale-transporte.`
+  })()
+
   const salvarFeriado = async () => {
     if (!formFeriado.descricao.trim()) return
+    if (avisoFeriadoMovel && !window.confirm(avisoFeriadoMovel + '\n\nCadastrar mesmo assim?')) return
     const payload = { dia: parseInt(formFeriado.dia), mes: parseInt(formFeriado.mes), descricao: formFeriado.descricao, tipo: formFeriado.tipo }
     if (editandoFeriado) {
       await fetch(API + '/funcionarios/feriados/' + editandoFeriado, { method: 'PUT', headers: hdr(), body: JSON.stringify(payload) })
@@ -559,6 +587,12 @@ export default function Encargos() {
                 <option value='municipal'>🏙️ Municipal (São Paulo)</option>
               </select>
             </div>
+            {avisoFeriadoMovel && (
+              <div style={{display:'flex',gap:8,background:'rgba(251,191,36,0.08)',border:'1px solid rgba(251,191,36,0.35)',borderRadius:8,padding:'10px 12px',marginBottom:12}}>
+                <span style={{fontSize:14}}>⚠️</span>
+                <span style={{fontSize:11,color:'#FBBF24',lineHeight:1.5}}>{avisoFeriadoMovel}</span>
+              </div>
+            )}
             <button onClick={salvarFeriado} style={{background:'#4F8EF7',color:'#fff',border:'1px solid #4F8EF7',borderRadius:6,padding:'8px 20px',fontSize:13,fontWeight:600,cursor:'pointer',width:'100%'}}>{editandoFeriado ? '💾 Salvar Alterações' : '💾 Salvar Feriado'}</button>
             <div style={{marginTop:16,padding:'10px 12px',background:'#0E1017',borderRadius:6,border:'1px solid #2A2D3E'}}>
               <div style={{fontSize:11,color:'#7B82A0',lineHeight:1.6}}>ℹ️ Somados aos feriados fixos já incluídos automaticamente (Carnaval, Páscoa, Corpus Christi, etc).</div>
