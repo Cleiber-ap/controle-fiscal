@@ -42,7 +42,8 @@ export default function Encargos() {
   const [fechamentos, setFechamentos] = useState<any[]>([])
   // Intervalo do comparativo. Comeca no ano corrente inteiro; o usuario ajusta.
   const periodoPadrao = () => ({ deMes: 1, deAno: HOJE.ano, ateMes: HOJE.mes, ateAno: HOJE.ano })
-  const [periodo, setPeriodo] = useState(periodoPadrao)
+  //  null = filtro limpo: nenhum periodo escolhido, nenhuma linha na tabela.
+  const [periodo, setPeriodo] = useState<null | ReturnType<typeof periodoPadrao>>(periodoPadrao)
   const showNotif = (msg: string, ok = true) => { setNotif({ msg, ok }); setTimeout(() => setNotif(null), 3500) }
   const carregar = async () => {
     const [fs2, hs, frs, fech, sals, emps, fechs] = await Promise.all([
@@ -582,24 +583,37 @@ export default function Encargos() {
       )}
       {aba === 'comparativo' && (() => {
         const chave = (ano: number, mes: number) => ano * 12 + mes
-        const de = chave(periodo.deAno, periodo.deMes)
-        const ate = chave(periodo.ateAno, periodo.ateMes)
-        const linhas = fechamentos
-          .filter(f => { const k = chave(f.ano, f.mes); return k >= de && k <= ate })
-          .sort((a, b) => chave(a.ano, a.mes) - chave(b.ano, b.mes))
+        const de = periodo ? chave(periodo.deAno, periodo.deMes) : 0
+        const ate = periodo ? chave(periodo.ateAno, periodo.ateMes) : 0
+        const linhas = periodo
+          ? fechamentos
+              .filter(f => { const k = chave(f.ano, f.mes); return k >= de && k <= ate })
+              .sort((a, b) => chave(a.ano, a.mes) - chave(b.ano, b.mes))
+          : []
         const soma = (c: string) => linhas.reduce((t, l) => t + (l[c] || 0), 0)
         const anos = [...new Set(fechamentos.map(f => f.ano))].sort()
-        const selMes = (v: number, set: (n: number) => void) => (
-          <select value={v} onChange={e => set(+e.target.value)} style={{ ...st.input, width: 'auto', padding: '5px 8px', fontSize: 12 }}>
+        const primeiro = fechamentos[0], ultimo = fechamentos[fechamentos.length - 1]
+        //  Com o filtro limpo, mexer em qualquer seletor reabre o periodo inteiro
+        //  ja com o campo escolhido aplicado — evita ficar com meio intervalo.
+        const ajustar = (campo: string, valor: number) => setPeriodo(p => ({
+          ...(p ?? (primeiro && ultimo
+            ? { deMes: primeiro.mes, deAno: primeiro.ano, ateMes: ultimo.mes, ateAno: ultimo.ano }
+            : periodoPadrao())),
+          [campo]: valor,
+        }))
+        const selMes = (v: number | undefined, campo: string) => (
+          <select value={v ?? ''} onChange={e => ajustar(campo, +e.target.value)} style={{ ...st.input, width: 'auto', padding: '5px 8px', fontSize: 12 }}>
+            {!periodo && <option value=''>—</option>}
             {MESES.map((m, i) => <option key={m} value={i + 1}>{m}</option>)}
           </select>
         )
-        const selAno = (v: number, set: (n: number) => void) => (
-          <select value={v} onChange={e => set(+e.target.value)} style={{ ...st.input, width: 'auto', padding: '5px 8px', fontSize: 12 }}>
+        const selAno = (v: number | undefined, campo: string) => (
+          <select value={v ?? ''} onChange={e => ajustar(campo, +e.target.value)} style={{ ...st.input, width: 'auto', padding: '5px 8px', fontSize: 12 }}>
+            {!periodo && <option value=''>—</option>}
             {anos.map(a => <option key={a} value={a}>{a}</option>)}
           </select>
         )
-        const invertido = de > ate
+        const invertido = !!periodo && de > ate
         return (
           <div>
             <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, marginBottom: 16, flexWrap: 'wrap' as const }}>
@@ -611,24 +625,28 @@ export default function Encargos() {
               </div>
               <div style={{ ...st.card, padding: '12px 14px', marginBottom: 0, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' as const }}>
                 <span style={{ fontSize: 11, color: '#7B82A0', textTransform: 'uppercase' as const, letterSpacing: '.08em' }}>De</span>
-                {selMes(periodo.deMes, n => setPeriodo(p => ({ ...p, deMes: n })))}
-                {selAno(periodo.deAno, n => setPeriodo(p => ({ ...p, deAno: n })))}
+                {selMes(periodo?.deMes, 'deMes')}
+                {selAno(periodo?.deAno, 'deAno')}
                 <span style={{ fontSize: 11, color: '#7B82A0', textTransform: 'uppercase' as const, letterSpacing: '.08em' }}>até</span>
-                {selMes(periodo.ateMes, n => setPeriodo(p => ({ ...p, ateMes: n })))}
-                {selAno(periodo.ateAno, n => setPeriodo(p => ({ ...p, ateAno: n })))}
+                {selMes(periodo?.ateMes, 'ateMes')}
+                {selAno(periodo?.ateAno, 'ateAno')}
                 <button
                   onClick={() => { const p = fechamentos[0], u = fechamentos[fechamentos.length - 1]
                     if (p && u) setPeriodo({ deMes: p.mes, deAno: p.ano, ateMes: u.mes, ateAno: u.ano }) }}
                   style={{ ...st.btn('#1A1D2A'), padding: '5px 12px', fontSize: 11 }}>Tudo</button>
                 <button
-                  onClick={() => setPeriodo(periodoPadrao())}
-                  title={`Volta ao padrão: janeiro a ${MESES[HOJE.mes - 1].toLowerCase()} de ${HOJE.ano}`}
+                  onClick={() => setPeriodo(null)}
+                  title='Limpa o período: nenhum mês fica selecionado'
                   style={{ ...st.btn('#1A1D2A'), padding: '5px 12px', fontSize: 11 }}>Limpar</button>
               </div>
             </div>
             {invertido ? (
               <div style={{ ...st.card, color: '#FBBF24', fontSize: 12 }}>
                 O mês inicial é posterior ao final. Inverta o intervalo para ver os dados.
+              </div>
+            ) : !periodo ? (
+              <div style={{ ...st.card, color: '#7B82A0', fontSize: 12 }}>
+                Nenhum período selecionado. Escolha o intervalo acima ou clique em Tudo.
               </div>
             ) : linhas.length === 0 ? (
               <div style={{ ...st.card, color: '#7B82A0', fontSize: 12 }}>
