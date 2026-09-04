@@ -221,6 +221,11 @@ export default function Encargos() {
   const calculos = funcionarios.map(f => ({
     ...f,
     calc: calcEncargos(f, horas[f.id] || 0, {
+      // Valores reais do mes, vindos de calcCalendario. Antes ficavam nos
+      // padroes fixos 6/25/20, que em 2026 divergem em 11 dos 12 meses.
+      domingosFeriados,
+      diasSegSab,
+      diasVT,
       multHE: pctHE[f.id] || 1.5,
       faltas: faltasAtrasos[f.id] || 0,
     }),
