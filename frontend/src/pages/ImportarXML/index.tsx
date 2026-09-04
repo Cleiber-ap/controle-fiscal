@@ -2,6 +2,7 @@
 import { registrarLog } from '../../api/auditoria'
 import api, { historicoAPI } from '../../api/endpoints'
 import { fmtR, fmtCNPJ } from '../../utils/formato'
+import { ehReceita, ehFaturamento } from '../../utils/notas'
 
 
 const CNPJ_EMPRESAS: Record<string, string> = {
@@ -252,13 +253,9 @@ export default function ImportarXML() {
       for (const nfNum of nfsLinha) {
         const nota = todasNotas.find((n: any) => {
           const numMatch = n.numero_nf === nfNum
-          // Mesmas guardas dos demais pontos: entrada nunca recebe pagamento, e
-          // devolucao nao e venda. Sem isso, uma linha do CSV citando uma nota de
+          // Entrada nunca recebe pagamento: uma linha do CSV citando uma nota de
           // devolucao lancaria pagamento nela, inflando a base do DAS.
-          const nat = (n.nat_operacao || n.status || '').toLowerCase()
-          const isVenda = (n.tipo || 'saida') !== 'entrada'
-            && ((nat.includes('venda') && !nat.includes('devolu'))
-                || nat.includes('complemento de frete') || nat.includes('complementar'))
+          const isVenda = ehReceita(n)
           // Filtrar por unidade se disponível
           if (unidade && unidade.includes('six') && n.empresa_id !== 1) return false
           if (unidade && unidade.includes('enova') && n.empresa_id !== 2) return false
@@ -457,7 +454,7 @@ export default function ImportarXML() {
       const empresasImportadas = [...new Set(notas.map(n => (n as any).empresaDetectada === 'six' ? 1 : 2))]
       for (const emp of empresasImportadas) {
         const todasNotas = await api.get('/notas/' + emp).then((r: any) => r.data).catch(() => [])
-        const canceladasRecalc = new Set(todasNotas.filter((n: any) => n.numero_nf?.endsWith('-CAN')).map((n: any) => n.numero_nf.replace('-CAN', '')))
+        const canceladasRecalc = new Set<string>(todasNotas.filter((n: any) => n.numero_nf?.endsWith('-CAN')).map((n: any) => n.numero_nf.replace('-CAN', '')))
         // Meses afetados por esta leva. So eles sao regravados: regravar todos os meses
         // sobrescreveria historico semeado manualmente cujos XMLs nao estao todos no banco.
         const mesesAlvo = new Set<string>()
@@ -471,7 +468,7 @@ export default function ImportarXML() {
           if (orig) addMes(orig.data_emissao)
         }
         const porMesRecalc: Record<string, number> = {}
-        todasNotas.filter((n: any) => { if (canceladasRecalc.has(n.numero_nf)) return false; if ((n.tipo || 'saida') === 'entrada') return false; const st = (n.nat_operacao || n.status || '').toLowerCase(); return (st.includes('venda') && !st.includes('devolu')) || st.includes('complemento de frete') || st.includes('complementar') }).forEach((n: any) => {
+        todasNotas.filter((n: any) => ehFaturamento(n, canceladasRecalc)).forEach((n: any) => {
           if (n.data_emissao) {
             const [, m, a] = n.data_emissao.split('/')
             const key = `${a}-${m}`

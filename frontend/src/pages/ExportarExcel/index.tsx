@@ -6,6 +6,7 @@ import axios from 'axios'
 import { registrarLog } from '../../api/auditoria'
 import { MESES } from '../../utils/meses'
 import { fmtR } from '../../utils/formato'
+import { ehReceita } from '../../utils/notas'
 
 const api = axios.create({ baseURL: import.meta.env.VITE_API_URL || 'https://diligent-integrity-production-3f98.up.railway.app' })
 api.interceptors.request.use(c => { const t = localStorage.getItem('access_token'); if (t) c.headers.Authorization = `Bearer ${t}`; return c })
@@ -181,12 +182,8 @@ export default function ExportarExcel() {
         return parseInt(parts[1])===mesAntIdx+1&&parseInt(parts[0])===anoAnt
       })
       const notasAguardando = listaFiltrada.filter((n:any)=>{
-        const st=(n.nat_operacao||n.status||"").toLowerCase()
         const semPag=!n.valor_pago||parseFloat(n.valor_pago)===0
-        // Complementares (NF-e complementar e complemento de frete) contam como
-        // receita nas demais telas e passam a entrar aqui tambem.
-        const ehReceita=((st.includes("venda")&&!st.includes("devolu"))||st.includes("complemento de frete")||st.includes("complementar"))&&(n.tipo||"saida")!=="entrada"
-        if(!n.data_emissao||!ehReceita||nfsCan.has(n.numero_nf)||!semPag) return false
+        if(!n.data_emissao||!ehReceita(n)||nfsCan.has(n.numero_nf)||!semPag) return false
         const parts=n.data_emissao.includes("-")?n.data_emissao.split("-"):n.data_emissao.split("/").reverse()
         return !(parseInt(parts[1])===mesAntIdx+1&&parseInt(parts[0])===anoAnt)
       })
