@@ -262,6 +262,38 @@ def _fechamento_json(f):
     }
 
 
+@router.get("/fechamentos")
+def listar_fechamentos(db: Session = Depends(get_db), current_user=Depends(get_current_user)):
+    """
+    Resumo de todos os meses fechados, do mais antigo ao mais recente.
+
+    Devolve so os totais e a contagem de funcionarios — o detalhe completo sai
+    por /fechamento/{ano}/{mes}, para a listagem nao carregar o JSON inteiro de
+    cada mes.
+    """
+    rows = db.query(FechamentoEncargos).order_by(
+        FechamentoEncargos.ano, FechamentoEncargos.mes).all()
+    saida = []
+    for f in rows:
+        qtd = None
+        if f.detalhe:
+            try:
+                qtd = len(json.loads(f.detalhe).get("funcionarios", []))
+            except ValueError:
+                qtd = None
+        saida.append({
+            "ano": f.ano, "mes": f.mes,
+            "funcionarios": qtd,
+            "total_salarios": f.total_salarios or 0,
+            "total_encargos": f.total_encargos or 0,
+            "total_empresa": f.total_empresa or 0,
+            "total_deposito": f.total_deposito or 0,
+            "fechado_por": f.fechado_por,
+            "fechado_em": f.fechado_em.isoformat() if f.fechado_em else None,
+        })
+    return saida
+
+
 @router.get("/fechamento/{ano}/{mes}")
 def get_fechamento(ano: int, mes: int, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
     """Fechamento do mes, ou null se ainda estiver aberto."""

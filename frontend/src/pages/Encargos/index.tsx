@@ -16,7 +16,7 @@ export default function Encargos() {
   const [horas, setHoras] = useState<Record<number, number>>({})
   const [pctHE, setPctHE] = useState<Record<number, number>>({})
   const [faltasAtrasos, setFaltasAtrasos] = useState<Record<number, number>>({})
-  const [aba, setAba] = useState<'resumo' | 'funcionarios' | 'feriados'>('resumo')
+  const [aba, setAba] = useState<'resumo' | 'funcionarios' | 'feriados' | 'comparativo'>('resumo')
   const [mesRef, setMesRef] = useState(() => { const d = new Date(); return { mes: d.getMonth() + 1, ano: d.getFullYear() } })
   const [diasUteis, setDiasUteis] = useState(22)
   const [domingosFeriados, setDomingosFeriados] = useState(6)
@@ -39,16 +39,24 @@ export default function Encargos() {
   const [salarios, setSalarios] = useState<any[]>([])
   const [fechamento, setFechamento] = useState<any | null>(null)
   const [fechando, setFechando] = useState(false)
+  const [fechamentos, setFechamentos] = useState<any[]>([])
+  // Intervalo do comparativo. Comeca no ano corrente inteiro; o usuario ajusta.
+  const [periodo, setPeriodo] = useState(() => {
+    const d = new Date()
+    return { deMes: 1, deAno: d.getFullYear(), ateMes: d.getMonth() + 1, ateAno: d.getFullYear() }
+  })
   const showNotif = (msg: string, ok = true) => { setNotif({ msg, ok }); setTimeout(() => setNotif(null), 3500) }
   const carregar = async () => {
-    const [fs2, hs, frs, fech, sals, emps] = await Promise.all([
+    const [fs2, hs, frs, fech, sals, emps, fechs] = await Promise.all([
       fetch(API + '/funcionarios/', { headers: hdr() }).then(r => r.json()).catch(() => []),
       fetch(API + `/funcionarios/horas/${mesRef.ano}/${mesRef.mes}`, { headers: hdr() }).then(r => r.json()).catch(() => ({})),
       fetch(API + '/funcionarios/feriados/', { headers: hdr() }).then(r => r.json()).catch(() => []),
       fetch(API + `/funcionarios/fechamento/${mesRef.ano}/${mesRef.mes}`, { headers: hdr() }).then(r => r.json()).catch(() => null),
       fetch(API + '/funcionarios/salarios', { headers: hdr() }).then(r => r.json()).catch(() => []),
       fetch(API + '/empresas/', { headers: hdr() }).then(r => r.json()).catch(() => []),
+      fetch(API + '/funcionarios/fechamentos', { headers: hdr() }).then(r => r.json()).catch(() => []),
     ])
+    setFechamentos(Array.isArray(fechs) ? fechs : [])
     setEmpresas(Array.isArray(emps) ? emps : [])
     setSalarios(Array.isArray(sals) ? sals : [])
     setFechamento(fech && fech.ano ? fech : null)
@@ -391,7 +399,7 @@ export default function Encargos() {
         ))}
       </div>
       <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
-        {[['resumo', '📊 Resumo Mensal'], ['funcionarios', '👥 Funcionários'], ['feriados', '📅 Feriados']].map(([k, l]) => (
+        {[['resumo', '📊 Resumo Mensal'], ['comparativo', '📈 Comparativo'], ['funcionarios', '👥 Funcionários'], ['feriados', '📅 Feriados']].map(([k, l]) => (
           <button key={k} style={st.btn(aba === k ? '#4F8EF7' : '#1A1D2A')} onClick={() => setAba(k as any)}>{l as string}</button>
         ))}
       </div>
@@ -574,6 +582,91 @@ export default function Encargos() {
           </div>
         </div>
       )}
+      {aba === 'comparativo' && (() => {
+        const chave = (ano: number, mes: number) => ano * 12 + mes
+        const de = chave(periodo.deAno, periodo.deMes)
+        const ate = chave(periodo.ateAno, periodo.ateMes)
+        const linhas = fechamentos
+          .filter(f => { const k = chave(f.ano, f.mes); return k >= de && k <= ate })
+          .sort((a, b) => chave(a.ano, a.mes) - chave(b.ano, b.mes))
+        const soma = (c: string) => linhas.reduce((t, l) => t + (l[c] || 0), 0)
+        const anos = [...new Set(fechamentos.map(f => f.ano))].sort()
+        const selMes = (v: number, set: (n: number) => void) => (
+          <select value={v} onChange={e => set(+e.target.value)} style={{ ...st.input, width: 'auto', padding: '5px 8px', fontSize: 12 }}>
+            {MESES.map((m, i) => <option key={m} value={i + 1}>{m}</option>)}
+          </select>
+        )
+        const selAno = (v: number, set: (n: number) => void) => (
+          <select value={v} onChange={e => set(+e.target.value)} style={{ ...st.input, width: 'auto', padding: '5px 8px', fontSize: 12 }}>
+            {anos.map(a => <option key={a} value={a}>{a}</option>)}
+          </select>
+        )
+        const invertido = de > ate
+        return (
+          <div>
+            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, marginBottom: 16, flexWrap: 'wrap' as const }}>
+              <div>
+                <div style={{ fontSize: 14, fontWeight: 700 }}>📈 Comparativo mensal</div>
+                <div style={{ fontSize: 11, color: '#7B82A0', marginTop: 2 }}>
+                  Apenas meses fechados. {fechamentos.length} disponíveis, de {fechamentos.length ? `${MESES[fechamentos[0].mes - 1]}/${fechamentos[0].ano}` : '—'} a {fechamentos.length ? `${MESES[fechamentos[fechamentos.length - 1].mes - 1]}/${fechamentos[fechamentos.length - 1].ano}` : '—'}.
+                </div>
+              </div>
+              <div style={{ ...st.card, padding: '12px 14px', marginBottom: 0, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' as const }}>
+                <span style={{ fontSize: 11, color: '#7B82A0', textTransform: 'uppercase' as const, letterSpacing: '.08em' }}>De</span>
+                {selMes(periodo.deMes, n => setPeriodo(p => ({ ...p, deMes: n })))}
+                {selAno(periodo.deAno, n => setPeriodo(p => ({ ...p, deAno: n })))}
+                <span style={{ fontSize: 11, color: '#7B82A0', textTransform: 'uppercase' as const, letterSpacing: '.08em' }}>até</span>
+                {selMes(periodo.ateMes, n => setPeriodo(p => ({ ...p, ateMes: n })))}
+                {selAno(periodo.ateAno, n => setPeriodo(p => ({ ...p, ateAno: n })))}
+                <button
+                  onClick={() => { const p = fechamentos[0], u = fechamentos[fechamentos.length - 1]
+                    if (p && u) setPeriodo({ deMes: p.mes, deAno: p.ano, ateMes: u.mes, ateAno: u.ano }) }}
+                  style={{ ...st.btn('#1A1D2A'), padding: '5px 12px', fontSize: 11 }}>Tudo</button>
+              </div>
+            </div>
+            {invertido ? (
+              <div style={{ ...st.card, color: '#FBBF24', fontSize: 12 }}>
+                O mês inicial é posterior ao final. Inverta o intervalo para ver os dados.
+              </div>
+            ) : linhas.length === 0 ? (
+              <div style={{ ...st.card, color: '#7B82A0', fontSize: 12 }}>
+                Nenhum mês fechado neste intervalo.
+              </div>
+            ) : (
+              <div style={{ ...st.card, padding: 0, overflow: 'hidden' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+                  <thead><tr>
+                    <th style={{ ...st.th }}>Mês</th>
+                    {['Funcionários', 'Total Salários', 'Total Encargos', 'Custo Total Empresa', 'Depósito'].map(h => (
+                      <th key={h} style={{ ...st.th, textAlign: 'right' as const }}>{h}</th>
+                    ))}
+                  </tr></thead>
+                  <tbody>
+                    {linhas.map(l => (
+                      <tr key={`${l.ano}-${l.mes}`}>
+                        <td style={{ ...st.td, fontFamily: 'inherit' }}>{MESES[l.mes - 1]}/{l.ano}</td>
+                        <td style={{ ...st.td, textAlign: 'right' as const }}>{l.funcionarios ?? '—'}</td>
+                        <td style={{ ...st.td, textAlign: 'right' as const, color: '#4F8EF7' }}>{fmtR(l.total_salarios)}</td>
+                        <td style={{ ...st.td, textAlign: 'right' as const, color: '#FBBF24' }}>{fmtR(l.total_encargos)}</td>
+                        <td style={{ ...st.td, textAlign: 'right' as const, color: '#34D399', fontWeight: 700 }}>{fmtR(l.total_empresa)}</td>
+                        <td style={{ ...st.td, textAlign: 'right' as const, color: '#A78BFA' }}>{fmtR(l.total_deposito)}</td>
+                      </tr>
+                    ))}
+                    <tr style={{ background: '#1A1D2A' }}>
+                      <td style={{ ...st.td, fontFamily: 'inherit', fontWeight: 700 }}>Total ({linhas.length} {linhas.length === 1 ? 'mês' : 'meses'})</td>
+                      <td style={{ ...st.td, textAlign: 'right' as const, color: '#7B82A0' }}>—</td>
+                      <td style={{ ...st.td, textAlign: 'right' as const, color: '#4F8EF7', fontWeight: 700 }}>{fmtR(soma('total_salarios'))}</td>
+                      <td style={{ ...st.td, textAlign: 'right' as const, color: '#FBBF24', fontWeight: 700 }}>{fmtR(soma('total_encargos'))}</td>
+                      <td style={{ ...st.td, textAlign: 'right' as const, color: '#34D399', fontWeight: 700 }}>{fmtR(soma('total_empresa'))}</td>
+                      <td style={{ ...st.td, textAlign: 'right' as const, color: '#A78BFA', fontWeight: 700 }}>{fmtR(soma('total_deposito'))}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )
+      })()}
       {aba === 'feriados' && (
         <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16}}>
           <div style={{background:'#13151F',border:'1px solid #4F8EF744',borderRadius:10,padding:20}}>
