@@ -22,7 +22,33 @@ function calcINSS(salario: number): number {
   return inss
 }
 
-function calcEncargos(func: any, diasUteis: number, horasExtras: number, domingosFeriados = 6, multHE = 1.5, diasSegSab = 25, diasVT = 20) {
+/**
+ * Parametros do calculo. Eram posicionais, e por isso quatro deles ficavam nos
+ * valores padrao sem ninguem notar — inclusive o multiplicador de hora extra,
+ * que a tela deixa escolher. Nomeados, fica visivel no call site o que e
+ * informado e o que cai no padrao.
+ */
+interface OpcoesEncargos {
+  /** Domingos e feriados do mes. */
+  domingosFeriados?: number
+  /** Multiplicador da hora extra: 1.5 = 50%, 2.0 = 100%. */
+  multHE?: number
+  /** Dias de segunda a sabado do mes. */
+  diasSegSab?: number
+  /** Dias com direito a vale-transporte. */
+  diasVT?: number
+  /** Desconto de faltas e atrasos, em reais. */
+  faltas?: number
+}
+
+function calcEncargos(func: any, horasExtras: number, opcoes: OpcoesEncargos = {}) {
+  const {
+    domingosFeriados = 6,
+    multHE = 1.5,
+    diasSegSab = 25,
+    diasVT = 20,
+    faltas = 0,
+  } = opcoes
   const sal = parseFloat(func.salario_base) || 0
   const va = parseFloat(func.vale_alimentacao) || 0
   const dinheiro = parseFloat(func.salario_dinheiro) || 0
@@ -38,14 +64,13 @@ function calcEncargos(func: any, diasUteis: number, horasExtras: number, domingo
   const vtDesconto = usaVT ? (sal + heValor) * 0.06 : 0
   const vtValor = usaVT ? Math.max(0, vtUnitario * diasVT * 1.06 - vtDesconto) : 0
   const inss = calcINSS(sal + heValor)
-  const faltas = 0
   const vale = sal * 0.40
   const desVT = vtDesconto
   const totalEncargos = ferias13 + fgts + multaFgts + heValor + heDsr + vtValor + va + dinheiro
   const totalDescontos = inss + desVT + faltas + vale
   const salLiquido = sal + heValor + va - totalDescontos + dinheiro
   const totalEmpresa = sal + totalEncargos
-  return { sal, ferias13, fgts, multaFgts, heValor, heDsr, vtValor, va, dinheiro, inss, desVT, vale, totalEncargos, totalDescontos, salLiquido, totalEmpresa, pctEncargos: totalEncargos / sal }
+  return { sal, ferias13, fgts, multaFgts, heValor, heDsr, vtValor, va, dinheiro, inss, desVT, faltas, vale, totalEncargos, totalDescontos, salLiquido, totalEmpresa, pctEncargos: totalEncargos / sal }
 }
 
 function calcPascoa(ano: number): Date {
@@ -59,10 +84,17 @@ function calcPascoa(ano: number): Date {
   return new Date(ano, mes-1, dia)
 }
 
-function getTodosOsFeriados(ano: number, custom: any[] = []) {
+/**
+ * Feriados nacionais e estaduais do ano — fonte unica.
+ *
+ * Esta lista existia duplicada: uma copia aqui, para o calculo do calendario, e
+ * outra dentro do componente, para exibir os feriados do mes. Acrescentar um
+ * feriado num lugar e esquecer do outro faria a tela e o calculo discordarem.
+ */
+function getFeriadosFixos(ano: number) {
   const p = calcPascoa(ano)
   const ad = (d:Date,n:number)=>{const r=new Date(d);r.setDate(r.getDate()+n);return r}
-  const fixos = [
+  return [
     {dia:1,mes:1,descricao:'Confraternização Universal',tipo:'nacional'},
     {dia:25,mes:1,descricao:'Aniversário de São Paulo',tipo:'estadual'},
     {dia:21,mes:4,descricao:'Tiradentes',tipo:'nacional'},
@@ -78,7 +110,11 @@ function getTodosOsFeriados(ano: number, custom: any[] = []) {
     {dia:ad(p,-2).getDate(),mes:ad(p,-2).getMonth()+1,descricao:'Sexta-Feira Santa',tipo:'nacional'},
     {dia:ad(p,60).getDate(),mes:ad(p,60).getMonth()+1,descricao:'Corpus Christi',tipo:'nacional'},
   ]
-  return [...fixos, ...custom]
+}
+
+/** Feriados fixos do ano mais os cadastrados manualmente. */
+function getTodosOsFeriados(ano: number, custom: any[] = []) {
+  return [...getFeriadosFixos(ano), ...custom]
 }
 
 function calcCalendario(mes: number, ano: number, feriadosExtra: Array<{dia: number, mes: number}> = []) {
@@ -179,25 +215,16 @@ export default function Encargos() {
     showNotif('Feriado removido')
     await carregar()
   }
-  const _pasc = calcPascoa(mesRef.ano)
-  const _add = (d:Date,n:number)=>{const r=new Date(d);r.setDate(r.getDate()+n);return r}
-  const feriadosFixosMes = [
-    {dia:1,mes:1,descricao:'Confraternização Universal',tipo:'nacional'},
-    {dia:25,mes:1,descricao:'Aniversário de São Paulo',tipo:'estadual'},
-    {dia:21,mes:4,descricao:'Tiradentes',tipo:'nacional'},
-    {dia:1,mes:5,descricao:'Dia do Trabalho',tipo:'nacional'},
-    {dia:9,mes:7,descricao:'Revolução Constitucionalista',tipo:'estadual'},
-    {dia:7,mes:9,descricao:'Independência do Brasil',tipo:'nacional'},
-    {dia:12,mes:10,descricao:'Nossa Sra. Aparecida',tipo:'nacional'},
-    {dia:2,mes:11,descricao:'Finados',tipo:'nacional'},
-    {dia:15,mes:11,descricao:'Proclamação da República',tipo:'nacional'},
-    {dia:25,mes:12,descricao:'Natal',tipo:'nacional'},
-    {dia:_add(_pasc,-48).getDate(),mes:_add(_pasc,-48).getMonth()+1,descricao:'Carnaval (2ª)',tipo:'nacional'},
-    {dia:_add(_pasc,-47).getDate(),mes:_add(_pasc,-47).getMonth()+1,descricao:'Carnaval (3ª)',tipo:'nacional'},
-    {dia:_add(_pasc,-2).getDate(),mes:_add(_pasc,-2).getMonth()+1,descricao:'Sexta-Feira Santa',tipo:'nacional'},
-    {dia:_add(_pasc,60).getDate(),mes:_add(_pasc,60).getMonth()+1,descricao:'Corpus Christi',tipo:'nacional'},
-  ].filter((f:any)=>f.mes===mesRef.mes).sort((a:any,b:any)=>a.dia-b.dia)
-  const calculos = funcionarios.map(f => ({ ...f, calc: calcEncargos(f, diasUteis, horas[f.id] || 0) }))
+  const feriadosFixosMes = getFeriadosFixos(mesRef.ano)
+    .filter(f => f.mes === mesRef.mes)
+    .sort((a, b) => a.dia - b.dia)
+  const calculos = funcionarios.map(f => ({
+    ...f,
+    calc: calcEncargos(f, horas[f.id] || 0, {
+      multHE: pctHE[f.id] || 1.5,
+      faltas: faltasAtrasos[f.id] || 0,
+    }),
+  }))
   const totalGeral = calculos.reduce((s, f) => s + f.calc.totalEmpresa, 0)
   const totalDeposito = calculos.reduce((s, f) => s + f.calc.ferias13 + f.calc.fgts + f.calc.multaFgts, 0)
   const totalEncargosGeral = calculos.reduce((s, f) => s + f.calc.totalEncargos, 0)
@@ -319,7 +346,7 @@ export default function Encargos() {
                   <td style={{...st.td,fontWeight:700}} colSpan={2}>TOTAL</td>
                   <td style={{...st.td,color:'#F87171'}}>{fmtR(calculos.reduce((s,f)=>s+f.calc.inss,0))}</td>
                   <td style={{...st.td,color:'#F87171'}}>{fmtR(calculos.reduce((s,f)=>s+f.calc.desVT,0))}</td>
-                  <td style={{...st.td,color:'#F87171'}}>{fmtR(Object.values(faltasAtrasos).reduce((s,v)=>s+v,0))}</td>
+                  <td style={{...st.td,color:'#F87171'}}>{fmtR(calculos.reduce((s,f)=>s+f.calc.faltas,0))}</td>
                   <td style={{...st.td,color:'#F87171'}}>{fmtR(calculos.reduce((s,f)=>s+f.calc.vale,0))}</td>
                   <td style={{...st.td,color:'#F87171',fontWeight:700}}>{fmtR(calculos.reduce((s,f)=>s+f.calc.totalDescontos,0))}</td>
                 </tr>
