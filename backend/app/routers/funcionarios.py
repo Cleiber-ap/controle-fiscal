@@ -21,12 +21,24 @@ class Funcionario(Base):
     created_at = Column(DateTime, server_default=func.now())
 
 class HorasExtras(Base):
+    """
+    Lancamentos manuais do mes, por funcionario.
+
+    Guardava so a quantidade de horas. O multiplicador (50% ou 100%) e o valor
+    de faltas viviam apenas na memoria da tela e se perdiam ao recarregar — o
+    que passou a alterar o resultado quando esses campos foram ligados ao
+    calculo.
+    """
     __tablename__ = "encargos_horas_extras"
     id = Column(Integer, primary_key=True, index=True)
     funcionario_id = Column(Integer, nullable=False)
     ano = Column(Integer, nullable=False)
     mes = Column(Integer, nullable=False)
     horas = Column(Float, default=0)
+    #  1.5 = 50% · 2.0 = 100%
+    mult_he = Column(Float, default=1.5, nullable=True)
+    #  Desconto de faltas e atrasos, em reais.
+    faltas = Column(Float, default=0, nullable=True)
     created_at = Column(DateTime, server_default=func.now())
 
 
@@ -69,15 +81,28 @@ def desativar(fid: int, db: Session = Depends(get_db), current_user=Depends(get_
 
 @router.get("/horas/{ano}/{mes}")
 def get_horas(ano: int, mes: int, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
+    """Lancamentos do mes por funcionario: horas, multiplicador e faltas."""
     rows = db.query(HorasExtras).filter(HorasExtras.ano == ano, HorasExtras.mes == mes).all()
-    return {r.funcionario_id: r.horas for r in rows}
+    return {
+        r.funcionario_id: {
+            "horas": r.horas or 0,
+            "mult_he": r.mult_he if r.mult_he is not None else 1.5,
+            "faltas": r.faltas or 0,
+        }
+        for r in rows
+    }
 
 @router.post("/horas")
 def salvar_horas(dados: dict, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
-    fid = dados["funcionario_id"]; ano = dados["ano"]; mes = dados["mes"]; horas = dados.get("horas", 0)
+    """Grava um lancamento. Campo omitido mantem o valor que ja estava gravado."""
+    fid = dados["funcionario_id"]; ano = dados["ano"]; mes = dados["mes"]
     ex = db.query(HorasExtras).filter(HorasExtras.funcionario_id == fid, HorasExtras.ano == ano, HorasExtras.mes == mes).first()
-    if ex: ex.horas = horas
-    else: db.add(HorasExtras(funcionario_id=fid, ano=ano, mes=mes, horas=horas))
+    if not ex:
+        ex = HorasExtras(funcionario_id=fid, ano=ano, mes=mes, horas=0, mult_he=1.5, faltas=0)
+        db.add(ex)
+    if "horas" in dados: ex.horas = dados["horas"]
+    if "mult_he" in dados: ex.mult_he = dados["mult_he"]
+    if "faltas" in dados: ex.faltas = dados["faltas"]
     db.commit()
     return {"ok": True}
 

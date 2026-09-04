@@ -6,6 +6,25 @@ from app.routers.historico import router as historico_router
 from app.routers.notas import router as notas_router, NotaFiscal
 from app.routers.auditoria import router as auditoria_router, LogAuditoria
 Base.metadata.create_all(bind=engine)
+
+# create_all cria tabelas novas, mas nao acrescenta colunas em tabela que ja
+# existe. Como o projeto nao usa Alembic, colunas novas entram aqui — sempre
+# com IF NOT EXISTS, para o startup poder repetir sem efeito.
+_COLUNAS_NOVAS = [
+    "ALTER TABLE encargos_horas_extras ADD COLUMN IF NOT EXISTS mult_he DOUBLE PRECISION DEFAULT 1.5",
+    "ALTER TABLE encargos_horas_extras ADD COLUMN IF NOT EXISTS faltas DOUBLE PRECISION DEFAULT 0",
+]
+
+def _aplicar_colunas_novas():
+    from sqlalchemy import text
+    with engine.begin() as conn:
+        for ddl in _COLUNAS_NOVAS:
+            try:
+                conn.execute(text(ddl))
+            except Exception as e:  # nao derruba a API por causa de migracao
+                print("migracao ignorada:", ddl, "->", e)
+
+_aplicar_colunas_novas()
 app = FastAPI(title="Controle Fiscal API", version="1.0.0")
 app.add_middleware(
     CORSMiddleware,

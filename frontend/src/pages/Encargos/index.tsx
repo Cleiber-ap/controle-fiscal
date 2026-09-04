@@ -37,7 +37,26 @@ export default function Encargos() {
       fetch(API + '/funcionarios/feriados/', { headers: hdr() }).then(r => r.json()).catch(() => []),
     ])
     setFuncionarios(Array.isArray(fs2) ? fs2 : [])
-    setHoras(hs || {})
+    // O endpoint devolvia so a quantidade de horas por funcionario e passou a
+    // devolver tambem multiplicador e faltas. Aceitar as duas formas permite
+    // publicar o frontend antes do backend sem quebrar a tela.
+    const lanc: Record<number, any> = hs && typeof hs === 'object' ? hs : {}
+    const h: Record<number, number> = {}
+    const mult: Record<number, number> = {}
+    const flt: Record<number, number> = {}
+    for (const [fid, v] of Object.entries(lanc)) {
+      const id = Number(fid)
+      if (v !== null && typeof v === 'object') {
+        h[id] = (v as any).horas || 0
+        mult[id] = (v as any).mult_he ?? 1.5
+        flt[id] = (v as any).faltas || 0
+      } else {
+        h[id] = Number(v) || 0
+      }
+    }
+    setHoras(h)
+    setPctHE(mult)
+    setFaltasAtrasos(flt)
     const feriadosLista = Array.isArray(frs) ? frs : []
     setFeriadosCustom(feriadosLista)
     const cal = calcCalendario(mesRef.mes, mesRef.ano, getTodosOsFeriados(mesRef.ano, feriadosLista))
@@ -51,9 +70,29 @@ export default function Encargos() {
     setDiasUteisProx(calProx.diasUteis)
   }
   useEffect(() => { carregar() }, [mesRef])
+  /** Grava um lancamento do mes. Campo omitido mantem o valor ja gravado. */
+  const salvarLancamento = async (fid: number, campos: Record<string, number>) => {
+    try {
+      const r = await fetch(API + '/funcionarios/horas', {
+        method: 'POST', headers: hdr(),
+        body: JSON.stringify({ funcionario_id: fid, ano: mesRef.ano, mes: mesRef.mes, ...campos }),
+      })
+      if (!r.ok) throw new Error('HTTP ' + r.status)
+    } catch (e: any) {
+      showNotif('Nao foi possivel gravar o lancamento: ' + (e?.message || 'erro'), false)
+    }
+  }
   const salvarHoras = async (fid: number, h: number) => {
     setHoras(p => ({ ...p, [fid]: h }))
-    await fetch(API + '/funcionarios/horas', { method: 'POST', headers: hdr(), body: JSON.stringify({ funcionario_id: fid, ano: mesRef.ano, mes: mesRef.mes, horas: h }) })
+    await salvarLancamento(fid, { horas: h })
+  }
+  const salvarMultHE = async (fid: number, m: number) => {
+    setPctHE(p => ({ ...p, [fid]: m }))
+    await salvarLancamento(fid, { mult_he: m })
+  }
+  const salvarFaltas = async (fid: number, v: number) => {
+    setFaltasAtrasos(p => ({ ...p, [fid]: v }))
+    await salvarLancamento(fid, { faltas: v })
   }
   const salvarFuncionario = async () => {
     setSalvando(true)
@@ -171,7 +210,7 @@ export default function Encargos() {
                       <input type="number" min="0" step="0.5" value={horas[f.id]||0} onChange={e=>temPermissao('encargos','editar')&&salvarHoras(f.id,+e.target.value)} disabled={!temPermissao('encargos','editar')} style={{...st.input,width:55,padding:'4px 6px',fontSize:12,textAlign:'center' as any}} />
                     </td>
                     <td style={{...st.td,padding:'6px 8px'}}>
-                      <select value={pctHE[f.id]||1.5} onChange={e=>temPermissao('encargos','editar')&&setPctHE(p=>({...p,[f.id]:+e.target.value}))} disabled={!temPermissao('encargos','editar')} style={{...st.input,width:70,padding:'4px 6px',fontSize:11}}>
+                      <select value={pctHE[f.id]||1.5} onChange={e=>temPermissao('encargos','editar')&&salvarMultHE(f.id,+e.target.value)} disabled={!temPermissao('encargos','editar')} style={{...st.input,width:70,padding:'4px 6px',fontSize:11}}>
                         <option value={1.5}>50%</option>
                         <option value={2.0}>100%</option>
                       </select>
@@ -218,7 +257,9 @@ export default function Encargos() {
                     <td style={{...st.td,color:'#F87171'}}>{f.calc.desVT>0?fmtR(f.calc.desVT):'—'}</td>
                     <td style={{...st.td,padding:'6px 8px'}}>
                       <input type="text" value={faltasAtrasos[f.id]||0}
-                        onChange={e=>temPermissao('encargos','editar')&&setFaltasAtrasos(p=>({...p,[f.id]:parseFloat(e.target.value.replace(",","."))||0}))} disabled={!temPermissao('encargos','editar')}
+                        onChange={e=>temPermissao('encargos','editar')&&setFaltasAtrasos(p=>({...p,[f.id]:parseFloat(e.target.value.replace(",","."))||0}))}
+                        onBlur={e=>temPermissao('encargos','editar')&&salvarFaltas(f.id,parseFloat(e.target.value.replace(",","."))||0)}
+                        disabled={!temPermissao('encargos','editar')}
                         style={{...st.input,width:80,padding:'4px 6px',fontSize:12,textAlign:'center' as any}} />
                     </td>
                     <td style={{...st.td,color:'#F87171'}}>{fmtR(f.calc.vale)}</td>
