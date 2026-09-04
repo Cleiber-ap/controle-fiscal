@@ -27,7 +27,8 @@ sys.path.insert(0, '.')
 from app.database import SessionLocal
 from app.models.empresa import HistoricoFaturamento
 from app.routers.notas import AjusteDevolucao, NotaFiscal
-from app.routers.funcionarios import FechamentoEncargos, Funcionario, HorasExtras
+from app.routers.funcionarios import (FechamentoEncargos, Funcionario, HorasExtras,
+                                      SalarioVigencia)
 
 # Mesmo criterio do ImportarXML: CNPJ do emitente decide a empresa.
 CNPJ_EMPRESA = {
@@ -106,6 +107,8 @@ def conferir_fechamentos(db):
 
     for f in fechamentos:
         ref = '%02d/%d' % (f.mes, f.ano)
+        inicio_mes = '%04d-%02d-01' % (f.ano, f.mes)
+        fim_mes = '%04d-%02d-31' % (f.ano, f.mes)
         if not f.detalhe:
             sem_detalhe.append('  %s — fechado antes do detalhe passar a ser gravado' % ref)
             continue
@@ -116,6 +119,28 @@ def conferir_fechamentos(db):
             continue
 
         atuais = {x.id: x for x in db.query(Funcionario).all()}
+
+        def esteve_na_empresa(fn):
+            """Datas de hoje colocam essa pessoa neste mes?"""
+            adm = getattr(fn, 'data_admissao', None)
+            dem = getattr(fn, 'data_demissao', None)
+            if adm and adm > fim_mes:
+                return False
+            if dem and dem < inicio_mes:
+                return False
+            return True
+
+        def remuneracao_vigente(fid):
+            """
+            Remuneracao que valia neste mes, pelo historico. Comparar o snapshot
+            com o cadastro atual acusaria todo reajuste posterior como
+            divergencia — o historico existe justamente para isso nao ocorrer.
+            """
+            vigs = db.query(SalarioVigencia).filter(
+                SalarioVigencia.funcionario_id == fid,
+                SalarioVigencia.vigencia <= fim_mes).order_by(
+                SalarioVigencia.vigencia).all()
+            return vigs[-1] if vigs else atuais.get(fid)
         lanc = {x.funcionario_id: x for x in db.query(HorasExtras).filter(
             HorasExtras.ano == f.ano, HorasExtras.mes == f.mes).all()}
 
@@ -126,11 +151,12 @@ def conferir_fechamentos(db):
             if not atual:
                 alterados.append('  %s · %s — funcionario nao existe mais no cadastro' % (ref, nome))
                 continue
+            vig = remuneracao_vigente(fid)
             for campo, rotulo in CAMPOS:
                 antes = float(snap.get(campo) or 0)
-                agora = float(getattr(atual, campo, 0) or 0)
+                agora = float(getattr(vig, campo, 0) or 0) if vig else 0.0
                 if abs(antes - agora) >= 0.01:
-                    alterados.append('  %s · %s — %s: fechado com R$ %.2f, hoje R$ %.2f'
+                    alterados.append('  %s · %s — %s: fechado com R$ %.2f, vigencia diz R$ %.2f'
                                      % (ref, nome, rotulo, antes, agora))
             # Datas de admissao/demissao: mudaram desde o fechamento?
             for campo, rotulo in [('data_admissao', 'admissao'), ('data_demissao', 'demissao')]:
@@ -143,11 +169,9 @@ def conferir_fechamentos(db):
                                      % (ref, nome, rotulo, antes, agora))
 
             # As datas de hoje ainda colocam essa pessoa neste mes?
-            inicio = '%04d-%02d-01' % (f.ano, f.mes)
-            fim = '%04d-%02d-31' % (f.ano, f.mes)
             adm = getattr(atual, 'data_admissao', None)
             dem = getattr(atual, 'data_demissao', None)
-            if (adm and adm > fim) or (dem and dem < inicio):
+            if not esteve_na_empresa(atual):
                 alterados.append('  %s · %s — pelas datas de hoje (adm %s, dem %s) nao estava na '
                                  'empresa neste mes, mas esta no fechamento'
                                  % (ref, nome, adm or '—', dem or '—'))
@@ -169,9 +193,11 @@ def conferir_fechamentos(db):
         for fid, at in atuais.items():
             if fid in ids_snap or not getattr(at, 'ativo', True):
                 continue
+            if not esteve_na_empresa(at):
+                continue  # nao estava na empresa naquele mes: esperado
             criado = getattr(at, 'created_at', None)
             if criado and f.fechado_em and criado > f.fechado_em:
-                continue  # contratado depois: esperado
+                continue  # cadastrado depois do fechamento
             alterados.append('  %s · %s — ja existia no cadastro mas ficou fora do fechamento'
                              % (ref, at.nome))
 
