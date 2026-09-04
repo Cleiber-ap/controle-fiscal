@@ -237,6 +237,8 @@ export default function Encargos() {
               funcionario_id: f.id,
               nome: f.nome,
               cargo: f.cargo || '',
+              data_admissao: f.data_admissao || null,
+              data_demissao: f.data_demissao || null,
               salario_base: parseFloat(f.salario_base) || 0,
               vale_alimentacao: parseFloat(f.vale_alimentacao) || 0,
               salario_dinheiro: parseFloat(f.salario_dinheiro) || 0,

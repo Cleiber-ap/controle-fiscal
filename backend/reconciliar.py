@@ -132,6 +132,26 @@ def conferir_fechamentos(db):
                 if abs(antes - agora) >= 0.01:
                     alterados.append('  %s · %s — %s: fechado com R$ %.2f, hoje R$ %.2f'
                                      % (ref, nome, rotulo, antes, agora))
+            # Datas de admissao/demissao: mudaram desde o fechamento?
+            for campo, rotulo in [('data_admissao', 'admissao'), ('data_demissao', 'demissao')]:
+                if campo not in snap:
+                    continue  # snapshot anterior a este campo
+                antes = snap.get(campo) or '—'
+                agora = getattr(atual, campo, None) or '—'
+                if antes != agora:
+                    alterados.append('  %s · %s — %s: fechado com %s, hoje %s'
+                                     % (ref, nome, rotulo, antes, agora))
+
+            # As datas de hoje ainda colocam essa pessoa neste mes?
+            inicio = '%04d-%02d-01' % (f.ano, f.mes)
+            fim = '%04d-%02d-31' % (f.ano, f.mes)
+            adm = getattr(atual, 'data_admissao', None)
+            dem = getattr(atual, 'data_demissao', None)
+            if (adm and adm > fim) or (dem and dem < inicio):
+                alterados.append('  %s · %s — pelas datas de hoje (adm %s, dem %s) nao estava na '
+                                 'empresa neste mes, mas esta no fechamento'
+                                 % (ref, nome, adm or '—', dem or '—'))
+
             l = lanc.get(fid)
             for campo, rotulo, padrao in [('horas', 'horas extras', 0),
                                           ('mult_he', 'multiplicador de HE', 1.5),
