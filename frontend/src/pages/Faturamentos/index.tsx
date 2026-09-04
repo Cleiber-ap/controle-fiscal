@@ -22,7 +22,6 @@ export default function Faturamentos() {
   const mesAntIdx = now.getMonth() === 0 ? 11 : now.getMonth() - 1
   const anoAnt = now.getMonth() === 0 ? now.getFullYear() - 1 : now.getFullYear()
   const anoAtual = now.getFullYear()
-  const mesAntNome = MESES[mesAntIdx]
 
   useEffect(() => {
     Promise.all([
@@ -37,8 +36,6 @@ export default function Faturamentos() {
   const acumSixAno = histSix.filter(r => r.ano === anoAtual).reduce((s: number, r: any) => s + r.valor, 0)
   const acumEnovaAno = histEnova.filter(r => r.ano === anoAtual).reduce((s: number, r: any) => s + r.valor, 0)
   const acumTotal = acumSixAno + acumEnovaAno
-  const vSixMesAnt = histSix.find(r => r.ano === anoAnt && r.mes === mesAntIdx + 1)?.valor || 0
-  const vEnovaMesAnt = histEnova.find(r => r.ano === anoAnt && r.mes === mesAntIdx + 1)?.valor || 0
 
   const periodos = [...new Set([
     ...histSix.filter(r => r.valor != null).map(r => `${r.ano}-${r.mes}`),
@@ -102,34 +99,23 @@ export default function Faturamentos() {
         Acumulado do Ano ({anoAtual})
         <div style={{ flex: 1, height: '1px', background: '#252836' }} />
       </div>
-      <div style={card}>
-        <div style={{ padding: '18px 24px', borderBottom: '1px solid #252836', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div>
-            <div style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1px', color: '#4A5070', marginBottom: '6px' }}>Total Consolidado — SIX + ENOVA</div>
-            <div style={{ fontSize: '30px', fontWeight: 700, ...mono }}><ContadorAnimado valor={acumTotal} cor="#E8EAF0" formatador={fmtR} /></div>
-          </div>
-          <div style={{ fontSize: '11px', color: '#7B82A0' }}>{anoAtual}</div>
+      <div style={{ ...card, display: 'grid', gridTemplateColumns: '1.2fr 1fr 1fr' }}>
+        <div style={{ padding: '18px 24px', borderRight: '1px solid #252836' }}>
+          <div style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1px', color: '#4A5070', marginBottom: '6px' }}>Total Consolidado — SIX + ENOVA</div>
+          <div style={{ fontSize: '30px', fontWeight: 700, ...mono }}><ContadorAnimado valor={acumTotal} cor="#E8EAF0" formatador={fmtR} /></div>
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr' }}>
-          {[
-            { label: 'SIX Comercial', cor: '#4F8EF7', acum: acumSixAno, meses: histSix.filter(r => r.ano === anoAtual).length, mesAnt: vSixMesAnt },
-            { label: 'ENOVA Comercial', cor: '#34D399', acum: acumEnovaAno, meses: histEnova.filter(r => r.ano === anoAtual).length, mesAnt: vEnovaMesAnt },
-          ].map((e, i) => (
-            <div key={i} style={{ padding: '14px 22px', borderRight: i === 0 ? '1px solid #252836' : 'none', borderTop: `2px solid ${e.cor}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <div>
-                <div style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1px', color: '#4A5070', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: e.cor, display: 'inline-block' }} />{e.label}
-                </div>
-                <div style={{ fontSize: '20px', fontWeight: 700, ...mono, color: e.cor }}>{fmtR(e.acum)}</div>
-                <div style={{ fontSize: '10px', color: '#7B82A0', marginTop: '3px' }}>{e.meses} meses lançados</div>
-              </div>
-              <div style={{ textAlign: 'right' }}>
-                <div style={{ fontSize: '10px', color: '#4A5070', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '4px' }}>Mês ant. ({mesAntNome})</div>
-                <div style={{ fontSize: '14px', fontWeight: 700, ...mono, color: e.cor }}>{fmtR(e.mesAnt)}</div>
-              </div>
+        {[
+          { label: 'SIX Comercial', cor: '#4F8EF7', acum: acumSixAno, meses: histSix.filter(r => r.ano === anoAtual).length },
+          { label: 'ENOVA Comercial', cor: '#34D399', acum: acumEnovaAno, meses: histEnova.filter(r => r.ano === anoAtual).length },
+        ].map((e, i) => (
+          <div key={i} style={{ padding: '18px 24px', borderRight: i === 0 ? '1px solid #252836' : 'none', borderTop: `2px solid ${e.cor}` }}>
+            <div style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1px', color: '#4A5070', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: e.cor, display: 'inline-block' }} />
+              {e.label} ({e.meses} {e.meses === 1 ? 'mês lançado' : 'meses lançados'})
             </div>
-          ))}
-        </div>
+            <div style={{ fontSize: '20px', fontWeight: 700, ...mono, color: e.cor }}>{fmtR(e.acum)}</div>
+          </div>
+        ))}
       </div>
 
       {/* ── LANÇAMENTOS ── */}
