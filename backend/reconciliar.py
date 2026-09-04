@@ -16,6 +16,7 @@ Uso:
 
 Saida: 0 se nada foi apontado, 1 se houve achado.
 """
+import json
 import os
 import re
 import sys
@@ -26,6 +27,7 @@ sys.path.insert(0, '.')
 from app.database import SessionLocal
 from app.models.empresa import HistoricoFaturamento
 from app.routers.notas import AjusteDevolucao, NotaFiscal
+from app.routers.funcionarios import FechamentoEncargos, Funcionario, HorasExtras
 
 # Mesmo criterio do ImportarXML: CNPJ do emitente decide a empresa.
 CNPJ_EMPRESA = {
@@ -73,6 +75,96 @@ def eh_faturamento(nota, canceladas):
     return (('venda' in st and 'devolu' not in st)
             or 'complemento de frete' in st
             or 'complementar' in st)
+
+
+def conferir_fechamentos(db):
+    """
+    Mes fechado nao deve mudar. Compara os dados guardados no fechamento com o
+    cadastro de hoje: se um salario foi reajustado, um lancamento alterado ou um
+    funcionario entrou/saiu, o total congelado deixou de corresponder a realidade
+    que o produziu.
+
+    Compara DADOS, nao recalcula: a regra de calculo vive em
+    frontend/src/utils/encargos.ts e reimplementa-la aqui criaria duas versoes da
+    mesma formula — o defeito que originou este script.
+    """
+    titulo('MODO BANCO — fechamentos da folha')
+
+    fechamentos = db.query(FechamentoEncargos).order_by(
+        FechamentoEncargos.ano, FechamentoEncargos.mes).all()
+    print('  %d mes(es) fechado(s)' % len(fechamentos))
+    if not fechamentos:
+        return
+
+    CAMPOS = [
+        ('salario_base', 'salario'),
+        ('vale_alimentacao', 'vale alimentacao'),
+        ('salario_dinheiro', 'salario em dinheiro'),
+        ('vale_transporte_valor', 'valor do VT'),
+    ]
+    alterados, sem_detalhe = [], []
+
+    for f in fechamentos:
+        ref = '%02d/%d' % (f.mes, f.ano)
+        if not f.detalhe:
+            sem_detalhe.append('  %s — fechado antes do detalhe passar a ser gravado' % ref)
+            continue
+        try:
+            det = json.loads(f.detalhe)
+        except ValueError:
+            sem_detalhe.append('  %s — detalhe ilegivel' % ref)
+            continue
+
+        atuais = {x.id: x for x in db.query(Funcionario).all()}
+        lanc = {x.funcionario_id: x for x in db.query(HorasExtras).filter(
+            HorasExtras.ano == f.ano, HorasExtras.mes == f.mes).all()}
+
+        for snap in det.get('funcionarios', []):
+            fid = snap.get('funcionario_id')
+            nome = snap.get('nome') or ('id %s' % fid)
+            atual = atuais.get(fid)
+            if not atual:
+                alterados.append('  %s · %s — funcionario nao existe mais no cadastro' % (ref, nome))
+                continue
+            for campo, rotulo in CAMPOS:
+                antes = float(snap.get(campo) or 0)
+                agora = float(getattr(atual, campo, 0) or 0)
+                if abs(antes - agora) >= 0.01:
+                    alterados.append('  %s · %s — %s: fechado com R$ %.2f, hoje R$ %.2f'
+                                     % (ref, nome, rotulo, antes, agora))
+            l = lanc.get(fid)
+            for campo, rotulo, padrao in [('horas', 'horas extras', 0),
+                                          ('mult_he', 'multiplicador de HE', 1.5),
+                                          ('faltas', 'faltas', 0)]:
+                antes = float(snap.get(campo) if snap.get(campo) is not None else padrao)
+                agora = float(getattr(l, campo, None) if l and getattr(l, campo, None) is not None else padrao)
+                if abs(antes - agora) >= 0.01:
+                    alterados.append('  %s · %s — %s: fechado com %.2f, hoje %.2f'
+                                     % (ref, nome, rotulo, antes, agora))
+
+        # Funcionario ausente do snapshot so e problema se ja existia quando o mes
+        # foi fechado. Quem foi cadastrado depois nao tinha como estar la, e
+        # apontar isso a cada contratacao tornaria o relatorio ruidoso.
+        ids_snap = {x.get('funcionario_id') for x in det.get('funcionarios', [])}
+        for fid, at in atuais.items():
+            if fid in ids_snap or not getattr(at, 'ativo', True):
+                continue
+            criado = getattr(at, 'created_at', None)
+            if criado and f.fechado_em and criado > f.fechado_em:
+                continue  # contratado depois: esperado
+            alterados.append('  %s · %s — ja existia no cadastro mas ficou fora do fechamento'
+                             % (ref, at.nome))
+
+        print('    %s · %d funcionario(s) · custo total R$ %.2f%s'
+              % (ref, len(det.get('funcionarios', [])), f.total_empresa or 0,
+                 ' · INSS ' + det['inss_vigencia'] if det.get('inss_vigencia') else ''))
+
+    apontar('Mes fechado cujos dados mudaram depois', alterados)
+    if sem_detalhe:
+        print()
+        print('  Informativo — fechamento sem detalhe para comparar (%d):' % len(sem_detalhe))
+        for l in sem_detalhe:
+            print(l)
 
 
 # ─────────────────────────────────────────────────────────────── leitura XML ──
@@ -418,6 +510,7 @@ db = SessionLocal()
 try:
     conferir_banco(db)
     conferir_ajustes(db)
+    conferir_fechamentos(db)
     if len(sys.argv) > 1:
         conferir_xml(db, sys.argv[1:])
     else:

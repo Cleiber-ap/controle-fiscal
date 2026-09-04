@@ -5,6 +5,7 @@ import ContadorAnimado from '../../components/ContadorAnimado'
 import { MESES_FULL as MESES } from '../../utils/meses'
 import { fmtR } from '../../utils/formato'
 import { calcEncargos, calcCalendario, getFeriadosFixos, getTodosOsFeriados } from '../../utils/encargos'
+import { VIGENCIA_INSS } from '../../utils/inss'
 
 const API = 'https://diligent-integrity-production-3f98.up.railway.app'
 const token = () => localStorage.getItem('access_token')
@@ -177,6 +178,25 @@ export default function Encargos() {
           total_salarios: calcSalarios, total_encargos: calcEncargosGeral,
           total_empresa: calcGeral, total_deposito: calcDeposito,
           fechado_por: usuario?.nome || usuario?.email || null,
+          // Guarda o que produziu esses totais. Assim da para conferir depois se
+          // algo mudou sob um mes fechado, comparando dados — sem reimplementar
+          // o calculo fora daqui.
+          detalhe: {
+            inss_vigencia: VIGENCIA_INSS,
+            calendario: { diasUteis, diasSegSab, domingosFeriados, diasVT },
+            funcionarios: funcionarios.map(f => ({
+              funcionario_id: f.id,
+              nome: f.nome,
+              salario_base: parseFloat(f.salario_base) || 0,
+              vale_alimentacao: parseFloat(f.vale_alimentacao) || 0,
+              salario_dinheiro: parseFloat(f.salario_dinheiro) || 0,
+              vale_transporte: !!f.vale_transporte,
+              vale_transporte_valor: parseFloat(f.vale_transporte_valor) || 0,
+              horas: horas[f.id] || 0,
+              mult_he: pctHE[f.id] || 1.5,
+              faltas: faltasAtrasos[f.id] || 0,
+            })),
+          },
         }),
       })
       if (!r.ok) throw new Error('HTTP ' + r.status)

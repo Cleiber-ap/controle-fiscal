@@ -13,6 +13,7 @@ Base.metadata.create_all(bind=engine)
 _COLUNAS_NOVAS = [
     "ALTER TABLE encargos_horas_extras ADD COLUMN IF NOT EXISTS mult_he DOUBLE PRECISION DEFAULT 1.5",
     "ALTER TABLE encargos_horas_extras ADD COLUMN IF NOT EXISTS faltas DOUBLE PRECISION DEFAULT 0",
+    "ALTER TABLE encargos_fechamento ADD COLUMN IF NOT EXISTS detalhe TEXT",
 ]
 
 def _aplicar_colunas_novas():

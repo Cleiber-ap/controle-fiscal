@@ -1,10 +1,11 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from sqlalchemy import Column, Integer, String, Float, Boolean, DateTime
+from sqlalchemy import Column, Integer, String, Float, Boolean, DateTime, Text
 from sqlalchemy.sql import func
 from app.database import get_db, Base
 from app.auth.jwt import get_current_user
 from datetime import datetime
+import json
 
 class Funcionario(Base):
     __tablename__ = "funcionarios"
@@ -62,6 +63,11 @@ class FechamentoEncargos(Base):
     total_deposito = Column(Float, default=0)
     fechado_por = Column(String(100))
     fechado_em = Column(DateTime, server_default=func.now())
+    #  JSON com os dados que produziram os totais: cadastro de cada funcionario,
+    #  lancamentos do mes e calendario. Guardar a entrada permite conferir depois
+    #  se algo mudou sob um mes fechado, sem precisar recalcular — o que exigiria
+    #  duplicar a regra de calculo aqui no backend.
+    detalhe = Column(Text)
 
 
 class Feriado(Base):
@@ -139,6 +145,7 @@ def _fechamento_json(f):
         "total_deposito": f.total_deposito or 0,
         "fechado_por": f.fechado_por,
         "fechado_em": f.fechado_em.isoformat() if f.fechado_em else None,
+        "detalhe": json.loads(f.detalhe) if f.detalhe else None,
     }
 
 
@@ -164,6 +171,7 @@ def fechar_mes(dados: dict, db: Session = Depends(get_db), current_user=Depends(
     f.total_empresa = dados.get("total_empresa", 0)
     f.total_deposito = dados.get("total_deposito", 0)
     f.fechado_por = dados.get("fechado_por")
+    f.detalhe = json.dumps(dados["detalhe"], ensure_ascii=False) if dados.get("detalhe") else None
     f.fechado_em = datetime.utcnow()
     db.commit(); db.refresh(f)
     return _fechamento_json(f)
