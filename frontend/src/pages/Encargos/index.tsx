@@ -29,13 +29,17 @@ export default function Encargos() {
   const [editandoFeriado, setEditandoFeriado] = useState<number|null>(null)
   const [salvando, setSalvando] = useState(false)
   const [notif, setNotif] = useState<{ msg: string, ok: boolean } | null>(null)
+  const [fechamento, setFechamento] = useState<any | null>(null)
+  const [fechando, setFechando] = useState(false)
   const showNotif = (msg: string, ok = true) => { setNotif({ msg, ok }); setTimeout(() => setNotif(null), 3500) }
   const carregar = async () => {
-    const [fs2, hs, frs] = await Promise.all([
+    const [fs2, hs, frs, fech] = await Promise.all([
       fetch(API + '/funcionarios/', { headers: hdr() }).then(r => r.json()).catch(() => []),
       fetch(API + `/funcionarios/horas/${mesRef.ano}/${mesRef.mes}`, { headers: hdr() }).then(r => r.json()).catch(() => ({})),
       fetch(API + '/funcionarios/feriados/', { headers: hdr() }).then(r => r.json()).catch(() => []),
+      fetch(API + `/funcionarios/fechamento/${mesRef.ano}/${mesRef.mes}`, { headers: hdr() }).then(r => r.json()).catch(() => null),
     ])
+    setFechamento(fech && fech.ano ? fech : null)
     setFuncionarios(Array.isArray(fs2) ? fs2 : [])
     // O endpoint devolvia so a quantidade de horas por funcionario e passou a
     // devolver tambem multiplicador e faltas. Aceitar as duas formas permite
@@ -147,10 +151,58 @@ export default function Encargos() {
       faltas: faltasAtrasos[f.id] || 0,
     }),
   }))
-  const totalGeral = calculos.reduce((s, f) => s + f.calc.totalEmpresa, 0)
-  const totalDeposito = calculos.reduce((s, f) => s + f.calc.ferias13 + f.calc.fgts + f.calc.multaFgts, 0)
-  const totalEncargosGeral = calculos.reduce((s, f) => s + f.calc.totalEncargos, 0)
-  const totalSalarios = calculos.reduce((s, f) => s + f.calc.sal, 0)
+  const calcGeral = calculos.reduce((s, f) => s + f.calc.totalEmpresa, 0)
+  const calcDeposito = calculos.reduce((s, f) => s + f.calc.ferias13 + f.calc.fgts + f.calc.multaFgts, 0)
+  const calcEncargosGeral = calculos.reduce((s, f) => s + f.calc.totalEncargos, 0)
+  const calcSalarios = calculos.reduce((s, f) => s + f.calc.sal, 0)
+
+  // Mes fechado exibe o que foi congelado, nao o recalculo de agora: reajuste de
+  // salario ou mudanca na tabela do INSS nao devem alterar um mes ja conferido.
+  const mesFechado = !!fechamento
+  const totalSalarios = mesFechado ? fechamento.total_salarios : calcSalarios
+  const totalEncargosGeral = mesFechado ? fechamento.total_encargos : calcEncargosGeral
+  const totalGeral = mesFechado ? fechamento.total_empresa : calcGeral
+  const totalDeposito = mesFechado ? fechamento.total_deposito : calcDeposito
+  const podeEditar = temPermissao('encargos', 'editar') && !mesFechado
+
+  const fecharMes = async () => {
+    if (!window.confirm(`Fechar ${MESES[mesRef.mes - 1]}/${mesRef.ano}? Os totais ficam congelados e os lancamentos travados ate voce reabrir.`)) return
+    setFechando(true)
+    try {
+      const usuario = JSON.parse(localStorage.getItem('usuario') || 'null')
+      const r = await fetch(API + '/funcionarios/fechamento', {
+        method: 'POST', headers: hdr(),
+        body: JSON.stringify({
+          ano: mesRef.ano, mes: mesRef.mes,
+          total_salarios: calcSalarios, total_encargos: calcEncargosGeral,
+          total_empresa: calcGeral, total_deposito: calcDeposito,
+          fechado_por: usuario?.nome || usuario?.email || null,
+        }),
+      })
+      if (!r.ok) throw new Error('HTTP ' + r.status)
+      await registrarLog({ acao: 'CONFIRMAR', modulo: 'encargos', descricao: `Folha fechada: ${MESES[mesRef.mes - 1]}/${mesRef.ano} · custo total ${fmtR(calcGeral)}`, valorDepois: { ano: mesRef.ano, mes: mesRef.mes, total_empresa: calcGeral } })
+      showNotif('Mes fechado!')
+      await carregar()
+    } catch (e: any) {
+      showNotif('Nao foi possivel fechar o mes: ' + (e?.message || 'erro'), false)
+    }
+    setFechando(false)
+  }
+
+  const reabrirMes = async () => {
+    if (!window.confirm(`Reabrir ${MESES[mesRef.mes - 1]}/${mesRef.ano}? Os totais congelados serao descartados e a tela volta a calcular ao vivo.`)) return
+    setFechando(true)
+    try {
+      const r = await fetch(API + `/funcionarios/fechamento/${mesRef.ano}/${mesRef.mes}`, { method: 'DELETE', headers: hdr() })
+      if (!r.ok) throw new Error('HTTP ' + r.status)
+      await registrarLog({ acao: 'EDITAR', modulo: 'encargos', descricao: `Folha reaberta: ${MESES[mesRef.mes - 1]}/${mesRef.ano}` })
+      showNotif('Mes reaberto para edicao')
+      await carregar()
+    } catch (e: any) {
+      showNotif('Nao foi possivel reabrir o mes: ' + (e?.message || 'erro'), false)
+    }
+    setFechando(false)
+  }
   const st = {
     card: { background: '#13151F', border: '1px solid #252836', borderRadius: 10, padding: 20, marginBottom: 16 } as any,
     label: { fontSize: 11, fontWeight: 600, color: '#7B82A0', textTransform: 'uppercase' as any, letterSpacing: '0.08em', marginBottom: 6 },
@@ -173,6 +225,29 @@ export default function Encargos() {
         </div>
       </div>
       {notif && <div style={{ background: notif.ok ? '#0D3326' : '#2D1B1B', border: '1px solid ' + (notif.ok ? '#34D399' : '#F87171'), borderRadius: 8, padding: '10px 16px', marginBottom: 16, color: notif.ok ? '#34D399' : '#F87171', fontSize: 13 }}>{notif.msg}</div>}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, background: mesFechado ? 'rgba(52,211,153,0.08)' : 'rgba(251,191,36,0.06)', border: '1px solid ' + (mesFechado ? 'rgba(52,211,153,0.3)' : 'rgba(251,191,36,0.25)'), borderRadius: 8, padding: '10px 16px', marginBottom: 16 }}>
+        <span style={{ fontSize: 15 }}>{mesFechado ? '🔒' : '✏️'}</span>
+        <div style={{ flex: 1 }}>
+          <div style={{ fontSize: 12, fontWeight: 600, color: mesFechado ? '#34D399' : '#FBBF24' }}>
+            {mesFechado
+              ? `${MESES[mesRef.mes - 1]}/${mesRef.ano} fechado — totais congelados`
+              : `${MESES[mesRef.mes - 1]}/${mesRef.ano} aberto — os totais mudam conforme voce lanca`}
+          </div>
+          <div style={{ fontSize: 11, color: '#7B82A0', marginTop: 2 }}>
+            {mesFechado
+              ? `Fechado${fechamento.fechado_por ? ' por ' + fechamento.fechado_por : ''}${fechamento.fechado_em ? ' em ' + new Date(fechamento.fechado_em).toLocaleString('pt-BR') : ''}. Reabra para editar horas extras ou faltas.`
+              : 'Lance as horas extras e faltas do mes; ao terminar, feche para congelar os valores.'}
+          </div>
+        </div>
+        {temPermissao('encargos', 'editar') && (
+          <button
+            disabled={fechando}
+            onClick={mesFechado ? reabrirMes : fecharMes}
+            style={{ ...st.btn(mesFechado ? '#1A1D2A' : '#34D399'), whiteSpace: 'nowrap', opacity: fechando ? 0.6 : 1 }}>
+            {fechando ? 'Aguarde…' : mesFechado ? '🔓 Reabrir mês' : '🔒 Fechar mês'}
+          </button>
+        )}
+      </div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 20 }}>
         {[{ label: 'Total Salários', valor: totalSalarios, cor: '#4F8EF7' }, { label: 'Total Encargos', valor: totalEncargosGeral, cor: '#FBBF24' }, { label: 'Custo Total Empresa', valor: totalGeral, cor: '#34D399' }, { label: 'Depósito (Fér+13ª+FGTS+Multa)', valor: totalDeposito, cor: '#A78BFA' }].map(c => (
           <div key={c.label} style={{ ...st.card, borderColor: c.cor + '44' }}>
@@ -207,10 +282,10 @@ export default function Encargos() {
                     <td style={st.td}>{fmtR(f.calc.va)}</td>
                     <td style={st.td}>{f.calc.dinheiro>0?fmtR(f.calc.dinheiro):'—'}</td>
                     <td style={{...st.td,padding:'6px 8px'}}>
-                      <input type="number" min="0" step="0.5" value={horas[f.id]||0} onChange={e=>temPermissao('encargos','editar')&&salvarHoras(f.id,+e.target.value)} disabled={!temPermissao('encargos','editar')} style={{...st.input,width:55,padding:'4px 6px',fontSize:12,textAlign:'center' as any}} />
+                      <input type="number" min="0" step="0.5" value={horas[f.id]||0} onChange={e=>podeEditar&&salvarHoras(f.id,+e.target.value)} disabled={!podeEditar} style={{...st.input,width:55,padding:'4px 6px',fontSize:12,textAlign:'center' as any}} />
                     </td>
                     <td style={{...st.td,padding:'6px 8px'}}>
-                      <select value={pctHE[f.id]||1.5} onChange={e=>temPermissao('encargos','editar')&&salvarMultHE(f.id,+e.target.value)} disabled={!temPermissao('encargos','editar')} style={{...st.input,width:70,padding:'4px 6px',fontSize:11}}>
+                      <select value={pctHE[f.id]||1.5} onChange={e=>podeEditar&&salvarMultHE(f.id,+e.target.value)} disabled={!podeEditar} style={{...st.input,width:70,padding:'4px 6px',fontSize:11}}>
                         <option value={1.5}>50%</option>
                         <option value={2.0}>100%</option>
                       </select>
@@ -257,9 +332,9 @@ export default function Encargos() {
                     <td style={{...st.td,color:'#F87171'}}>{f.calc.desVT>0?fmtR(f.calc.desVT):'—'}</td>
                     <td style={{...st.td,padding:'6px 8px'}}>
                       <input type="text" value={faltasAtrasos[f.id]||0}
-                        onChange={e=>temPermissao('encargos','editar')&&setFaltasAtrasos(p=>({...p,[f.id]:parseFloat(e.target.value.replace(",","."))||0}))}
-                        onBlur={e=>temPermissao('encargos','editar')&&salvarFaltas(f.id,parseFloat(e.target.value.replace(",","."))||0)}
-                        disabled={!temPermissao('encargos','editar')}
+                        onChange={e=>podeEditar&&setFaltasAtrasos(p=>({...p,[f.id]:parseFloat(e.target.value.replace(",","."))||0}))}
+                        onBlur={e=>podeEditar&&salvarFaltas(f.id,parseFloat(e.target.value.replace(",","."))||0)}
+                        disabled={!podeEditar}
                         style={{...st.input,width:80,padding:'4px 6px',fontSize:12,textAlign:'center' as any}} />
                     </td>
                     <td style={{...st.td,color:'#F87171'}}>{fmtR(f.calc.vale)}</td>

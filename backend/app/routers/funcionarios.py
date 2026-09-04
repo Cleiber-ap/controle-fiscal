@@ -4,6 +4,7 @@ from sqlalchemy import Column, Integer, String, Float, Boolean, DateTime
 from sqlalchemy.sql import func
 from app.database import get_db, Base
 from app.auth.jwt import get_current_user
+from datetime import datetime
 
 class Funcionario(Base):
     __tablename__ = "funcionarios"
@@ -40,6 +41,27 @@ class HorasExtras(Base):
     #  Desconto de faltas e atrasos, em reais.
     faltas = Column(Float, default=0, nullable=True)
     created_at = Column(DateTime, server_default=func.now())
+
+
+class FechamentoEncargos(Base):
+    """
+    Fechamento mensal da folha: congela os totais do mes.
+
+    Os totais sao recalculados a cada abertura da tela, a partir do cadastro
+    atual. Se um salario for reajustado ou a tabela do INSS mudar, meses
+    passados passariam a exibir outro valor. O fechamento guarda o que valeu
+    de fato naquele mes.
+    """
+    __tablename__ = "encargos_fechamento"
+    id = Column(Integer, primary_key=True, index=True)
+    ano = Column(Integer, nullable=False)
+    mes = Column(Integer, nullable=False)
+    total_salarios = Column(Float, default=0)
+    total_encargos = Column(Float, default=0)
+    total_empresa = Column(Float, default=0)
+    total_deposito = Column(Float, default=0)
+    fechado_por = Column(String(100))
+    fechado_em = Column(DateTime, server_default=func.now())
 
 
 class Feriado(Base):
@@ -105,6 +127,57 @@ def salvar_horas(dados: dict, db: Session = Depends(get_db), current_user=Depend
     if "faltas" in dados: ex.faltas = dados["faltas"]
     db.commit()
     return {"ok": True}
+
+def _fechamento_json(f):
+    if not f:
+        return None
+    return {
+        "ano": f.ano, "mes": f.mes,
+        "total_salarios": f.total_salarios or 0,
+        "total_encargos": f.total_encargos or 0,
+        "total_empresa": f.total_empresa or 0,
+        "total_deposito": f.total_deposito or 0,
+        "fechado_por": f.fechado_por,
+        "fechado_em": f.fechado_em.isoformat() if f.fechado_em else None,
+    }
+
+
+@router.get("/fechamento/{ano}/{mes}")
+def get_fechamento(ano: int, mes: int, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
+    """Fechamento do mes, ou null se ainda estiver aberto."""
+    f = db.query(FechamentoEncargos).filter(
+        FechamentoEncargos.ano == ano, FechamentoEncargos.mes == mes).first()
+    return _fechamento_json(f)
+
+
+@router.post("/fechamento")
+def fechar_mes(dados: dict, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
+    """Congela os totais do mes. Refechar sobrescreve os valores."""
+    ano = dados["ano"]; mes = dados["mes"]
+    f = db.query(FechamentoEncargos).filter(
+        FechamentoEncargos.ano == ano, FechamentoEncargos.mes == mes).first()
+    if not f:
+        f = FechamentoEncargos(ano=ano, mes=mes)
+        db.add(f)
+    f.total_salarios = dados.get("total_salarios", 0)
+    f.total_encargos = dados.get("total_encargos", 0)
+    f.total_empresa = dados.get("total_empresa", 0)
+    f.total_deposito = dados.get("total_deposito", 0)
+    f.fechado_por = dados.get("fechado_por")
+    f.fechado_em = datetime.utcnow()
+    db.commit(); db.refresh(f)
+    return _fechamento_json(f)
+
+
+@router.delete("/fechamento/{ano}/{mes}")
+def reabrir_mes(ano: int, mes: int, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
+    """Reabre o mes para edicao, descartando o snapshot."""
+    f = db.query(FechamentoEncargos).filter(
+        FechamentoEncargos.ano == ano, FechamentoEncargos.mes == mes).first()
+    if f:
+        db.delete(f); db.commit()
+    return {"ok": True}
+
 
 @router.get("/feriados/")
 def listar_feriados(db: Session = Depends(get_db), current_user=Depends(get_current_user)):
