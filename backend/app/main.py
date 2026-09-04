@@ -14,6 +14,12 @@ _COLUNAS_NOVAS = [
     "ALTER TABLE encargos_horas_extras ADD COLUMN IF NOT EXISTS mult_he DOUBLE PRECISION DEFAULT 1.5",
     "ALTER TABLE encargos_horas_extras ADD COLUMN IF NOT EXISTS faltas DOUBLE PRECISION DEFAULT 0",
     "ALTER TABLE encargos_fechamento ADD COLUMN IF NOT EXISTS detalhe TEXT",
+    "ALTER TABLE funcionarios ADD COLUMN IF NOT EXISTS data_admissao VARCHAR(10)",
+    "ALTER TABLE funcionarios ADD COLUMN IF NOT EXISTS data_demissao VARCHAR(10)",
+    # Sugestao inicial de admissao: a data em que o registro foi cadastrado. So
+    # preenche o que esta vazio, entao repetir nao sobrescreve correcao manual.
+    "UPDATE funcionarios SET data_admissao = TO_CHAR(created_at, 'YYYY-MM-DD') "
+    "WHERE data_admissao IS NULL AND created_at IS NOT NULL",
 ]
 
 def _aplicar_colunas_novas():

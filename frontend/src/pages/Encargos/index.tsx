@@ -64,9 +64,19 @@ export default function Encargos() {
         h[id] = Number(v) || 0
       }
     }
-    setHoras(h)
-    setPctHE(mult)
-    setFaltasAtrasos(flt)
+    // Mes fechado exibe os lancamentos que foram congelados.
+    const snap = fech && fech.detalhe && Array.isArray(fech.detalhe.funcionarios) ? fech.detalhe.funcionarios : null
+    if (snap) {
+      const hS: Record<number, number> = {}, mS: Record<number, number> = {}, fS: Record<number, number> = {}
+      for (const x of snap) {
+        hS[x.funcionario_id] = x.horas || 0
+        mS[x.funcionario_id] = x.mult_he ?? 1.5
+        fS[x.funcionario_id] = x.faltas || 0
+      }
+      setHoras(hS); setPctHE(mS); setFaltasAtrasos(fS)
+    } else {
+      setHoras(h); setPctHE(mult); setFaltasAtrasos(flt)
+    }
     const feriadosLista = Array.isArray(frs) ? frs : []
     setFeriadosCustom(feriadosLista)
     const cal = calcCalendario(mesRef.mes, mesRef.ano, getTodosOsFeriados(mesRef.ano, feriadosLista))
@@ -144,14 +154,44 @@ export default function Encargos() {
   const feriadosFixosMes = getFeriadosFixos(mesRef.ano)
     .filter(f => f.mes === mesRef.mes)
     .sort((a, b) => a.dia - b.dia)
-  const calculos = funcionarios.map(f => ({
+  /** Funcionario estava na empresa no mes de referencia? */
+  const estavaNaEmpresa = (f: any) => {
+    const inicio = `${mesRef.ano}-${String(mesRef.mes).padStart(2, '0')}-01`
+    const fim = `${mesRef.ano}-${String(mesRef.mes).padStart(2, '0')}-31`
+    if (f.data_admissao && f.data_admissao > fim) return false   // contratado depois
+    if (f.data_demissao && f.data_demissao < inicio) return false // saiu antes
+    if (!f.data_admissao && !f.ativo) return false
+    return true
+  }
+
+  // Mes fechado monta a folha a partir do que foi congelado, nao do cadastro de
+  // hoje: quem entrou depois nao pode aparecer, e reajuste posterior nao pode
+  // mexer no que ja foi conferido.
+  // Mes fechado exibe o que foi congelado, nao o recalculo de agora: reajuste de
+  // salario ou mudanca na tabela do INSS nao devem alterar um mes ja conferido.
+  const mesFechado = !!fechamento
+  const snapshot = mesFechado ? fechamento.detalhe?.funcionarios : null
+  const folhaDoMes = snapshot
+    ? snapshot.map((x: any) => ({
+        id: x.funcionario_id, nome: x.nome,
+        cargo: x.cargo || funcionarios.find(f => f.id === x.funcionario_id)?.cargo || '',
+        salario_base: x.salario_base, vale_alimentacao: x.vale_alimentacao,
+        salario_dinheiro: x.salario_dinheiro, vale_transporte: x.vale_transporte,
+        vale_transporte_valor: x.vale_transporte_valor,
+      }))
+    : funcionarios.filter(estavaNaEmpresa)
+
+  // Calendario: do snapshot quando fechado, senao o do mes consultado.
+  const calDoMes = (snapshot && fechamento.detalhe?.calendario) || { domingosFeriados, diasSegSab, diasVT }
+
+  const calculos = folhaDoMes.map((f: any) => ({
     ...f,
     calc: calcEncargos(f, horas[f.id] || 0, {
       // Valores reais do mes, vindos de calcCalendario. Antes ficavam nos
       // padroes fixos 6/25/20, que em 2026 divergem em 11 dos 12 meses.
-      domingosFeriados,
-      diasSegSab,
-      diasVT,
+      domingosFeriados: calDoMes.domingosFeriados,
+      diasSegSab: calDoMes.diasSegSab,
+      diasVT: calDoMes.diasVT,
       multHE: pctHE[f.id] || 1.5,
       faltas: faltasAtrasos[f.id] || 0,
     }),
@@ -161,9 +201,6 @@ export default function Encargos() {
   const calcEncargosGeral = calculos.reduce((s, f) => s + f.calc.totalEncargos, 0)
   const calcSalarios = calculos.reduce((s, f) => s + f.calc.sal, 0)
 
-  // Mes fechado exibe o que foi congelado, nao o recalculo de agora: reajuste de
-  // salario ou mudanca na tabela do INSS nao devem alterar um mes ja conferido.
-  const mesFechado = !!fechamento
   const totalSalarios = mesFechado ? fechamento.total_salarios : calcSalarios
   const totalEncargosGeral = mesFechado ? fechamento.total_encargos : calcEncargosGeral
   const totalGeral = mesFechado ? fechamento.total_empresa : calcGeral
@@ -196,9 +233,10 @@ export default function Encargos() {
           detalhe: {
             inss_vigencia: VIGENCIA_INSS,
             calendario: { diasUteis, diasSegSab, domingosFeriados, diasVT },
-            funcionarios: funcionarios.map(f => ({
+            funcionarios: funcionarios.filter(estavaNaEmpresa).map(f => ({
               funcionario_id: f.id,
               nome: f.nome,
+              cargo: f.cargo || '',
               salario_base: parseFloat(f.salario_base) || 0,
               vale_alimentacao: parseFloat(f.vale_alimentacao) || 0,
               salario_dinheiro: parseFloat(f.salario_dinheiro) || 0,
@@ -298,7 +336,7 @@ export default function Encargos() {
           <div key={c.label} style={{ ...st.card, borderColor: c.cor + '44' }}>
             <div style={st.label}>{c.label}</div>
             <div style={{ fontSize: 22, fontWeight: 700, fontFamily: 'monospace' }}><ContadorAnimado valor={c.valor} cor={c.cor} formatador={fmtR} /></div>
-            <div style={{ fontSize: 11, color: '#7B82A0', marginTop: 4 }}>{MESES[mesRef.mes - 1]}/{mesRef.ano} — {funcionarios.length} funcionário(s)</div>
+            <div style={{ fontSize: 11, color: '#7B82A0', marginTop: 4 }}>{MESES[mesRef.mes - 1]}/{mesRef.ano} — {folhaDoMes.length} funcionário(s)</div>
           </div>
         ))}
       </div>
@@ -408,7 +446,7 @@ export default function Encargos() {
             <div style={{...st.card,borderColor:'#4F8EF7',marginBottom:16}}>
               <div style={{fontSize:14,fontWeight:700,marginBottom:16}}>{form.id?'Editar':'Novo'} Funcionário</div>
               <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:12,marginBottom:16}}>
-                {[{k:'nome',l:'Nome',t:'text'},{k:'cargo',l:'Cargo',t:'text'},{k:'salario_base',l:'Salário Base (R$)',t:'text'},{k:'vale_alimentacao',l:'Vale Alimentação (R$)',t:'text'},{k:'salario_dinheiro',l:'Sal. em Dinheiro (R$)',t:'text'},{k:'empresa_id',l:'Empresa (1=SIX, 2=ENOVA)',t:'text'},{k:'vale_transporte_valor',l:'Valor Unitário VT (R$/dia)',t:'text'}].map(({k,l,t})=>(
+                {[{k:'nome',l:'Nome',t:'text'},{k:'cargo',l:'Cargo',t:'text'},{k:'salario_base',l:'Salário Base (R$)',t:'text'},{k:'vale_alimentacao',l:'Vale Alimentação (R$)',t:'text'},{k:'salario_dinheiro',l:'Sal. em Dinheiro (R$)',t:'text'},{k:'empresa_id',l:'Empresa (1=SIX, 2=ENOVA)',t:'text'},{k:'vale_transporte_valor',l:'Valor Unitário VT (R$/dia)',t:'text'},{k:'data_admissao',l:'Admissão',t:'date'},{k:'data_demissao',l:'Demissão (vazio = ativo)',t:'date'}].map(({k,l,t})=>(
                   <div key={k}><div style={st.label}>{l}</div><input type={t} value={form[k]||''} onChange={e=>setForm((p:any)=>({...p,[k]:t==='number'?+e.target.value:e.target.value}))} style={st.input}/></div>
                 ))}
                 <div><div style={st.label}>Vale Transporte</div>

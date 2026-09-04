@@ -20,6 +20,11 @@ class Funcionario(Base):
     vale_transporte_valor = Column(Float, default=0)
     vale_alimentacao_desconto = Column(Float, default=0)
     ativo = Column(Boolean, default=True)
+    #  AAAA-MM-DD. Definem em quais meses o funcionario entra na folha. Sem elas
+    #  a tela montava qualquer mes com quem estava ativo hoje, somando salario de
+    #  quem ainda nao havia sido contratado.
+    data_admissao = Column(String(10))
+    data_demissao = Column(String(10))
     created_at = Column(DateTime, server_default=func.now())
 
 class HorasExtras(Base):
@@ -83,7 +88,14 @@ router = APIRouter(tags=["funcionarios"])
 
 @router.get("/")
 def listar(db: Session = Depends(get_db), current_user=Depends(get_current_user)):
-    return db.query(Funcionario).filter(Funcionario.ativo == True).all()
+    """
+    Todos os funcionarios, inclusive os desligados.
+
+    Antes devolvia so os ativos, e por isso quem saia da empresa sumia tambem
+    dos meses passados em que trabalhou. Quem entra na folha de cada mes e
+    decidido por data_admissao e data_demissao, na tela.
+    """
+    return db.query(Funcionario).order_by(Funcionario.nome).all()
 
 @router.post("/")
 def criar(dados: dict, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
@@ -104,7 +116,12 @@ def atualizar(fid: int, dados: dict, db: Session = Depends(get_db), current_user
 def desativar(fid: int, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
     f = db.query(Funcionario).filter(Funcionario.id == fid).first()
     if not f: raise HTTPException(404, "Não encontrado")
-    f.ativo = False; db.commit()
+    f.ativo = False
+    #  Sem a data, o desligamento apagaria a pessoa tambem dos meses ja
+    #  trabalhados. Preenche com hoje se ainda nao houver.
+    if not f.data_demissao:
+        f.data_demissao = datetime.utcnow().strftime("%Y-%m-%d")
+    db.commit()
     return {"ok": True}
 
 @router.get("/horas/{ano}/{mes}")
