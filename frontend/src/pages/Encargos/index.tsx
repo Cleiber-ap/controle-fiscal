@@ -51,12 +51,16 @@ function calcEncargos(func: any, horasExtras: number, opcoes: OpcoesEncargos = {
   const dsrFator = diasSegSab > 0 ? domingosFeriados / diasSegSab : 0
   const vtDesconto = usaVT ? (sal + heValor) * 0.06 : 0
   const vtValor = usaVT ? Math.max(0, vtUnitario * diasVT * 1.06 - vtDesconto) : 0
-  const inss = calcINSS(sal + heValor)
+  // O DSR reflexo das horas extras integra o salario de contribuicao, junto com
+  // as proprias horas extras.
+  const inss = calcINSS(sal + heValor + heDsr)
   const vale = sal * 0.40
   const desVT = vtDesconto
   const totalEncargos = ferias13 + fgts + multaFgts + heValor + heDsr + vtValor + va + dinheiro
   const totalDescontos = inss + desVT + faltas + vale
-  const salLiquido = sal + heValor + va - totalDescontos + dinheiro
+  // O DSR reflexo das HE e pago ao funcionario, entao entra no liquido — antes
+  // aparecia so no custo da empresa, e passaria a ser tributado sem ser pago.
+  const salLiquido = sal + heValor + heDsr + va - totalDescontos + dinheiro
   const totalEmpresa = sal + totalEncargos
   return { sal, ferias13, fgts, multaFgts, heValor, heDsr, vtValor, va, dinheiro, inss, desVT, faltas, vale, totalEncargos, totalDescontos, salLiquido, totalEmpresa, pctEncargos: totalEncargos / sal }
 }
