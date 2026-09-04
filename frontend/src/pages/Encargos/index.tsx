@@ -44,6 +44,8 @@ export default function Encargos() {
   const periodoPadrao = () => ({ deMes: 1, deAno: HOJE.ano, ateMes: HOJE.mes, ateAno: HOJE.ano })
   //  null = filtro limpo: nenhum periodo escolhido, nenhuma linha na tabela.
   const [periodo, setPeriodo] = useState<null | ReturnType<typeof periodoPadrao>>(periodoPadrao)
+  //  0 = todos os funcionarios somados.
+  const [funcFiltro, setFuncFiltro] = useState(0)
   const showNotif = (msg: string, ok = true) => { setNotif({ msg, ok }); setTimeout(() => setNotif(null), 3500) }
   const carregar = async () => {
     const [fs2, hs, frs, fech, sals, emps, fechs] = await Promise.all([
@@ -585,11 +587,25 @@ export default function Encargos() {
         const chave = (ano: number, mes: number) => ano * 12 + mes
         const de = periodo ? chave(periodo.deAno, periodo.deMes) : 0
         const ate = periodo ? chave(periodo.ateAno, periodo.ateMes) : 0
-        const linhas = periodo
+        const noIntervalo = periodo
           ? fechamentos
               .filter(f => { const k = chave(f.ano, f.mes); return k >= de && k <= ate })
               .sort((a, b) => chave(a.ano, a.mes) - chave(b.ano, b.mes))
           : []
+        //  Com funcionario escolhido, refaz a conta so da parte dele, a partir do
+        //  que o mes congelou. Usa o mesmo calcEncargos da tela, entao os numeros
+        //  saem da mesma regra — nao de uma copia.
+        const linhas = funcFiltro === 0 ? noIntervalo : noIntervalo.map(f => {
+          const snap = f.detalhe?.funcionarios?.find((x: any) => x.funcionario_id === funcFiltro)
+          if (!snap) return null
+          const cal = f.detalhe?.calendario || {}
+          const c = calcEncargos(snap, snap.horas || 0, {
+            domingosFeriados: cal.domingosFeriados, diasSegSab: cal.diasSegSab, diasVT: cal.diasVT,
+            multHE: snap.mult_he ?? 1.5, faltas: snap.faltas || 0, ano: f.ano,
+          })
+          return { ...f, funcionarios: 1, total_salarios: c.sal, total_encargos: c.totalEncargos,
+                   total_empresa: c.totalEmpresa, total_deposito: c.ferias13 + c.fgts + c.multaFgts }
+        }).filter(Boolean) as any[]
         const soma = (c: string) => linhas.reduce((t, l) => t + (l[c] || 0), 0)
         const anos = [...new Set(fechamentos.map(f => f.ano))].sort()
         const primeiro = fechamentos[0], ultimo = fechamentos[fechamentos.length - 1]
@@ -621,6 +637,7 @@ export default function Encargos() {
                 <div style={{ fontSize: 14, fontWeight: 700 }}>📈 Comparativo mensal</div>
                 <div style={{ fontSize: 11, color: '#7B82A0', marginTop: 2 }}>
                   Apenas meses fechados. {fechamentos.length} disponíveis, de {fechamentos.length ? `${MESES[fechamentos[0].mes - 1]}/${fechamentos[0].ano}` : '—'} a {fechamentos.length ? `${MESES[fechamentos[fechamentos.length - 1].mes - 1]}/${fechamentos[fechamentos.length - 1].ano}` : '—'}.
+                  {funcFiltro !== 0 && ` Somente ${funcionarios.find((f: any) => f.id === funcFiltro)?.nome || ''}.`}
                 </div>
               </div>
               <div style={{ ...st.card, padding: '12px 14px', marginBottom: 0, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' as const }}>
@@ -634,8 +651,14 @@ export default function Encargos() {
                   onClick={() => { const p = fechamentos[0], u = fechamentos[fechamentos.length - 1]
                     if (p && u) setPeriodo({ deMes: p.mes, deAno: p.ano, ateMes: u.mes, ateAno: u.ano }) }}
                   style={{ ...st.btn('#1A1D2A'), padding: '5px 12px', fontSize: 11 }}>Tudo</button>
+                <span style={{ width: 1, height: 22, background: '#2A2D3E', margin: '0 2px' }} />
+                <select value={funcFiltro} onChange={e => setFuncFiltro(+e.target.value)}
+                  style={{ ...st.input, width: 'auto', padding: '5px 8px', fontSize: 12 }}>
+                  <option value={0}>Todos os funcionários</option>
+                  {funcionarios.map((f: any) => <option key={f.id} value={f.id}>{f.nome}</option>)}
+                </select>
                 <button
-                  onClick={() => setPeriodo(null)}
+                  onClick={() => { setPeriodo(null); setFuncFiltro(0) }}
                   title='Limpa o período: nenhum mês fica selecionado'
                   style={{ ...st.btn('#1A1D2A'), padding: '5px 12px', fontSize: 11 }}>Limpar</button>
               </div>
@@ -665,7 +688,7 @@ export default function Encargos() {
                     {linhas.map(l => (
                       <tr key={`${l.ano}-${l.mes}`}>
                         <td style={{ ...st.td, fontFamily: 'inherit' }}>{MESES[l.mes - 1]}/{l.ano}</td>
-                        <td style={{ ...st.td, textAlign: 'right' as const }}>{l.funcionarios ?? '—'}</td>
+                        <td style={{ ...st.td, textAlign: 'right' as const }}>{funcFiltro === 0 ? (l.funcionarios ?? '—') : '—'}</td>
                         <td style={{ ...st.td, textAlign: 'right' as const, color: '#4F8EF7' }}>{fmtR(l.total_salarios)}</td>
                         <td style={{ ...st.td, textAlign: 'right' as const, color: '#FBBF24' }}>{fmtR(l.total_encargos)}</td>
                         <td style={{ ...st.td, textAlign: 'right' as const, color: '#34D399', fontWeight: 700 }}>{fmtR(l.total_empresa)}</td>

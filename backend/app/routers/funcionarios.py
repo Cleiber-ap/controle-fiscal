@@ -265,22 +265,23 @@ def _fechamento_json(f):
 @router.get("/fechamentos")
 def listar_fechamentos(db: Session = Depends(get_db), current_user=Depends(get_current_user)):
     """
-    Resumo de todos os meses fechados, do mais antigo ao mais recente.
+    Todos os meses fechados, do mais antigo ao mais recente, com o detalhe.
 
-    Devolve so os totais e a contagem de funcionarios — o detalhe completo sai
-    por /fechamento/{ano}/{mes}, para a listagem nao carregar o JSON inteiro de
-    cada mes.
+    O detalhe vem junto porque a tela de comparativo permite filtrar por
+    funcionario, e para isso precisa dos valores de cada pessoa em cada mes.
     """
     rows = db.query(FechamentoEncargos).order_by(
         FechamentoEncargos.ano, FechamentoEncargos.mes).all()
     saida = []
     for f in rows:
+        det = None
         qtd = None
         if f.detalhe:
             try:
-                qtd = len(json.loads(f.detalhe).get("funcionarios", []))
+                det = json.loads(f.detalhe)
+                qtd = len(det.get("funcionarios", []))
             except ValueError:
-                qtd = None
+                det = None
         saida.append({
             "ano": f.ano, "mes": f.mes,
             "funcionarios": qtd,
@@ -290,6 +291,7 @@ def listar_fechamentos(db: Session = Depends(get_db), current_user=Depends(get_c
             "total_deposito": f.total_deposito or 0,
             "fechado_por": f.fechado_por,
             "fechado_em": f.fechado_em.isoformat() if f.fechado_em else None,
+            "detalhe": det,
         })
     return saida
 
