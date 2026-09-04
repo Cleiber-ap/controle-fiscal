@@ -6,13 +6,13 @@ import api from '../../api/endpoints'
 import ContadorAnimado from '../../components/ContadorAnimado'
 import { MESES } from '../../utils/meses'
 import { fmtR, fmtCNPJ } from '../../utils/formato'
-import { ehReceita } from '../../utils/notas'
+import { ehReceita, ehDevolucao, mencionaVenda, ehComplementar, naturezaDe } from '../../utils/notas'
 
 const mono = { fontFamily: 'monospace' }
-function statusStyle(s: string) {
-  const sl = (s || '').toLowerCase()
-  if (sl.includes('devolu')) return { bg: 'rgba(251,191,36,0.12)', cor: '#FBBF24' }
-  if (sl.includes('venda') || sl.includes('complemento de frete') || sl.includes('complementar')) return { bg: 'rgba(52,211,153,0.12)', cor: '#34D399' }
+function statusStyle(nota: any) {
+  const sl = naturezaDe(nota)
+  if (ehDevolucao(nota)) return { bg: 'rgba(251,191,36,0.12)', cor: '#FBBF24' }
+  if (mencionaVenda(nota) || ehComplementar(nota)) return { bg: 'rgba(52,211,153,0.12)', cor: '#34D399' }
   if (sl.includes('cancelamento')) return { bg: 'rgba(248,113,113,0.12)', cor: '#F87171' }
   if (sl.includes('carta') || sl.includes('correcao') || sl.includes('cce')) return { bg: 'rgba(79,142,247,0.12)', cor: '#4F8EF7' }
   if (sl.includes('inutiliz')) return { bg: 'rgba(249,115,22,0.12)', cor: '#F97316' }
@@ -235,7 +235,7 @@ export default function Contabilidade() {
     : notasFiltradas
 
   const notasFiltradas3 = filtroTipo ? notasFiltradas2.filter((r: any) => (r.tipo || 'saida') === filtroTipo) : notasFiltradas2
-  const notasFiltradas4 = filtroStatus.length > 0 ? notasFiltradas3.filter((r: any) => { const nat = r.nat_operacao || r.status || ''; const cancelada = nfsCanceladas.has(r.numero_nf); const isEntrada = cancelada && !nfsCanReal.has(r.numero_nf) && nat.toLowerCase().includes('venda'); if (filtroStatus.includes('Venda/Entrada') && isEntrada) return true; if (filtroStatus.includes('Venda') && cancelada) return false; return filtroStatus.includes(nat); }) : notasFiltradas3
+  const notasFiltradas4 = filtroStatus.length > 0 ? notasFiltradas3.filter((r: any) => { const nat = r.nat_operacao || r.status || ''; const cancelada = nfsCanceladas.has(r.numero_nf); const isEntrada = cancelada && !nfsCanReal.has(r.numero_nf) && mencionaVenda(r); if (filtroStatus.includes('Venda/Entrada') && isEntrada) return true; if (filtroStatus.includes('Venda') && cancelada) return false; return filtroStatus.includes(nat); }) : notasFiltradas3
   const notasFiltradas5 = filtroMesContb.length > 0 ? notasFiltradas4.filter((r: any) => {
     const lista = pagamentos[r.numero_nf] || []
     if (lista.length > 0) {
@@ -665,9 +665,9 @@ export default function Contabilidade() {
                   const foiCancelada = nfsCanceladas.has(r.numero_nf)
                   const nat = (r.nat_operacao || r.status || '').toLowerCase()
                   const isVenda = ehReceita(r) && !foiCancelada
-                  const stStyle = foiCancelada && (r.nat_operacao || r.status || '').toLowerCase().includes('venda')
+                  const stStyle = foiCancelada && mencionaVenda(r)
                     ? (nfsCanReal.has(r.numero_nf) ? { bg: 'rgba(248,113,113,0.15)', cor: '#FCA5A5' } : { bg: 'rgba(251,191,36,0.15)', cor: '#FBBF24' })
-                    : statusStyle(r.nat_operacao || r.status)
+                    : statusStyle(r)
                   const isEdit = editando === r.numero_nf
                   const isSaldoEdit = editando === r.numero_nf + '-saldo'
                   const mesEmit = r.data_emissao ? parseInt((r.data_emissao.includes('-') ? r.data_emissao.split('-')[1] : r.data_emissao.split('/')[1])) : 0

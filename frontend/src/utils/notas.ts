@@ -36,6 +36,23 @@ export function ehDevolucao(nota: NotaClassificavel): boolean {
 }
 
 /**
+ * A natureza menciona venda — inclusive em "devolucao de venda".
+ *
+ * Serve para apresentacao, onde interessa saber que a nota fala de venda sem
+ * julgar se e receita: a Contabilidade usa isso para distinguir uma venda
+ * anulada por entrada de uma venda de fato cancelada.
+ */
+export function mencionaVenda(nota: NotaClassificavel): boolean {
+  return naturezaDe(nota).includes('venda')
+}
+
+/** NF-e complementar ou complemento de frete. */
+export function ehComplementar(nota: NotaClassificavel): boolean {
+  const st = naturezaDe(nota)
+  return st.includes('complemento de frete') || st.includes('complementar')
+}
+
+/**
  * A nota representa receita: venda, complemento de frete ou NF-e complementar.
  *
  * Nao considera cancelamento — quem sabe quais notas foram canceladas e a tela,
@@ -44,10 +61,7 @@ export function ehDevolucao(nota: NotaClassificavel): boolean {
  */
 export function ehReceita(nota: NotaClassificavel): boolean {
   if (ehEntrada(nota)) return false
-  const st = naturezaDe(nota)
-  return (st.includes('venda') && !st.includes('devolu'))
-    || st.includes('complemento de frete')
-    || st.includes('complementar')
+  return (mencionaVenda(nota) && !ehDevolucao(nota)) || ehComplementar(nota)
 }
 
 /** Receita que ainda vale: nao esta na lista de canceladas. */
