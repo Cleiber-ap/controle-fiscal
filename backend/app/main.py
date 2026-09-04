@@ -20,6 +20,17 @@ _COLUNAS_NOVAS = [
     # preenche o que esta vazio, entao repetir nao sobrescreve correcao manual.
     "UPDATE funcionarios SET data_admissao = TO_CHAR(created_at, 'YYYY-MM-DD') "
     "WHERE data_admissao IS NULL AND created_at IS NOT NULL",
+    # Primeira vigencia de cada funcionario: a remuneracao atual, valendo desde a
+    # admissao. NOT EXISTS deixa a instrucao repetivel e nao mexe em quem ja tem
+    # historico.
+    "INSERT INTO funcionario_salarios "
+    "(funcionario_id, vigencia, salario_base, vale_alimentacao, salario_dinheiro, "
+    " vale_transporte, vale_transporte_valor) "
+    "SELECT f.id, COALESCE(f.data_admissao, TO_CHAR(f.created_at, 'YYYY-MM-DD'), '2000-01-01'), "
+    "       f.salario_base, f.vale_alimentacao, f.salario_dinheiro, "
+    "       f.vale_transporte, f.vale_transporte_valor "
+    "FROM funcionarios f "
+    "WHERE NOT EXISTS (SELECT 1 FROM funcionario_salarios s WHERE s.funcionario_id = f.id)",
 ]
 
 def _aplicar_colunas_novas():

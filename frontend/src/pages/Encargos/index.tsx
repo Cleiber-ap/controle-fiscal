@@ -35,16 +35,19 @@ export default function Encargos() {
   const [editandoFeriado, setEditandoFeriado] = useState<number|null>(null)
   const [salvando, setSalvando] = useState(false)
   const [notif, setNotif] = useState<{ msg: string, ok: boolean } | null>(null)
+  const [salarios, setSalarios] = useState<any[]>([])
   const [fechamento, setFechamento] = useState<any | null>(null)
   const [fechando, setFechando] = useState(false)
   const showNotif = (msg: string, ok = true) => { setNotif({ msg, ok }); setTimeout(() => setNotif(null), 3500) }
   const carregar = async () => {
-    const [fs2, hs, frs, fech] = await Promise.all([
+    const [fs2, hs, frs, fech, sals] = await Promise.all([
       fetch(API + '/funcionarios/', { headers: hdr() }).then(r => r.json()).catch(() => []),
       fetch(API + `/funcionarios/horas/${mesRef.ano}/${mesRef.mes}`, { headers: hdr() }).then(r => r.json()).catch(() => ({})),
       fetch(API + '/funcionarios/feriados/', { headers: hdr() }).then(r => r.json()).catch(() => []),
       fetch(API + `/funcionarios/fechamento/${mesRef.ano}/${mesRef.mes}`, { headers: hdr() }).then(r => r.json()).catch(() => null),
+      fetch(API + '/funcionarios/salarios', { headers: hdr() }).then(r => r.json()).catch(() => []),
     ])
+    setSalarios(Array.isArray(sals) ? sals : [])
     setFechamento(fech && fech.ano ? fech : null)
     setFuncionarios(Array.isArray(fs2) ? fs2 : [])
     // O endpoint devolvia so a quantidade de horas por funcionario e passou a
@@ -154,6 +157,19 @@ export default function Encargos() {
   const feriadosFixosMes = getFeriadosFixos(mesRef.ano)
     .filter(f => f.mes === mesRef.mes)
     .sort((a, b) => a.dia - b.dia)
+  /**
+   * Remuneracao que valia para o funcionario no mes consultado: a vigencia mais
+   * recente que comecou ate o fim do mes. Sem historico, usa o cadastro atual.
+   */
+  const remuneracaoNoMes = (f: any) => {
+    const fim = `${mesRef.ano}-${String(mesRef.mes).padStart(2, '0')}-31`
+    const vig = salarios
+      .filter(v => v.funcionario_id === f.id && v.vigencia <= fim)
+      .sort((a, b) => a.vigencia < b.vigencia ? -1 : 1)
+      .pop()
+    return vig ? { ...f, ...vig, id: f.id, nome: f.nome, cargo: f.cargo } : f
+  }
+
   /** Funcionario estava na empresa no mes de referencia? */
   const estavaNaEmpresa = (f: any) => {
     const inicio = `${mesRef.ano}-${String(mesRef.mes).padStart(2, '0')}-01`
@@ -179,7 +195,7 @@ export default function Encargos() {
         salario_dinheiro: x.salario_dinheiro, vale_transporte: x.vale_transporte,
         vale_transporte_valor: x.vale_transporte_valor,
       }))
-    : funcionarios.filter(estavaNaEmpresa)
+    : funcionarios.filter(estavaNaEmpresa).map(remuneracaoNoMes)
 
   // Calendario: do snapshot quando fechado, senao o do mes consultado.
   const calDoMes = (snapshot && fechamento.detalhe?.calendario) || { domingosFeriados, diasSegSab, diasVT }
@@ -233,7 +249,7 @@ export default function Encargos() {
           detalhe: {
             inss_vigencia: VIGENCIA_INSS,
             calendario: { diasUteis, diasSegSab, domingosFeriados, diasVT },
-            funcionarios: funcionarios.filter(estavaNaEmpresa).map(f => ({
+            funcionarios: funcionarios.filter(estavaNaEmpresa).map(remuneracaoNoMes).map((f: any) => ({
               funcionario_id: f.id,
               nome: f.nome,
               cargo: f.cargo || '',
@@ -441,6 +457,38 @@ export default function Encargos() {
       )}
       {aba === 'funcionarios' && (
         <div>
+          <div style={{ ...st.card, marginBottom: 16 }}>
+            <div style={{ fontSize: 12, fontWeight: 700, color: '#A78BFA', marginBottom: 4 }}>💰 Histórico de remuneração</div>
+            <div style={{ fontSize: 11, color: '#7B82A0', marginBottom: 12 }}>
+              Cada mês é calculado com a vigência que valia nele. Ao editar um funcionário, informe a data em que o novo valor passa a valer.
+            </div>
+            {salarios.length === 0 ? (
+              <div style={{ fontSize: 12, color: '#7B82A0' }}>Nenhuma vigência registrada.</div>
+            ) : (
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 11 }}>
+                <thead><tr>
+                  {['Funcionário', 'A partir de', 'Salário', 'V. Alim.', 'Dinheiro', 'VT/dia'].map((h, i) => (
+                    <th key={h} style={{ ...st.th, textAlign: i === 0 || i === 1 ? 'left' as any : 'right' as any }}>{h}</th>
+                  ))}
+                </tr></thead>
+                <tbody>
+                  {[...salarios].sort((a, b) => a.funcionario_id - b.funcionario_id || (a.vigencia < b.vigencia ? -1 : 1)).map(v => {
+                    const f = funcionarios.find(x => x.id === v.funcionario_id)
+                    return (
+                      <tr key={v.id}>
+                        <td style={st.td}>{f?.nome || 'id ' + v.funcionario_id}</td>
+                        <td style={st.td}>{v.vigencia.split('-').reverse().join('/')}</td>
+                        <td style={{ ...st.td, textAlign: 'right' as any }}>{fmtR(v.salario_base)}</td>
+                        <td style={{ ...st.td, textAlign: 'right' as any }}>{fmtR(v.vale_alimentacao)}</td>
+                        <td style={{ ...st.td, textAlign: 'right' as any }}>{v.salario_dinheiro ? fmtR(v.salario_dinheiro) : '—'}</td>
+                        <td style={{ ...st.td, textAlign: 'right' as any }}>{v.vale_transporte ? fmtR(v.vale_transporte_valor) : '—'}</td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            )}
+          </div>
           <div style={{display:'flex',justifyContent:'flex-end',marginBottom:12}}>
             {temPermissao('encargos', 'incluir') && <button style={st.btn('#34D399')} onClick={()=>{setEditando('novo');setForm({empresa_id:1,vale_alimentacao:250,vale_transporte:true,salario_dinheiro:0})}}>+ Novo Funcionário</button>}
           </div>
@@ -448,7 +496,7 @@ export default function Encargos() {
             <div style={{...st.card,borderColor:'#4F8EF7',marginBottom:16}}>
               <div style={{fontSize:14,fontWeight:700,marginBottom:16}}>{form.id?'Editar':'Novo'} Funcionário</div>
               <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:12,marginBottom:16}}>
-                {[{k:'nome',l:'Nome',t:'text'},{k:'cargo',l:'Cargo',t:'text'},{k:'salario_base',l:'Salário Base (R$)',t:'text'},{k:'vale_alimentacao',l:'Vale Alimentação (R$)',t:'text'},{k:'salario_dinheiro',l:'Sal. em Dinheiro (R$)',t:'text'},{k:'empresa_id',l:'Empresa (1=SIX, 2=ENOVA)',t:'text'},{k:'vale_transporte_valor',l:'Valor Unitário VT (R$/dia)',t:'text'},{k:'data_admissao',l:'Admissão',t:'date'},{k:'data_demissao',l:'Demissão (vazio = ativo)',t:'date'}].map(({k,l,t})=>(
+                {[{k:'nome',l:'Nome',t:'text'},{k:'cargo',l:'Cargo',t:'text'},{k:'salario_base',l:'Salário Base (R$)',t:'text'},{k:'vale_alimentacao',l:'Vale Alimentação (R$)',t:'text'},{k:'salario_dinheiro',l:'Sal. em Dinheiro (R$)',t:'text'},{k:'empresa_id',l:'Empresa (1=SIX, 2=ENOVA)',t:'text'},{k:'vale_transporte_valor',l:'Valor Unitário VT (R$/dia)',t:'text'},{k:'data_admissao',l:'Admissão',t:'date'},{k:'data_demissao',l:'Demissão (vazio = ativo)',t:'date'},{k:'vigencia',l:'Vigência do reajuste (vazio = mês atual)',t:'date'}].map(({k,l,t})=>(
                   <div key={k}><div style={st.label}>{l}</div><input type={t} value={form[k]||''} onChange={e=>setForm((p:any)=>({...p,[k]:t==='number'?+e.target.value:e.target.value}))} style={st.input}/></div>
                 ))}
                 <div><div style={st.label}>Vale Transporte</div>

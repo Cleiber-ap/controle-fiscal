@@ -49,6 +49,27 @@ class HorasExtras(Base):
     created_at = Column(DateTime, server_default=func.now())
 
 
+class SalarioVigencia(Base):
+    """
+    Historico de remuneracao. Uma linha por mudanca, valida a partir de vigencia.
+
+    O cadastro guarda so os valores atuais; sem historico, reajustar um salario
+    reescrevia o passado — meses ainda abertos passavam a calcular com o valor
+    novo. Cada mes usa a vigencia que valia nele.
+    """
+    __tablename__ = "funcionario_salarios"
+    id = Column(Integer, primary_key=True, index=True)
+    funcionario_id = Column(Integer, nullable=False, index=True)
+    #  AAAA-MM-DD: primeiro dia em que estes valores valem.
+    vigencia = Column(String(10), nullable=False)
+    salario_base = Column(Float, default=0)
+    vale_alimentacao = Column(Float, default=0)
+    salario_dinheiro = Column(Float, default=0)
+    vale_transporte = Column(Boolean, default=True)
+    vale_transporte_valor = Column(Float, default=0)
+    created_at = Column(DateTime, server_default=func.now())
+
+
 class FechamentoEncargos(Base):
     """
     Fechamento mensal da folha: congela os totais do mes.
@@ -99,16 +120,87 @@ def listar(db: Session = Depends(get_db), current_user=Depends(get_current_user)
 
 @router.post("/")
 def criar(dados: dict, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
+    vigencia = dados.pop('vigencia', None)
     f = Funcionario(**{k: v for k, v in dados.items() if k != 'id'})
     db.add(f); db.commit(); db.refresh(f)
+    _gravar_vigencia(db, f, vigencia or f.data_admissao or datetime.utcnow().strftime("%Y-%m-01"))
+    db.commit()
     return f
+
+CAMPOS_REMUNERACAO = ('salario_base', 'vale_alimentacao', 'salario_dinheiro',
+                      'vale_transporte', 'vale_transporte_valor')
+
+
+def _salario_json(v):
+    return {
+        "id": v.id, "funcionario_id": v.funcionario_id, "vigencia": v.vigencia,
+        "salario_base": v.salario_base or 0, "vale_alimentacao": v.vale_alimentacao or 0,
+        "salario_dinheiro": v.salario_dinheiro or 0,
+        "vale_transporte": bool(v.vale_transporte),
+        "vale_transporte_valor": v.vale_transporte_valor or 0,
+    }
+
+
+def _gravar_vigencia(db, f, vigencia):
+    """Cria ou atualiza a vigencia com a remuneracao atual do funcionario."""
+    v = db.query(SalarioVigencia).filter(
+        SalarioVigencia.funcionario_id == f.id,
+        SalarioVigencia.vigencia == vigencia).first()
+    if not v:
+        v = SalarioVigencia(funcionario_id=f.id, vigencia=vigencia)
+        db.add(v)
+    for c in CAMPOS_REMUNERACAO:
+        setattr(v, c, getattr(f, c))
+    return v
+
+
+@router.get("/salarios")
+def listar_salarios(db: Session = Depends(get_db), current_user=Depends(get_current_user)):
+    """Todas as vigencias, da mais antiga para a mais recente."""
+    rows = db.query(SalarioVigencia).order_by(
+        SalarioVigencia.funcionario_id, SalarioVigencia.vigencia).all()
+    return [_salario_json(v) for v in rows]
+
+
+@router.post("/salarios")
+def criar_vigencia(dados: dict, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
+    """Lanca uma vigencia avulsa, para corrigir o historico."""
+    fid = dados["funcionario_id"]
+    v = db.query(SalarioVigencia).filter(
+        SalarioVigencia.funcionario_id == fid,
+        SalarioVigencia.vigencia == dados["vigencia"]).first()
+    if not v:
+        v = SalarioVigencia(funcionario_id=fid, vigencia=dados["vigencia"])
+        db.add(v)
+    for c in CAMPOS_REMUNERACAO:
+        if c in dados:
+            setattr(v, c, dados[c])
+    db.commit(); db.refresh(v)
+    return _salario_json(v)
+
+
+@router.delete("/salarios/{vid}")
+def remover_vigencia(vid: int, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
+    v = db.query(SalarioVigencia).filter(SalarioVigencia.id == vid).first()
+    if v:
+        db.delete(v); db.commit()
+    return {"ok": True}
+
 
 @router.put("/{fid}")
 def atualizar(fid: int, dados: dict, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
     f = db.query(Funcionario).filter(Funcionario.id == fid).first()
     if not f: raise HTTPException(404, "Não encontrado")
+    antes = {c: getattr(f, c) for c in CAMPOS_REMUNERACAO}
+    vigencia = dados.pop('vigencia', None)
     for k, v in dados.items():
         if k not in ('id', 'created_at'): setattr(f, k, v)
+    mudou = any(getattr(f, c) != antes[c] for c in CAMPOS_REMUNERACAO)
+    if mudou:
+        #  Sem vigencia informada, vale do primeiro dia do mes corrente.
+        _gravar_vigencia(db, f, vigencia or datetime.utcnow().strftime("%Y-%m-01"))
+    elif vigencia:
+        _gravar_vigencia(db, f, vigencia)
     db.commit(); db.refresh(f)
     return f
 
